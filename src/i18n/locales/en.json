@@ -103,5 +103,25 @@
     "resetSettingsConfirm": "Reset all settings to defaults? This action cannot be undone.",
     "settingsReset": "Settings reset to defaults.",
     "settingsResetFailed": "Failed to reset settings."
+  },
+  "menu": {
+    "file": "File",
+    "edit": "Edit",
+    "view": "View",
+    "help": "Help",
+    "newTask": "New Task",
+    "importTasks": "Import Tasks",
+    "exportTasks": "Export Tasks",
+    "quit": "Quit",
+    "selectAll": "Select All",
+    "deleteSelected": "Delete Selected",
+    "preferences": "Preferences",
+    "enableSlimMode": "Enable Slim Mode",
+    "disableSlimMode": "Disable Slim Mode",
+    "toggleTheme": "Toggle Theme",
+    "enableAlwaysOnTop": "Enable Always on Top",
+    "disableAlwaysOnTop": "Disable Always on Top",
+    "keyboardShortcuts": "Keyboard Shortcuts",
+    "about": "About YuToDo"
   }
 }

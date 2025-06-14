@@ -3,15 +3,6 @@ import { Download, Upload, FileText, Database } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Todo } from '../types/todo';
 
-// Tauri環境チェック関数
-const isTauriEnvironment = () => {
-  try {
-    return typeof window !== 'undefined' && 
-           (window as any).__TAURI_INTERNALS__ !== undefined;
-  } catch {
-    return false;
-  }
-};
 
 interface DataManagerProps {
   todos: Todo[];

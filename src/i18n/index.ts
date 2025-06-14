@@ -50,7 +50,6 @@ i18n
     ns: ['translation'],
 
     // Return key if translation is missing (for development)
-    returnKeyIfNamespace: false,
     returnEmptyString: false,
   });
 
