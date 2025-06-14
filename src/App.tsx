@@ -25,6 +25,7 @@ import { TodoFilter, FilterType } from './components/TodoFilter';
 import { SearchBar } from './components/SearchBar';
 import { DeleteConfirmDialog } from './components/DeleteConfirmDialog';
 import { ConnectionStatus } from './components/ConnectionStatus';
+import { MenuBar } from './components/MenuBar';
 import { useSocket } from './hooks/useSocket';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { AppSettings, Todo } from './types/todo';
@@ -63,10 +64,11 @@ function App() {
     message: string;
   }>({ isOpen: false, todoIds: [], title: '', message: '' });
   const [showConnectionTooltip, setShowConnectionTooltip] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const addTodoFormRef = useRef<AddTodoFormRef>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  const { todos, connected, connectionStatus, reconnectAttempts, addTodo, updateTodo, deleteTodo, toggleTodo, bulkImport, reorderTodos } = useSocket(settings.serverUrl);
+  const { todos, connectionStatus, reconnectAttempts, addTodo, updateTodo, deleteTodo, toggleTodo, bulkImport, reorderTodos } = useSocket(settings.serverUrl);
 
   useEffect(() => {
     const initializeConfig = async () => {
@@ -232,7 +234,10 @@ function App() {
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       const threshold = 30;
-      setShowHeader(e.clientY <= threshold);
+      // メニューが開いている時はヘッダーを隠さない
+      if (!isMenuOpen) {
+        setShowHeader(e.clientY <= threshold);
+      }
     };
 
     const handleMouseEnter = () => {
@@ -240,34 +245,43 @@ function App() {
     };
 
     const handleMouseLeave = () => {
-      setShowHeader(false);
+      // メニューが開いている時はヘッダーを隠さない
+      if (!isMenuOpen) {
+        setShowHeader(false);
+      }
     };
 
     // Tauri環境での追加対応
     const handleWindowBlur = () => {
-      setShowHeader(false);
+      if (!isMenuOpen) {
+        setShowHeader(false);
+      }
     };
 
     const handleVisibilityChange = () => {
-      if (document.hidden) {
+      if (document.hidden && !isMenuOpen) {
         setShowHeader(false);
       }
     };
 
     // bodyレベルでもマウス追跡を追加
     const handleBodyMouseLeave = () => {
-      setShowHeader(false);
+      if (!isMenuOpen) {
+        setShowHeader(false);
+      }
     };
 
     // htmlレベルでのマウス追跡
     const handleDocumentMouseLeave = () => {
-      setShowHeader(false);
+      if (!isMenuOpen) {
+        setShowHeader(false);
+      }
     };
 
     // ウィンドウレベルでのマウス追跡
     const handleWindowMouseOut = (e: MouseEvent) => {
       // マウスがウィンドウから完全に出た場合
-      if (!e.relatedTarget) {
+      if (!e.relatedTarget && !isMenuOpen) {
         setShowHeader(false);
       }
     };
@@ -291,7 +305,7 @@ function App() {
       window.removeEventListener('blur', handleWindowBlur);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, []);
+  }, [isMenuOpen]);
 
   // ウィンドウフォーカス状態を監視
   useEffect(() => {
@@ -331,7 +345,7 @@ function App() {
         const newTitle = `${statusIcon} YuToDo${reconnectText}`;
 
         // Tauriの場合
-        if (window.__TAURI__) {
+        if ((window as any).__TAURI__) {
           const appWindow = getCurrentWindow();
           await appWindow.setTitle(newTitle);
         } else {
@@ -378,6 +392,36 @@ function App() {
     } catch (error) {
       console.error('Failed to close window:', error);
     }
+  };
+
+  // メニューアクションハンドラー
+  const handleToggleTheme = () => {
+    const themes = ['auto', 'light', 'dark'] as const;
+    const currentIndex = themes.indexOf(settings.darkMode);
+    const nextTheme = themes[(currentIndex + 1) % themes.length];
+    handleSettingsChange({ ...settings, darkMode: nextTheme });
+  };
+
+  const handleToggleSlim = () => {
+    handleSettingsChange({ ...settings, detailedMode: !settings.detailedMode });
+  };
+
+  const handleToggleAlwaysOnTop = () => {
+    handleSettingsChange({ ...settings, alwaysOnTop: !settings.alwaysOnTop });
+  };
+
+  const handleShowAbout = () => {
+    alert(`YuToDo v0.1.0\n\nA modern, feature-rich todo list application built with Tauri, React, and TypeScript.\n\nFeatures real-time synchronization, keyboard shortcuts, and native desktop integration.`);
+  };
+
+  const handleImportTasksFromMenu = () => {
+    setShowSettings(true);
+    // 設定画面のデータマネージャータブにフォーカス
+  };
+
+  const handleExportTasksFromMenu = () => {
+    setShowSettings(true);
+    // 設定画面のデータマネージャータブにフォーカス
   };
 
   // ヘッダードラッグハンドラ
@@ -444,6 +488,7 @@ function App() {
 
   useKeyboardShortcuts(keyboardHandlers, { isModalOpen: showSettings || showShortcutHelp || deleteConfirm.isOpen });
 
+
   // 実際のダークモード状態を計算
   const isDarkMode = settings.darkMode === 'dark' ||
     (settings.darkMode === 'auto' && systemPrefersDark);
@@ -478,20 +523,6 @@ function App() {
     }
   };
 
-  const getConnectionStatusShort = () => {
-    switch (connectionStatus) {
-      case 'connected':
-        return '●';
-      case 'connecting':
-        return reconnectAttempts > 0 ? `○ (${reconnectAttempts})` : '○';
-      case 'disconnected':
-        return '×';
-      case 'error':
-        return '!';
-      default:
-        return '?';
-    }
-  };
 
   // 削除ハンドラー（設定に応じて確認ダイアログを表示）
   const handleDeleteWithConfirm = (todoId: string) => {
@@ -644,6 +675,21 @@ function App() {
       <header className={`app-header ${showHeader ? 'app-header--visible' : 'app-header--hidden'}`} onMouseDown={handleHeaderMouseDown}>
         <div className="header-left">
           <h1>YuToDo</h1>
+          <MenuBar
+            settings={settings}
+            onNewTask={keyboardHandlers.onNewTask}
+            onSelectAll={keyboardHandlers.onSelectAll}
+            onDeleteSelected={keyboardHandlers.onDeleteSelected}
+            onShowSettings={() => setShowSettings(true)}
+            onToggleSlim={handleToggleSlim}
+            onToggleTheme={handleToggleTheme}
+            onToggleAlwaysOnTop={handleToggleAlwaysOnTop}
+            onShowShortcuts={() => setShowShortcutHelp(true)}
+            onShowAbout={handleShowAbout}
+            onImportTasks={handleImportTasksFromMenu}
+            onExportTasks={handleExportTasksFromMenu}
+            onMenuStateChange={setIsMenuOpen}
+          />
         </div>
         <div className="header-center">
           {settings.detailedMode && (

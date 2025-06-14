@@ -58,20 +58,9 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onUpdate, on
             console.log('📥 Opener plugin imported successfully:', opener);
             console.log('📊 Available methods:', Object.keys(opener));
             
-            // openUrlまたはopenを試行
-            if (opener.open) {
-              console.log('🔧 Using opener.open');
-              await opener.open(href);
-            } else if (opener.openUrl) {
-              console.log('🔧 Using opener.openUrl');
-              await opener.openUrl(href);
-            } else if (opener.default && opener.default.open) {
-              console.log('🔧 Using opener.default.open');
-              await opener.default.open(href);
-            } else {
-              console.log('⚠️ Plugin methods not found');
-              throw new Error('No suitable open method found in opener plugin');
-            }
+            // 正しいopenメソッドを使用
+            console.log('🔧 Using opener.open');
+            await (opener as any).open(href);
             console.log('✅ URL opened successfully via Tauri opener');
             
             // WSLg環境での追加対応
@@ -273,49 +262,6 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onUpdate, on
 
   const isOverdue = todo.scheduledFor && new Date(todo.scheduledFor) < new Date() && !todo.completed;
 
-  const handleKeyDown = (event: React.KeyboardEvent) => {
-    if (isEditing) return;
-    
-    switch (event.key) {
-      case ' ':
-        event.preventDefault();
-        onToggle(todo.id);
-        break;
-      case 'e':
-        event.preventDefault();
-        setIsEditing(true);
-        // スリムモードでのキーボード編集開始時はフォーカスとカーソル位置設定
-        if (slimMode) {
-          setTimeout(() => {
-            if (editInputRef.current) {
-              editInputRef.current.focus();
-              const length = editInputRef.current.value.length;
-              editInputRef.current.setSelectionRange(length, length);
-            }
-          }, 0);
-        }
-        break;
-      case 'F2':
-        event.preventDefault();
-        if (slimMode) {
-          setIsEditing(true);
-          // F2での編集開始時はフォーカスとカーソル位置設定
-          setTimeout(() => {
-            if (editInputRef.current) {
-              editInputRef.current.focus();
-              const length = editInputRef.current.value.length;
-              editInputRef.current.setSelectionRange(length, length);
-            }
-          }, 0);
-        }
-        break;
-      case 'Delete':
-      case 'Backspace':
-        event.preventDefault();
-        onDelete(todo.id);
-        break;
-    }
-  };
 
   // スリムモード編集時のキー処理
   const handleEditKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {

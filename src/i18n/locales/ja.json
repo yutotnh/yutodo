@@ -103,5 +103,25 @@
     "resetSettingsConfirm": "すべての設定をデフォルトに戻しますか？この操作は元に戻せません。",
     "settingsReset": "設定をデフォルトに戻しました。",
     "settingsResetFailed": "設定のリセットに失敗しました。"
+  },
+  "menu": {
+    "file": "ファイル",
+    "edit": "編集",
+    "view": "表示",
+    "help": "ヘルプ",
+    "newTask": "新しいタスク",
+    "importTasks": "タスクを読み込み",
+    "exportTasks": "タスクを書き出し",
+    "quit": "終了",
+    "selectAll": "すべて選択",
+    "deleteSelected": "選択項目を削除",
+    "preferences": "環境設定",
+    "enableSlimMode": "スリムモードを有効",
+    "disableSlimMode": "スリムモードを無効",
+    "toggleTheme": "テーマ切り替え",
+    "enableAlwaysOnTop": "常に最前面を有効",
+    "disableAlwaysOnTop": "常に最前面を無効",
+    "keyboardShortcuts": "キーボードショートカット",
+    "about": "YuToDoについて"
   }
 }

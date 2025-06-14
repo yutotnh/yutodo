@@ -26,6 +26,7 @@ A modern, feature-rich todo list application built with Tauri, React, and TypeSc
 - 📋 **Right-click context** - Right-click links to copy URLs to clipboard
 - ✨ **Visual feedback** - Animated selection indicators and smooth transitions
 - 🎯 **Precise editing** - Click-to-position cursor in task editing with canvas-based positioning
+- 📋 **Header menu system** - Integrated File/Edit/View/Help menus with keyboard shortcuts and dropdown navigation
 
 ### Data Management & Export/Import
 - 💾 **SQLite database** - Reliable local data storage with automatic persistence
@@ -276,6 +277,31 @@ A complete JSON Schema is provided in `config.schema.json` for IDE autocompletio
 | `Ctrl + Click` | Individual selection toggle |
 | `Double Click` | Edit task title (in-place editing) |
 
+### Header Menu System
+The application features an integrated menu bar in the header with the following menus:
+
+#### File Menu
+- **New Task** (Ctrl+N) - Create a new task
+- **Import Tasks** - Import tasks from JSON file
+- **Export Tasks** - Export tasks to JSON/CSV
+- **Quit** (Ctrl+Q) - Close application
+
+#### Edit Menu  
+- **Select All** (Ctrl+A) - Select all visible tasks
+- **Delete Selected** (Del) - Delete selected tasks
+- **Preferences** (Ctrl+,) - Open settings panel
+
+#### View Menu
+- **Toggle Slim Mode** - Switch between detailed and compact view
+- **Toggle Theme** - Cycle through auto/light/dark themes  
+- **Always on Top** - Keep window above other applications
+
+#### Help Menu
+- **Keyboard Shortcuts** (Ctrl+K Ctrl+S) - Show shortcut reference
+- **About YuToDo** - Application information
+
+**Menu Navigation**: Click menu titles to open dropdowns, press Esc to close, or click outside menu area. All menu items include their keyboard shortcuts for quick reference.
+
 ## Internationalization
 
 ### Supported Languages
@@ -479,3 +505,9 @@ npm run tauri dev
 - **Enter Key Issue**: Pressing Enter while a task is selected may occasionally cause the task to become unresponsive (background appears darker) until Escape is pressed. This is a focus management issue under investigation.
   - **Workaround**: Use `E` or `F2` keys for task editing, or press `Escape` to clear the state
   - **Impact**: Temporary UI issue that doesn't affect core functionality
+
+### Header Menu System
+- **Menu Interaction**: The header menu system replaces native Tauri menus with a custom implementation
+- **Auto-hide Prevention**: When a menu is open, the header auto-hide feature is temporarily disabled to prevent accidental closing
+- **Event Handling**: Menu clicks are properly isolated to prevent conflicts with header dragging functionality
+- **Keyboard Navigation**: All menu items support keyboard activation and display their shortcuts for reference

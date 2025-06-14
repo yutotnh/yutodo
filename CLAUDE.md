@@ -20,7 +20,8 @@ This is a Tauri desktop application for todo list management with a React fronte
 - **Types**: Shared interfaces in `src/types/todo.ts` and `src/types/config.ts`
 - **Hooks**: Custom hooks for socket communication (`useSocket.ts`) and keyboard shortcuts (`useKeyboardShortcuts.ts`)
 - **Configuration**: TOML-based config system with `src/utils/configManager.ts`
-- **Internationalization**: `src/i18n/` - Complete i18n system with English/Japanese support
+- **Internationalization**: `src/i18n/` - Complete i18n system with English/Japanese support  
+- **Menu System**: Custom header-integrated menu bar (`src/components/MenuBar.tsx`) replacing native Tauri menus
 
 ## Development Commands
 
@@ -73,6 +74,7 @@ npm run start        # Run compiled server
 - All modals (Settings, ShortcutHelp, DeleteConfirmDialog) support Esc key and outside-click closing
 - Delete confirmation dialogs with settings-controlled behavior
 - Overlay-based UI components (header auto-hide, bottom Add Todo form) that don't displace content
+- **Menu System**: Custom header-integrated MenuBar component with dropdown menus that prevent header auto-hide during interaction
 
 ### Tauri v2 Integration
 - **Plugins Used**: opener, dialog, fs, clipboard-manager
@@ -115,6 +117,7 @@ npm run start        # Run compiled server
 - **Overlay UI**: Non-intrusive header and Add Todo form that overlay content without displacement
 - **Element selection prevention**: CSS and keyboard handling to prevent unwanted text selection
 - **Multi-selection**: Excel-like task selection with Shift+Click (range) and Ctrl+Click (individual) with visual feedback
+- **Header Menu System**: Custom menu bar integrated into header with File/Edit/View/Help menus and keyboard shortcuts
 
 ## Database Schema
 
@@ -246,6 +249,13 @@ To add a new language (e.g., French):
 - **WSLg fallbacks**: Always provide clipboard alternatives for file operations and URL opening
 - **Element selection**: Use CSS `user-select: none` globally with specific exceptions for text inputs
 - **OS detection**: Platform-aware keyboard shortcut labels (Ctrl vs Cmd) with automatic detection
+
+### Header Menu System Implementation
+- **Event Isolation**: Menu clicks use `preventDefault()` and `stopPropagation()` to prevent header drag conflicts
+- **State Management**: Menu open state (`isMenuOpen`) prevents header auto-hide during menu interaction
+- **Dropdown Positioning**: Absolute positioned dropdowns with slide-in animation and outside-click detection
+- **Keyboard Navigation**: Esc key closes menus, Enter activates items
+- **Visual Feedback**: Active state styling and hover effects with theme-aware colors
 
 ## Known Issues
 
