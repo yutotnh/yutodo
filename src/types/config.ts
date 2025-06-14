@@ -16,6 +16,7 @@ export interface TodoAppConfig {
       theme: 'auto' | 'light' | 'dark';
       detailed_mode: boolean;
       auto_hide_header: boolean;
+      language: 'auto' | 'en' | 'ja';
     };
     // 動作設定
     behavior: {
@@ -62,6 +63,7 @@ export const DEFAULT_CONFIG: TodoAppConfig = {
       theme: 'auto',
       detailed_mode: false,
       auto_hide_header: true,
+      language: 'auto',
     },
     behavior: {
       auto_save: true,
@@ -99,6 +101,7 @@ export function configToAppSettings(config: TodoAppConfig) {
     confirmDelete: config.app.behavior.confirm_delete,
     customCss: config.appearance.custom_css || '',
     serverUrl: config.server.url,
+    language: config.app.ui.language,
   };
 }
 
@@ -115,6 +118,7 @@ export function appSettingsToConfig(settings: any, existingConfig: TodoAppConfig
         ...existingConfig.app.ui,
         theme: settings.darkMode,
         detailed_mode: settings.detailedMode,
+        language: settings.language,
       },
       behavior: {
         ...existingConfig.app.behavior,

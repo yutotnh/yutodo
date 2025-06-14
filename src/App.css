@@ -16,6 +16,37 @@
 
 * {
   box-sizing: border-box;
+  /* 不要な要素選択を防ぐ */
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* テキスト入力やコンテンツ表示要素は選択可能にする */
+input,
+textarea,
+[contenteditable="true"],
+.todo-item__title,
+.todo-item__description,
+.search-input,
+.server-url-input,
+.custom-css-textarea,
+.todo-edit-title,
+.todo-edit-description {
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }
 
 body {
@@ -53,12 +84,7 @@ body {
 .app-main {
   flex: 1;
   overflow: hidden;
-  padding-top: 0; /* ヘッダーが隠れているときはパディングなし */
-  transition: margin-top 0.3s ease-in-out;
-}
-
-.app-main--with-header {
-  margin-top: 50px; /* ヘッダーの高さ分のマージン */
+  /* マージンを除去 - ヘッダーはオーバーレイ表示 */
 }
 
 
@@ -69,8 +95,8 @@ body {
 }
 
 .app--slim .todo-item {
-  padding: 0.75rem 1rem;
-  margin: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  margin: 0.25rem 0.1rem; /* 左右余白をさらに狭く */
   background: white;
   border: 1px solid #e2e8f0;
   border-radius: 12px;
@@ -81,11 +107,18 @@ body {
   backface-visibility: hidden; /* 3D変換の最適化 */
 }
 
-.app--slim .todo-item:hover:not([data-dragging="true"]) {
+.app--slim .todo-item:hover:not([data-dragging="true"]):not(.todo-item--selected) {
   background: #f8fafc;
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   border-color: #cbd5e1;
+}
+
+.app--slim .todo-item--selected {
+  background: #dbeafe;
+  border-color: #3b82f6;
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.25);
+  transform: translateY(-2px);
 }
 
 .app--slim .todo-item--completed {
@@ -216,7 +249,7 @@ body {
 
 /* スリムモードでの追加フォームをスタイリッシュに */
 .app--slim .add-todo-form {
-  margin: 1rem;
+  margin: 0.5rem 0.1rem;
   background: white;
   border: 1px solid #e2e8f0;
   border-radius: 12px;
@@ -336,36 +369,40 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.75rem 1rem;
-  background: #ffffff;
-  border-bottom: 1px solid #e2e8f0;
+  padding: 0.5rem 1rem;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.6);
   flex-shrink: 0;
   user-select: none;
-  height: 50px;
+  height: 28px;
   cursor: grab;
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   z-index: 1000;
-  transition: transform 0.3s ease-in-out;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+  opacity: 0.7;
+}
+
+.app-header--visible {
+  transform: translateY(0);
+  opacity: 0.9;
+}
+
+.app-header--hidden {
+  transform: translateY(-100%);
+  opacity: 0;
 }
 
 .app-header:active {
   cursor: grabbing;
 }
 
-.app-header--hidden {
-  transform: translateY(-100%);
-}
-
-.app-header--visible {
-  transform: translateY(0);
-}
-
-/* ヘッダーがホバーされている間は表示を保持 */
-.app-header:hover {
-  transform: translateY(0) !important;
+/* ヘッダーがホバーされている間は透明度を上げる */
+.app-header--visible:hover {
+  opacity: 1;
 }
 
 .header-left,
@@ -387,6 +424,7 @@ body {
 
 .header-right {
   flex: 0 0 auto;
+  gap: 0.5rem;
 }
 
 .app-header h1 {
@@ -402,39 +440,59 @@ body {
   gap: 1rem;
 }
 
-/* Window Controls */
+/* Window Controls - タイル形式 */
 .window-control {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 30px;
+  width: 20px;
+  height: 20px;
   border: none;
-  border-radius: 6px;
-  background: transparent;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.6);
   color: #64748b;
   cursor: pointer !important;
   transition: all 0.15s ease;
   padding: 0;
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(226, 232, 240, 0.4);
 }
 
 .settings-btn {
   cursor: pointer !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: none;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.6);
+  color: #64748b;
+  transition: all 0.15s ease;
+  padding: 0;
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(226, 232, 240, 0.4);
 }
 
-.window-control:hover {
-  background: #f1f5f9;
+.window-control:hover,
+.settings-btn:hover {
+  background: rgba(255, 255, 255, 0.9);
   color: #334155;
+  border-color: rgba(226, 232, 240, 0.6);
+  transform: translateY(-1px);
 }
 
 .minimize-btn:hover {
-  background: #dbeafe;
+  background: rgba(219, 234, 254, 0.9);
   color: #2563eb;
+  border-color: rgba(37, 99, 235, 0.3);
 }
 
 .close-btn:hover {
-  background: #fee2e2;
+  background: rgba(254, 226, 226, 0.9);
   color: #dc2626;
+  border-color: rgba(220, 38, 38, 0.3);
 }
 
 .connection-status {
@@ -590,6 +648,10 @@ body {
   padding: 1rem 1.5rem;
 }
 
+.app--slim .todo-list {
+  padding: 0.5rem 0.1rem;
+}
+
 .empty-state {
   text-align: center;
   padding: 3rem 1rem;
@@ -631,9 +693,46 @@ body {
 }
 
 .todo-item--selected {
-  border-color: #059669;
-  background: #f0fdfa;
-  box-shadow: 0 0 0 2px rgba(5, 150, 105, 0.1);
+  border-color: #3b82f6;
+  background: #eff6ff;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+  transform: translateY(-1px);
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.todo-item--selected::before {
+  content: '✓';
+  position: absolute;
+  right: 8px;
+  top: 8px;
+  width: 20px;
+  height: 20px;
+  background: #3b82f6;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: bold;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
+  animation: checkBounce 0.3s ease;
+}
+
+@keyframes checkBounce {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 .todo-item:focus {
@@ -1381,8 +1480,8 @@ body {
 }
 
 .app--dark .app-header {
-  background: #1e293b;
-  border-bottom-color: #334155;
+  background: rgba(30, 41, 59, 0.7);
+  border-bottom-color: rgba(51, 65, 85, 0.5);
 }
 
 .app--dark .app-header h1 {
@@ -1453,14 +1552,30 @@ body {
   color: #ef4444;
 }
 
-.app--dark .settings-btn {
-  background: #334155;
+.app--dark .settings-btn,
+.app--dark .window-control {
+  background: rgba(51, 65, 85, 0.6);
   color: #94a3b8;
+  border: 1px solid rgba(71, 85, 105, 0.4);
 }
 
-.app--dark .settings-btn:hover {
-  background: #475569;
+.app--dark .settings-btn:hover,
+.app--dark .window-control:hover {
+  background: rgba(71, 85, 105, 0.9);
   color: #e2e8f0;
+  border-color: rgba(71, 85, 105, 0.6);
+}
+
+.app--dark .minimize-btn:hover {
+  background: rgba(30, 58, 138, 0.8);
+  color: #60a5fa;
+  border-color: rgba(37, 99, 235, 0.4);
+}
+
+.app--dark .close-btn:hover {
+  background: rgba(127, 29, 29, 0.8);
+  color: #f87171;
+  border-color: rgba(220, 38, 38, 0.4);
 }
 
 .app--dark .add-todo-form {
@@ -1499,9 +1614,15 @@ body {
 }
 
 .app--dark .todo-item--selected {
-  border-color: #10b981;
-  background: #064e3b;
-  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+  border-color: #60a5fa;
+  background: #1e3a8a;
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.3);
+  transform: translateY(-1px);
+}
+
+.app--dark .todo-item--selected::before {
+  background: #60a5fa;
+  box-shadow: 0 2px 8px rgba(96, 165, 250, 0.5);
 }
 
 .app--dark .todo-item__title {
@@ -1576,6 +1697,38 @@ body {
 
 .app--dark .check-btn {
   border-color: #475569;
+}
+
+.app--dark .action-btn {
+  color: #94a3b8;
+  background: transparent;
+}
+
+.app--dark .action-btn:hover {
+  background: #334155;
+  color: #e2e8f0;
+}
+
+.app--dark .action-btn--delete:hover {
+  background: #7f1d1d;
+  color: #ef4444;
+}
+
+.app--dark.app--slim .action-btn {
+  background: #334155;
+  border-color: #475569;
+  color: #94a3b8;
+}
+
+.app--dark.app--slim .action-btn:hover {
+  background: #475569;
+  color: #e2e8f0;
+}
+
+.app--dark.app--slim .action-btn--delete:hover {
+  background: #7f1d1d;
+  border-color: #991b1b;
+  color: #ef4444;
 }
 
 .app--dark .settings-panel {
@@ -1756,9 +1909,15 @@ body {
   }
 
   .todo-item--selected {
-    border-color: #10b981;
-    background: #064e3b;
-    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+    border-color: #60a5fa;
+    background: #1e3a8a;
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.3);
+    transform: translateY(-1px);
+  }
+
+  .todo-item--selected::before {
+    background: #60a5fa;
+    box-shadow: 0 2px 8px rgba(96, 165, 250, 0.5);
   }
 
   .todo-item__title {
@@ -1885,4 +2044,78 @@ body {
   .data-description {
     color: #94a3b8;
   }
+}
+
+/* 底部固定のAddTodoForm オーバーレイ */
+.add-todo-overlay {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 999;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+  border-top: 1px solid rgba(226, 232, 240, 0.6);
+  padding: 0.75rem 1rem;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+/* ダークモード対応 */
+.app--dark .add-todo-overlay {
+  background: rgba(30, 41, 59, 0.95);
+  border-top-color: rgba(51, 65, 85, 0.6);
+}
+
+/* 選択カウンター */
+.selection-counter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 1rem;
+  margin: 0.5rem;
+  background: #3b82f6;
+  color: white;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+  animation: slideDown 0.2s ease;
+}
+
+.selection-counter__text {
+  flex: 1;
+}
+
+.selection-counter__clear {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  border-radius: 4px;
+  color: white;
+  padding: 0.25rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease;
+}
+
+.selection-counter__clear:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ダークモード */
+.app--dark .selection-counter {
+  background: #1e40af;
+  box-shadow: 0 2px 8px rgba(30, 64, 175, 0.4);
 }

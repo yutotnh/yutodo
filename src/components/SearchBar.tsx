@@ -1,5 +1,6 @@
 import { forwardRef } from 'react';
 import { Search, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface SearchBarProps {
   searchQuery: string;
@@ -8,7 +9,8 @@ interface SearchBarProps {
 }
 
 export const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(
-  ({ searchQuery, onSearchChange, placeholder = "タスクを検索..." }, ref) => {
+  ({ searchQuery, onSearchChange, placeholder }, ref) => {
+    const { t } = useTranslation();
     const handleClear = () => {
       onSearchChange('');
     };
@@ -22,14 +24,14 @@ export const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(
             type="text"
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
-            placeholder={placeholder}
+            placeholder={placeholder || t('tasks.search')}
             className="search-input"
           />
           {searchQuery && (
             <button
               onClick={handleClear}
               className="search-clear"
-              aria-label="検索をクリア"
+              aria-label={t('tasks.clearSearch')}
             >
               <X size={16} />
             </button>

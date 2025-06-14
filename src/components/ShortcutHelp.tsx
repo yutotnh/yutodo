@@ -1,32 +1,92 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { X, Keyboard } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface ShortcutHelpProps {
   onClose: () => void;
 }
 
-const shortcuts = [
-  { key: 'Ctrl/Cmd + N', description: '新しいタスクを追加' },
-  { key: 'Ctrl/Cmd + ,', description: '設定を開く' },
-  { key: 'Ctrl/Cmd + F', description: '検索' },
-  { key: 'Ctrl/Cmd + A', description: '全選択' },
-  { key: 'Ctrl/Cmd + ?', description: 'ショートカットヘルプを表示' },
-  { key: 'Delete', description: '選択されたタスクを削除' },
-  { key: 'Escape', description: 'フォーカスを外す' },
-  { key: 'Enter', description: 'タスクを追加/保存' },
-  { key: 'Space', description: 'タスクを完了/未完了に切り替え' },
-  { key: 'e', description: 'タスクを編集' },
-  { key: 'Ctrl/Cmd + Click', description: '複数選択' }
-];
-
 export const ShortcutHelp: React.FC<ShortcutHelpProps> = ({ onClose }) => {
+  const { t } = useTranslation();
+  const shortcutPanelRef = useRef<HTMLDivElement>(null);
+  
+  // Escキーでヘルプを閉じる
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        event.stopPropagation();
+        onClose();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [onClose]);
+
+  // ヘルプパネル外側クリック検知
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (shortcutPanelRef.current && !shortcutPanelRef.current.contains(event.target as Node)) {
+        onClose();
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [onClose]);
+  
+  // OS検知
+  const detectOS = () => {
+    if (typeof navigator !== 'undefined') {
+      const platform = navigator.platform.toUpperCase();
+      if (platform.indexOf('MAC') >= 0 || platform.indexOf('IPHONE') >= 0 || platform.indexOf('IPAD') >= 0) {
+        return 'mac';
+      }
+      if (platform.indexOf('WIN') >= 0) {
+        return 'windows';
+      }
+      if (platform.indexOf('LINUX') >= 0) {
+        return 'linux';
+      }
+    }
+    // Tauri環境での追加チェック
+    if (typeof window !== 'undefined' && (window as any).__TAURI_INTERNALS__) {
+      const userAgent = navigator.userAgent.toLowerCase();
+      if (userAgent.includes('mac')) return 'mac';
+      if (userAgent.includes('win')) return 'windows';
+      if (userAgent.includes('linux')) return 'linux';
+    }
+    return 'unknown';
+  };
+  
+  const os = detectOS();
+  const modifierKey = os === 'mac' ? 'Cmd' : 'Ctrl';
+  
+  const shortcuts = [
+    { key: `${modifierKey} + N`, description: t('shortcuts.addNewTask') },
+    { key: `${modifierKey} + ,`, description: t('shortcuts.openSettings') },
+    { key: `${modifierKey} + F`, description: t('shortcuts.search') },
+    { key: `${modifierKey} + A`, description: t('shortcuts.selectAll') },
+    { key: `${modifierKey} + K, ${modifierKey} + S`, description: t('shortcuts.showShortcutHelp') },
+    { key: 'Delete', description: t('shortcuts.deleteSelectedTasks') },
+    { key: 'Escape', description: t('shortcuts.removeFocus') },
+    { key: 'Space', description: t('shortcuts.toggleTaskCompletion') },
+    { key: 'e', description: t('shortcuts.editTask') },
+    { key: `${modifierKey} + Click`, description: t('shortcuts.multipleSelection') },
+    { key: 'Shift + Click', description: t('shortcuts.rangeSelection') }
+  ];
   return (
     <div className="settings-overlay">
-      <div className="settings-panel">
+      <div className="settings-panel" ref={shortcutPanelRef}>
         <div className="settings-header">
           <h2>
             <Keyboard size={20} />
-            キーボードショートカット
+            {t('shortcuts.title')}
           </h2>
           <button onClick={onClose} className="settings-close">
             <X size={20} />

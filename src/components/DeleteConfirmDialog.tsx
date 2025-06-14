@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { AlertTriangle, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface DeleteConfirmDialogProps {
   isOpen: boolean;
@@ -18,6 +19,25 @@ export const DeleteConfirmDialog: React.FC<DeleteConfirmDialogProps> = ({
   message,
   itemCount = 1
 }) => {
+  const { t } = useTranslation();
+  const dialogRef = useRef<HTMLDivElement>(null);
+  
+  // 外側クリック検知
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dialogRef.current && !dialogRef.current.contains(event.target as Node)) {
+        onClose();
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen, onClose]);
+  
   if (!isOpen) return null;
 
   const handleConfirm = () => {
@@ -35,7 +55,7 @@ export const DeleteConfirmDialog: React.FC<DeleteConfirmDialogProps> = ({
 
   return (
     <div className="delete-confirm-overlay" onKeyDown={handleKeyDown}>
-      <div className="delete-confirm-dialog">
+      <div className="delete-confirm-dialog" ref={dialogRef}>
         <div className="delete-confirm-header">
           <div className="delete-confirm-icon">
             <AlertTriangle size={24} />
@@ -50,24 +70,24 @@ export const DeleteConfirmDialog: React.FC<DeleteConfirmDialogProps> = ({
           <p>{message}</p>
           {itemCount > 1 && (
             <p className="delete-confirm-count">
-              {itemCount}個のタスクが削除されます。
+              {t('tasks.tasksWillBeDeleted', { count: itemCount })}
             </p>
           )}
           <p className="delete-confirm-warning">
-            この操作は取り消すことができません。
+            {t('tasks.actionCannotBeUndone')}
           </p>
         </div>
         
         <div className="delete-confirm-actions">
           <button onClick={onClose} className="btn btn--secondary">
-            キャンセル
+            {t('buttons.cancel')}
           </button>
           <button 
             onClick={handleConfirm} 
             className="btn btn--danger"
             autoFocus
           >
-            削除する
+            {t('buttons.delete')}
           </button>
         </div>
       </div>

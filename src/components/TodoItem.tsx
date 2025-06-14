@@ -6,6 +6,7 @@ import 'react-datepicker/dist/react-datepicker.css';
 import { Check, Edit2, Trash2, Clock, AlertCircle } from 'lucide-react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { useTranslation } from 'react-i18next';
 import { Todo } from '../types/todo';
 
 interface TodoItemProps {
@@ -14,11 +15,12 @@ interface TodoItemProps {
   onUpdate: (todo: Todo) => void;
   onDelete: (id: string) => void;
   isSelected?: boolean;
-  onSelect?: (id: string, selected: boolean) => void;
+  onSelect?: (id: string, selected: boolean, event?: React.MouseEvent) => void;
   slimMode?: boolean;
 }
 
 export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onUpdate, onDelete, isSelected = false, onSelect, slimMode = false }) => {
+  const { t } = useTranslation();
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(todo.title);
   const [editDescription, setEditDescription] = useState(todo.description || '');
@@ -149,6 +151,29 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onUpdate, on
     setEditScheduledFor(todo.scheduledFor ? new Date(todo.scheduledFor) : null);
   }, [todo]);
 
+  // グローバルな編集開始イベントをリッスン
+  React.useEffect(() => {
+    const handleStartEdit = (event: CustomEvent) => {
+      if (event.detail.todoId === todo.id) {
+        setIsEditing(true);
+        if (slimMode) {
+          setTimeout(() => {
+            if (editInputRef.current) {
+              editInputRef.current.focus();
+              const length = editInputRef.current.value.length;
+              editInputRef.current.setSelectionRange(length, length);
+            }
+          }, 0);
+        }
+      }
+    };
+
+    document.addEventListener('startEdit', handleStartEdit as EventListener);
+    return () => {
+      document.removeEventListener('startEdit', handleStartEdit as EventListener);
+    };
+  }, [todo.id, slimMode]);
+
   const handleSave = () => {
     onUpdate({
       ...todo,
@@ -179,9 +204,10 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onUpdate, on
     setIsEditing(false);
   };
 
-  // ワンクリックハンドラ（スリムモード用）
-  const handleTitleClick = (e: React.MouseEvent<HTMLElement>) => {
-    if (slimMode && !isEditing) {
+  // ダブルクリックハンドラ（全モード対応）
+  const handleTitleDoubleClick = (e: React.MouseEvent<HTMLElement>) => {
+    if (!isEditing) {
+      e.preventDefault(); // デフォルト動作を停止
       e.stopPropagation(); // 親のクリックイベントを停止
       
       // クリック位置を計算
@@ -190,6 +216,10 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onUpdate, on
       const clickX = e.clientX - rect.left;
       
       setIsEditing(true);
+      
+      // 選択状態をクリア（編集開始時は選択を解除）
+      onSelect?.(todo.id, false, e);
+      
       // 少し遅延してフォーカス（レンダリング後）
       setTimeout(() => {
         if (editInputRef.current) {
@@ -252,9 +282,18 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onUpdate, on
         onToggle(todo.id);
         break;
       case 'e':
-      case 'Enter':
         event.preventDefault();
         setIsEditing(true);
+        // スリムモードでのキーボード編集開始時はフォーカスとカーソル位置設定
+        if (slimMode) {
+          setTimeout(() => {
+            if (editInputRef.current) {
+              editInputRef.current.focus();
+              const length = editInputRef.current.value.length;
+              editInputRef.current.setSelectionRange(length, length);
+            }
+          }, 0);
+        }
         break;
       case 'F2':
         event.preventDefault();
@@ -281,10 +320,7 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onUpdate, on
   // スリムモード編集時のキー処理
   const handleEditKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     event.stopPropagation(); // イベントの伝播を停止
-    if (event.key === 'Enter') {
-      event.preventDefault();
-      handleSlimSave();
-    } else if (event.key === 'Escape') {
+    if (event.key === 'Escape') {
       event.preventDefault();
       setEditTitle(todo.title); // 元のタイトルに戻す
       setIsEditing(false);
@@ -300,8 +336,23 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onUpdate, on
   };
 
   const handleClick = (event: React.MouseEvent) => {
-    if (event.ctrlKey || event.metaKey) {
-      onSelect?.(todo.id, !isSelected);
+    // ダブルクリックの場合は選択処理をスキップ
+    if (event.detail === 2) {
+      return;
+    }
+
+    // クリック可能な要素（チェックボックス、編集ボタン、削除ボタン等）をクリックした場合は選択処理をスキップ
+    const target = event.target as HTMLElement;
+    if (target.closest('button') || target.closest('input') || target.closest('textarea')) {
+      return;
+    }
+
+    if (event.ctrlKey || event.metaKey || event.shiftKey) {
+      // 修飾キーがある場合は選択状態をトグル
+      onSelect?.(todo.id, !isSelected, event);
+    } else {
+      // 通常クリックの場合も選択処理を呼び出し（単一選択として扱われる）
+      onSelect?.(todo.id, !isSelected, event);
     }
   };
 
@@ -341,14 +392,14 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onUpdate, on
               timeFormat="HH:mm"
               timeIntervals={15}
               dateFormat="yyyy/MM/dd HH:mm"
-              placeholderText="日時を選択..."
+              placeholderText={t('tasks.selectDateTime')}
               className="todo-edit-schedule"
               isClearable
             />
           </div>
           <div className="todo-edit-actions">
-            <button onClick={handleSave} className="btn btn--primary">Save</button>
-            <button onClick={handleCancel} className="btn btn--secondary">Cancel</button>
+            <button onClick={handleSave} className="btn btn--primary">{t('buttons.save')}</button>
+            <button onClick={handleCancel} className="btn btn--secondary">{t('buttons.cancel')}</button>
           </div>
         </div>
       </div>
@@ -361,7 +412,6 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onUpdate, on
       style={style}
       className={`todo-item ${todo.completed ? 'todo-item--completed' : ''} ${isOverdue ? 'todo-item--overdue' : ''} ${isSelected ? 'todo-item--selected' : ''}`}
       data-dragging={isDragging}
-      onKeyDown={handleKeyDown}
       onClick={handleClick}
       {...attributes}
       {...(!isEditing ? listeners : {})} // 編集中でない場合のみドラッグリスナーを適用
@@ -390,8 +440,8 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onUpdate, on
         ) : (
           <div 
             className="todo-item__title" 
-            onClick={handleTitleClick}
-            style={{ cursor: slimMode ? 'pointer' : 'default' }}
+            onDoubleClick={handleTitleDoubleClick}
+            style={{ cursor: 'pointer' }}
           >
             <ReactMarkdown 
               remarkPlugins={[remarkGfm]}

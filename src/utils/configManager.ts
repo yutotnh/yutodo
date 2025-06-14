@@ -25,7 +25,7 @@ export class ConfigManager {
 
   private loadFromLocalStorage(): void {
     try {
-      const stored = localStorage.getItem('todoAppSettings');
+      const stored = localStorage.getItem('yutodoAppSettings');
       console.log('📋 localStorage content:', stored);
       if (stored) {
         const settings = JSON.parse(stored) as AppSettings;
@@ -45,7 +45,7 @@ export class ConfigManager {
   private saveToLocalStorage(config: TodoAppConfig): void {
     try {
       const settings = configToAppSettings(config);
-      localStorage.setItem('todoAppSettings', JSON.stringify(settings));
+      localStorage.setItem('yutodoAppSettings', JSON.stringify(settings));
       console.log('✅ Config saved to localStorage');
     } catch (error) {
       console.error('❌ Failed to save to localStorage:', error);
@@ -115,6 +115,7 @@ export class ConfigManager {
       toml += `theme = "${cleanConfig.app.ui.theme}"\n`;
       toml += `detailed_mode = ${cleanConfig.app.ui.detailed_mode}\n`;
       toml += `auto_hide_header = ${cleanConfig.app.ui.auto_hide_header}\n`;
+      toml += `language = "${cleanConfig.app.ui.language}"\n`;
 
       // Application behavior settings
       toml += '\n# Application behavior settings\n';

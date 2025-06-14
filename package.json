@@ -21,10 +21,13 @@
     "@tauri-apps/plugin-opener": "^2",
     "@types/node": "^24.0.1",
     "@types/react-datepicker": "^6.2.0",
+    "i18next": "^25.2.1",
+    "i18next-browser-languagedetector": "^8.2.0",
     "lucide-react": "^0.514.0",
     "react": "^18.3.1",
     "react-datepicker": "^8.4.0",
     "react-dom": "^18.3.1",
+    "react-i18next": "^15.5.3",
     "react-markdown": "^10.1.0",
     "remark-gfm": "^4.0.1",
     "socket.io-client": "^4.8.1"

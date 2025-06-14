@@ -17,4 +17,5 @@ export interface AppSettings {
   confirmDelete: boolean;
   customCss: string;
   serverUrl: string;
+  language: 'auto' | 'en' | 'ja';
 }
