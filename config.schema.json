@@ -1,0 +1,237 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://example.com/yutodo-app-config.schema.json",
+  "title": "YuToDo Configuration",
+  "description": "Configuration schema for the YuToDo application",
+  "type": "object",
+  "required": ["app", "server"],
+  "properties": {
+    "app": {
+      "type": "object",
+      "description": "Application settings",
+      "required": ["window", "ui", "behavior"],
+      "properties": {
+        "window": {
+          "type": "object",
+          "description": "Window configuration",
+          "required": ["always_on_top"],
+          "properties": {
+            "always_on_top": {
+              "type": "boolean",
+              "description": "Keep window always on top",
+              "default": false
+            },
+            "width": {
+              "type": "integer",
+              "description": "Initial window width",
+              "minimum": 300,
+              "maximum": 3840,
+              "default": 800
+            },
+            "height": {
+              "type": "integer",
+              "description": "Initial window height",
+              "minimum": 200,
+              "maximum": 2160,
+              "default": 600
+            },
+            "min_width": {
+              "type": "integer",
+              "description": "Minimum window width",
+              "minimum": 200,
+              "default": 400
+            },
+            "min_height": {
+              "type": "integer",
+              "description": "Minimum window height",
+              "minimum": 150,
+              "default": 300
+            }
+          },
+          "additionalProperties": false
+        },
+        "ui": {
+          "type": "object",
+          "description": "User interface settings",
+          "required": ["theme", "detailed_mode", "auto_hide_header"],
+          "properties": {
+            "theme": {
+              "type": "string",
+              "description": "Application theme",
+              "enum": ["auto", "light", "dark"],
+              "default": "auto"
+            },
+            "detailed_mode": {
+              "type": "boolean",
+              "description": "Show detailed view with descriptions and filters",
+              "default": false
+            },
+            "auto_hide_header": {
+              "type": "boolean",
+              "description": "Automatically hide header when not in focus",
+              "default": true
+            }
+          },
+          "additionalProperties": false
+        },
+        "behavior": {
+          "type": "object",
+          "description": "Application behavior settings",
+          "required": ["auto_save", "enable_shortcuts", "show_notifications"],
+          "properties": {
+            "auto_save": {
+              "type": "boolean",
+              "description": "Automatically save changes",
+              "default": true
+            },
+            "enable_shortcuts": {
+              "type": "boolean",
+              "description": "Enable keyboard shortcuts",
+              "default": true
+            },
+            "show_notifications": {
+              "type": "boolean",
+              "description": "Show system notifications",
+              "default": true
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "server": {
+      "type": "object",
+      "description": "Server connection settings",
+      "required": ["url"],
+      "properties": {
+        "url": {
+          "type": "string",
+          "description": "Server URL",
+          "format": "uri",
+          "pattern": "^https?://",
+          "default": "http://localhost:3001"
+        },
+        "timeout": {
+          "type": "integer",
+          "description": "Connection timeout in milliseconds",
+          "minimum": 1000,
+          "maximum": 60000,
+          "default": 5000
+        },
+        "retry_attempts": {
+          "type": "integer",
+          "description": "Number of retry attempts",
+          "minimum": 0,
+          "maximum": 10,
+          "default": 3
+        }
+      },
+      "additionalProperties": false
+    },
+    "appearance": {
+      "type": "object",
+      "description": "Visual appearance settings",
+      "properties": {
+        "custom_css": {
+          "type": "string",
+          "description": "Custom CSS styles",
+          "default": ""
+        },
+        "font_family": {
+          "type": "string",
+          "description": "Font family",
+          "pattern": "^[A-Za-z0-9\\s,'-]+$",
+          "default": "Inter, sans-serif"
+        },
+        "font_size": {
+          "type": "integer",
+          "description": "Base font size in pixels",
+          "minimum": 8,
+          "maximum": 24,
+          "default": 14
+        }
+      },
+      "additionalProperties": false
+    },
+    "shortcuts": {
+      "type": "object",
+      "description": "Keyboard shortcuts configuration",
+      "properties": {
+        "new_task": {
+          "type": "string",
+          "description": "Shortcut to create new task",
+          "pattern": "^(Ctrl|Alt|Shift|Meta)\\+[A-Za-z0-9]$|^F[1-9]|F1[0-2]$",
+          "default": "Ctrl+N"
+        },
+        "toggle_settings": {
+          "type": "string",
+          "description": "Shortcut to toggle settings",
+          "pattern": "^(Ctrl|Alt|Shift|Meta)\\+[A-Za-z0-9,]$|^F[1-9]|F1[0-2]$",
+          "default": "Ctrl+,"
+        },
+        "focus_search": {
+          "type": "string",
+          "description": "Shortcut to focus search",
+          "pattern": "^(Ctrl|Alt|Shift|Meta)\\+[A-Za-z0-9]$|^F[1-9]|F1[0-2]$",
+          "default": "Ctrl+F"
+        },
+        "select_all": {
+          "type": "string",
+          "description": "Shortcut to select all tasks",
+          "pattern": "^(Ctrl|Alt|Shift|Meta)\\+[A-Za-z0-9]$|^F[1-9]|F1[0-2]$",
+          "default": "Ctrl+A"
+        },
+        "delete_selected": {
+          "type": "string",
+          "description": "Shortcut to delete selected tasks",
+          "pattern": "^(Delete|Backspace)$|^(Ctrl|Alt|Shift|Meta)\\+[A-Za-z0-9]$",
+          "default": "Delete"
+        },
+        "show_help": {
+          "type": "string",
+          "description": "Shortcut to show help",
+          "pattern": "^F[1-9]|F1[0-2]$|^(Ctrl|Alt|Shift|Meta)\\+[A-Za-z0-9]$",
+          "default": "F1"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "app": {
+        "window": {
+          "always_on_top": false,
+          "width": 1024,
+          "height": 768
+        },
+        "ui": {
+          "theme": "dark",
+          "detailed_mode": true,
+          "auto_hide_header": false
+        },
+        "behavior": {
+          "auto_save": true,
+          "enable_shortcuts": true,
+          "show_notifications": false
+        }
+      },
+      "server": {
+        "url": "https://my-yutodo-server.com",
+        "timeout": 10000,
+        "retry_attempts": 5
+      },
+      "appearance": {
+        "custom_css": ".yutodo-item { background: red; }",
+        "font_family": "Monaco, monospace",
+        "font_size": 16
+      },
+      "shortcuts": {
+        "new_task": "Ctrl+T",
+        "toggle_settings": "F10"
+      }
+    }
+  ]
+}
