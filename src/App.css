@@ -1,0 +1,1888 @@
+:root {
+  font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color: #0f0f0f;
+  background-color: #f8fafc;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+}
+
+/* React DatePicker カスタムスタイル */
+.react-datepicker-wrapper {
+  width: 100%;
+}
+
+.react-datepicker__input-container input {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+}
+
+.react-datepicker__input-container input:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+  border-color: #3b82f6;
+}
+
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: #f8fafc;
+}
+
+.app-main {
+  flex: 1;
+  overflow: hidden;
+  padding-top: 0; /* ヘッダーが隠れているときはパディングなし */
+  transition: margin-top 0.3s ease-in-out;
+}
+
+.app-main--with-header {
+  margin-top: 50px; /* ヘッダーの高さ分のマージン */
+}
+
+
+/* Slim Mode - Modern & Stylish */
+.app--slim {
+  background: #f8fafc;
+  color: #1e293b;
+}
+
+.app--slim .todo-item {
+  padding: 0.75rem 1rem;
+  margin: 0.5rem;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease; /* transformを除外 */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  align-items: center; /* 垂直中央配置に変更 */
+  will-change: transform; /* GPUアクセラレーション有効化 */
+  backface-visibility: hidden; /* 3D変換の最適化 */
+}
+
+.app--slim .todo-item:hover:not([data-dragging="true"]) {
+  background: #f8fafc;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-color: #cbd5e1;
+}
+
+.app--slim .todo-item--completed {
+  background: #f1f5f9;
+  opacity: 0.7;
+}
+
+.app--slim .todo-item__description {
+  display: none; /* 説明を隠す */
+}
+
+.app--slim .todo-item__meta {
+  display: none; /* 優先度とスケジュールを隠す */
+}
+
+.app--slim .action-btn--edit {
+  display: none; /* 編集ボタンを隠す */
+}
+
+.app--slim .todo-item__actions {
+  gap: 0.5rem;
+  align-items: center; /* アクションボタンも中央配置 */
+}
+
+.app--slim .action-btn {
+  width: 24px;
+  height: 24px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  color: #64748b;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.app--slim .action-btn:hover {
+  background: #e2e8f0;
+  color: #334155;
+  transform: scale(1.1);
+}
+
+.app--slim .action-btn--delete:hover {
+  background: #fee2e2;
+  border-color: #fecaca;
+  color: #dc2626;
+}
+
+.app--slim .action-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.app--slim .check-btn {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #d1d5db;
+  background: white;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.app--slim .check-btn:hover {
+  border-color: #3b82f6;
+  background: #f0f9ff;
+}
+
+.app--slim .check-btn--checked {
+  background: #22c55e;
+  border-color: #22c55e;
+}
+
+.app--slim .check-btn svg {
+  width: 12px;
+  height: 12px;
+  color: white;
+}
+
+.app--slim .todo-item__check {
+  margin-top: 0; /* スリムモードではマージンをリセット */
+}
+
+.app--slim .todo-item__title {
+  font-size: 16px;
+  line-height: 1.5;
+  font-weight: 500;
+  color: #1e293b;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  min-height: 24px; /* チェックボックスと同じ高さに合わせる */
+}
+
+.app--slim .todo-item__title-edit {
+  font-size: 16px;
+  line-height: 1.5;
+  font-weight: 500;
+  color: #1e293b;
+  background: transparent;
+  border: none;
+  outline: none;
+  width: 100%;
+  min-height: 24px;
+  padding: 0;
+  margin: 0;
+}
+
+.app--slim .todo-item--completed .todo-item__title {
+  text-decoration: line-through;
+  opacity: 0.6;
+  color: #64748b;
+}
+
+/* スリムモードでは検索とフィルターを隠す */
+.app--slim .search-bar {
+  display: none;
+}
+
+.app--slim .todo-filter {
+  display: none;
+}
+
+/* スリムモードでの追加フォームをスタイリッシュに */
+.app--slim .add-todo-form {
+  margin: 1rem;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.app--slim .add-todo-input-group {
+  align-items: center; /* 入力グループも中央配置 */
+}
+
+.app--slim .add-todo-input {
+  font-size: 16px;
+  padding: 0.75rem;
+  background: transparent;
+  border: none;
+  color: #1e293b;
+  border-radius: 8px;
+}
+
+.app--slim .add-todo-input::placeholder {
+  color: #94a3b8;
+}
+
+.app--slim .add-todo-input:focus {
+  outline: none;
+  background: #f8fafc;
+}
+
+.app--slim .add-todo-btn {
+  width: 36px;
+  height: 36px;
+  background: #3b82f6;
+  border: 1px solid #3b82f6;
+  border-radius: 8px;
+  color: white;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.app--slim .add-todo-btn:hover {
+  background: #2563eb;
+  border-color: #2563eb;
+  transform: scale(1.05);
+}
+
+.app--slim .add-todo-btn:disabled {
+  background: #e2e8f0;
+  border-color: #e2e8f0;
+  color: #94a3b8;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.app--slim .add-todo-expanded {
+  display: none; /* 展開オプションを隠す */
+}
+
+/* ヘッダーも洗練されたスタイルに */
+.app--slim .app-header {
+  background: white;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.app--slim .app-header h1 {
+  color: #1e293b;
+  font-weight: 600;
+}
+
+.app--slim .header-center {
+  display: none; /* 接続状況を隠す */
+}
+
+.app--slim .settings-btn,
+.app--slim .window-control {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #64748b;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.app--slim .settings-btn:hover,
+.app--slim .window-control:hover {
+  background: #e2e8f0;
+  color: #334155;
+}
+
+.app--slim .minimize-btn:hover {
+  background: #dbeafe;
+  border-color: #93c5fd;
+  color: #2563eb;
+}
+
+.app--slim .close-btn:hover {
+  background: #fee2e2;
+  border-color: #fecaca;
+  color: #dc2626;
+}
+
+/* 空の状態もスタイリッシュに */
+.app--slim .empty-state {
+  color: #94a3b8;
+  text-align: center;
+  padding: 2rem;
+  font-style: italic;
+}
+
+/* Header */
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  flex-shrink: 0;
+  user-select: none;
+  height: 50px;
+  cursor: grab;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  transition: transform 0.3s ease-in-out;
+}
+
+.app-header:active {
+  cursor: grabbing;
+}
+
+.app-header--hidden {
+  transform: translateY(-100%);
+}
+
+.app-header--visible {
+  transform: translateY(0);
+}
+
+/* ヘッダーがホバーされている間は表示を保持 */
+.app-header:hover {
+  transform: translateY(0) !important;
+}
+
+.header-left,
+.header-center,
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.header-left {
+  flex: 0 0 auto;
+}
+
+.header-center {
+  flex: 1;
+  justify-content: center;
+}
+
+.header-right {
+  flex: 0 0 auto;
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* Window Controls */
+.window-control {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #64748b;
+  cursor: pointer !important;
+  transition: all 0.15s ease;
+  padding: 0;
+}
+
+.settings-btn {
+  cursor: pointer !important;
+}
+
+.window-control:hover {
+  background: #f1f5f9;
+  color: #334155;
+}
+
+.minimize-btn:hover {
+  background: #dbeafe;
+  color: #2563eb;
+}
+
+.close-btn:hover {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.connection-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.connection-status.connected {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.connection-status.disconnected {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+/* ミニモード時の接続状態インジケーター */
+.header-left .connection-status {
+  padding: 0.125rem 0.25rem;
+  border-radius: 50%;
+  min-width: 18px;
+  min-height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+.settings-btn {
+  padding: 0.5rem;
+  background: #f1f5f9;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  color: #64748b;
+  transition: all 0.2s;
+}
+
+.settings-btn:hover {
+  background: #e2e8f0;
+  color: #334155;
+}
+
+/* Main Content */
+.app-main {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Add Todo Form */
+.add-todo-form {
+  padding: 1.5rem;
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.add-todo-input-group {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.add-todo-input {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  background: #ffffff;
+  transition: border-color 0.2s;
+}
+
+.add-todo-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.add-todo-btn {
+  padding: 0.75rem;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.add-todo-btn:hover:not(:disabled) {
+  background: #2563eb;
+}
+
+.add-todo-btn:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+
+.add-todo-expanded {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: #f8fafc;
+  border-radius: 0.5rem;
+  border: 1px solid #e2e8f0;
+}
+
+.add-todo-description {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-family: inherit;
+  resize: vertical;
+  margin-bottom: 1rem;
+}
+
+.add-todo-description:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.add-todo-options {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.add-todo-priority,
+.add-todo-schedule {
+  padding: 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+}
+
+.add-todo-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+/* Todo List */
+.todo-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem 1.5rem;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: #64748b;
+}
+
+/* Todo Item */
+.todo-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1rem;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  margin-bottom: 0.75rem;
+  transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s; /* transformを除外 */
+  will-change: transform; /* GPUアクセラレーション有効化 */
+  backface-visibility: hidden; /* 3D変換の最適化 */
+}
+
+.todo-item:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.todo-item--completed {
+  opacity: 0.7;
+  background: #f8fafc;
+}
+
+.todo-item--overdue {
+  border-left: 4px solid #ef4444;
+}
+
+.todo-item--editing {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.todo-item--selected {
+  border-color: #059669;
+  background: #f0fdfa;
+  box-shadow: 0 0 0 2px rgba(5, 150, 105, 0.1);
+}
+
+.todo-item:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.todo-item__check {
+  flex-shrink: 0;
+  margin-top: 0.125rem;
+}
+
+.check-btn {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #d1d5db;
+  border-radius: 0.25rem;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  font-size: 0; /* テキストが表示されないようにする */
+  line-height: 0;
+}
+
+.check-btn:hover {
+  border-color: #3b82f6;
+}
+
+.check-btn--checked {
+  background: #3b82f6;
+  border-color: #3b82f6;
+  color: white;
+}
+
+.todo-item__content {
+  flex: 1;
+  min-width: 0;
+}
+
+.todo-item__title {
+  margin: 0 0 0.5rem 0;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #1e293b;
+}
+
+.todo-item--completed .todo-item__title {
+  text-decoration: line-through;
+  color: #64748b;
+}
+
+/* タイトル内のMarkdown要素スタイル */
+.todo-item__title strong {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.todo-item__title em {
+  font-style: italic;
+  color: #475569;
+}
+
+.todo-item__title code {
+  background-color: #f1f5f9;
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 0.875em;
+  color: #e11d48;
+}
+
+.todo-item__title a {
+  color: #3b82f6;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.todo-item__title a:hover {
+  text-decoration: underline;
+  color: #2563eb;
+}
+
+.todo-item__title .markdown-h1 {
+  font-size: 1.25em;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.todo-item__title .markdown-h2 {
+  font-size: 1.125em;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.todo-item__title .markdown-h3 {
+  font-size: 1em;
+  font-weight: 600;
+  color: #334155;
+}
+
+.todo-item__title .markdown-h4,
+.todo-item__title .markdown-h5,
+.todo-item__title .markdown-h6 {
+  font-size: 0.875em;
+  font-weight: 600;
+  color: #475569;
+}
+
+.todo-item__description {
+  margin-bottom: 0.75rem;
+  color: #475569;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.todo-item__description p {
+  margin: 0 0 0.5rem 0;
+}
+
+.todo-item__description p:last-child {
+  margin-bottom: 0;
+}
+
+.todo-item__description a {
+  color: #3b82f6;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.todo-item__description a:hover {
+  text-decoration: underline;
+  color: #2563eb;
+}
+
+.todo-item__description code {
+  background: #f1f5f9;
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  font-size: 0.8125rem;
+}
+
+.todo-item__description pre {
+  background: #f1f5f9;
+  padding: 0.75rem;
+  border-radius: 0.375rem;
+  overflow-x: auto;
+  font-size: 0.8125rem;
+}
+
+.todo-item__meta {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.75rem;
+}
+
+.priority-badge,
+.schedule-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-weight: 500;
+}
+
+.schedule-badge--overdue {
+  color: #ef4444;
+}
+
+.todo-item__actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+
+.action-btn {
+  padding: 0.375rem;
+  background: transparent;
+  border: none;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  color: #64748b;
+  transition: all 0.2s;
+}
+
+.action-btn:hover {
+  background: #f1f5f9;
+  color: #334155;
+}
+
+.action-btn--delete:hover {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+/* Todo Edit Form */
+.todo-edit-form {
+  width: 100%;
+}
+
+.todo-edit-title,
+.todo-edit-description {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-family: inherit;
+  margin-bottom: 0.75rem;
+}
+
+.todo-edit-title:focus,
+.todo-edit-description:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.todo-edit-description {
+  resize: vertical;
+}
+
+.todo-edit-meta {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.todo-edit-priority,
+.todo-edit-schedule {
+  padding: 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+}
+
+.todo-edit-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+/* Buttons */
+.btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn--primary {
+  background: #3b82f6;
+  color: white;
+}
+
+.btn--primary:hover {
+  background: #2563eb;
+}
+
+.btn--secondary {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.btn--secondary:hover {
+  background: #e2e8f0;
+}
+
+/* Settings */
+.settings-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.settings-panel {
+  width: 90%;
+  max-width: 600px;
+  max-height: 80vh;
+  background: white;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.settings-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.settings-header h2 {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.settings-close {
+  padding: 0.5rem;
+  background: transparent;
+  border: none;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  color: #64748b;
+  transition: all 0.2s;
+}
+
+.settings-close:hover {
+  background: #f1f5f9;
+  color: #334155;
+}
+
+.settings-content {
+  padding: 1.5rem;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.settings-section {
+  margin-bottom: 2rem;
+}
+
+.settings-section h3 {
+  margin: 0 0 1rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.setting-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  cursor: pointer;
+}
+
+.setting-item--full {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.setting-item input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.server-url-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.server-url-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.custom-css-textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  resize: vertical;
+}
+
+.custom-css-textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Search Bar */
+.search-bar {
+  padding: 1rem 1.5rem;
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.search-input-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  max-width: 400px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 0.75rem;
+  color: #9ca3af;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.75rem 0.75rem 0.75rem 2.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  background: #ffffff;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.search-clear {
+  position: absolute;
+  right: 0.5rem;
+  padding: 0.25rem;
+  background: transparent;
+  border: none;
+  border-radius: 0.25rem;
+  color: #9ca3af;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.search-clear:hover {
+  color: #6b7280;
+}
+
+/* Todo Filter */
+.todo-filter {
+  padding: 1rem 1.5rem;
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.filter-title {
+  margin: 0 0 0.75rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.filter-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.filter-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 1rem;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #64748b;
+  transition: all 0.2s;
+}
+
+.filter-btn:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #475569;
+}
+
+.filter-btn--active {
+  background: #3b82f6;
+  border-color: #3b82f6;
+  color: white;
+}
+
+.filter-count {
+  background: rgba(255, 255, 255, 0.3);
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.75rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  min-width: 1rem;
+  text-align: center;
+}
+
+.filter-btn--active .filter-count {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Data Manager */
+.data-manager {
+  margin-top: 2rem;
+}
+
+.data-manager-title {
+  margin: 0 0 1rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.data-manager-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.data-manager-section h4 {
+  margin: 0 0 0.75rem 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #4b5563;
+}
+
+.data-manager-buttons {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.data-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.data-btn--export {
+  background: #3b82f6;
+  border-color: #3b82f6;
+  color: white;
+}
+
+.data-btn--export:hover:not(:disabled) {
+  background: #2563eb;
+  border-color: #2563eb;
+}
+
+.data-btn--export:disabled {
+  background: #9ca3af;
+  border-color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.data-btn--import {
+  background: #10b981;
+  border-color: #10b981;
+  color: white;
+}
+
+.data-btn--import:hover {
+  background: #059669;
+  border-color: #059669;
+}
+
+.data-description {
+  margin: 0;
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+/* Shortcut Help */
+.shortcut-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.shortcut-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem;
+  background: #f8fafc;
+  border-radius: 0.5rem;
+  border: 1px solid #e2e8f0;
+}
+
+.shortcut-key {
+  background: #374151;
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 0.75rem;
+  font-weight: 500;
+  min-width: fit-content;
+  text-align: center;
+  border: 1px solid #4b5563;
+}
+
+.shortcut-description {
+  color: #374151;
+  font-size: 0.875rem;
+}
+
+/* Delete Confirmation Dialog */
+.delete-confirm-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1001;
+}
+
+.delete-confirm-dialog {
+  width: 90%;
+  max-width: 400px;
+  background: white;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.delete-confirm-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+  background: #fef2f2;
+}
+
+.delete-confirm-icon {
+  color: #dc2626;
+}
+
+.delete-confirm-header h3 {
+  margin: 0;
+  flex: 1;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.delete-confirm-close {
+  padding: 0.25rem;
+  background: transparent;
+  border: none;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  color: #64748b;
+  transition: all 0.2s;
+}
+
+.delete-confirm-close:hover {
+  background: #f1f5f9;
+  color: #334155;
+}
+
+.delete-confirm-content {
+  padding: 1.5rem;
+}
+
+.delete-confirm-content p {
+  margin: 0 0 0.75rem 0;
+  color: #475569;
+  line-height: 1.5;
+}
+
+.delete-confirm-content p:last-child {
+  margin-bottom: 0;
+}
+
+.delete-confirm-count {
+  font-weight: 600;
+  color: #dc2626;
+}
+
+.delete-confirm-warning {
+  font-size: 0.875rem;
+  color: #64748b;
+  font-style: italic;
+}
+
+.delete-confirm-actions {
+  display: flex;
+  gap: 0.75rem;
+  padding: 1.5rem;
+  border-top: 1px solid #e2e8f0;
+  background: #f8fafc;
+  justify-content: flex-end;
+}
+
+.btn--danger {
+  background: #dc2626;
+  color: white;
+  border: 1px solid #dc2626;
+}
+
+.btn--danger:hover {
+  background: #b91c1c;
+  border-color: #b91c1c;
+}
+
+/* Dark mode support */
+.app--dark {
+  color: #f1f5f9;
+  background: #0f172a;
+}
+
+.app--dark .app-header {
+  background: #1e293b;
+  border-bottom-color: #334155;
+}
+
+.app--dark .app-header h1 {
+  color: #f1f5f9;
+}
+
+.app--dark .connection-status.connected {
+  background: #14532d;
+  color: #22c55e;
+}
+
+.app--dark .connection-status.disconnected {
+  background: #7f1d1d;
+  color: #ef4444;
+}
+
+.app--dark .header-left .connection-status {
+  background: #374151;
+}
+
+/* 設定パネル内の接続状態表示 */
+.connection-status-info {
+  margin-top: 0.5rem;
+}
+
+.status-indicator {
+  padding: 0.375rem 0.75rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  display: inline-block;
+}
+
+.status-connected {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.status-connecting {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.status-disconnected {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.status-error {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+/* ダークモード時の設定パネル接続状態 */
+.app--dark .status-connected {
+  background: #14532d;
+  color: #22c55e;
+}
+
+.app--dark .status-connecting {
+  background: #1e3a8a;
+  color: #60a5fa;
+}
+
+.app--dark .status-disconnected,
+.app--dark .status-error {
+  background: #7f1d1d;
+  color: #ef4444;
+}
+
+.app--dark .settings-btn {
+  background: #334155;
+  color: #94a3b8;
+}
+
+.app--dark .settings-btn:hover {
+  background: #475569;
+  color: #e2e8f0;
+}
+
+.app--dark .add-todo-form {
+  background: #1e293b;
+  border-bottom-color: #334155;
+}
+
+.app--dark .add-todo-input {
+  background: #334155;
+  border-color: #475569;
+  color: #f1f5f9;
+}
+
+.app--dark .add-todo-expanded {
+  background: #334155;
+  border-color: #475569;
+}
+
+.app--dark .add-todo-description {
+  background: #475569;
+  border-color: #64748b;
+  color: #f1f5f9;
+}
+
+.app--dark .todo-item {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+.app--dark .todo-item:hover {
+  border-color: #475569;
+}
+
+.app--dark .todo-item--completed {
+  background: #0f172a;
+}
+
+.app--dark .todo-item--selected {
+  border-color: #10b981;
+  background: #064e3b;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+}
+
+.app--dark .todo-item__title {
+  color: #f1f5f9;
+}
+
+/* ダークモード - タイトル内のMarkdown要素スタイル */
+.app--dark .todo-item__title strong {
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.app--dark .todo-item__title em {
+  font-style: italic;
+  color: #cbd5e1;
+}
+
+.app--dark .todo-item__title code {
+  background-color: #334155;
+  color: #f59e0b;
+}
+
+.app--dark .todo-item__title a {
+  color: #60a5fa;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.app--dark .todo-item__title a:hover {
+  color: #93c5fd;
+}
+
+.app--dark .todo-item__title .markdown-h1 {
+  color: #ffffff;
+}
+
+.app--dark .todo-item__title .markdown-h2 {
+  color: #f1f5f9;
+}
+
+.app--dark .todo-item__title .markdown-h3 {
+  color: #e2e8f0;
+}
+
+.app--dark .todo-item__title .markdown-h4,
+.app--dark .todo-item__title .markdown-h5,
+.app--dark .todo-item__title .markdown-h6 {
+  color: #cbd5e1;
+}
+
+.app--dark .todo-item__description {
+  color: #cbd5e1;
+}
+
+.app--dark .todo-item__description a {
+  color: #60a5fa;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.app--dark .todo-item__description a:hover {
+  color: #93c5fd;
+}
+
+.app--dark .todo-item__description code {
+  background: #334155;
+}
+
+.app--dark .todo-item__description pre {
+  background: #334155;
+}
+
+.app--dark .check-btn {
+  border-color: #475569;
+}
+
+.app--dark .settings-panel {
+  background: #1e293b;
+}
+
+.app--dark .settings-header {
+  border-bottom-color: #334155;
+}
+
+.app--dark .settings-header h2 {
+  color: #f1f5f9;
+}
+
+.app--dark .server-url-input,
+.app--dark .custom-css-textarea {
+  background: #334155;
+  border-color: #475569;
+  color: #f1f5f9;
+}
+
+.app--dark .todo-edit-title,
+.app--dark .todo-edit-description {
+  background: #334155;
+  border-color: #475569;
+  color: #f1f5f9;
+}
+
+/* スリムモードのダークモード対応 */
+.app--dark.app--slim .todo-item {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+.app--dark.app--slim .todo-item:hover:not([data-dragging="true"]) {
+  background: #334155;
+  border-color: #475569;
+}
+
+.app--dark.app--slim .todo-item--completed {
+  background: #0f172a;
+}
+
+.app--dark.app--slim .todo-item__title {
+  color: #f1f5f9;
+}
+
+.app--dark.app--slim .todo-item__title-edit {
+  color: #f1f5f9;
+  background: transparent;
+}
+
+.app--dark.app--slim .todo-item--completed .todo-item__title {
+  color: #64748b;
+}
+
+.app--dark.app--slim .add-todo-form {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+.app--dark.app--slim .add-todo-input {
+  background: transparent;
+  color: #f1f5f9;
+}
+
+.app--dark.app--slim .add-todo-input::placeholder {
+  color: #64748b;
+}
+
+.app--dark.app--slim .add-todo-input:focus {
+  background: #334155;
+}
+
+/* 削除確認ダイアログのダークモード対応 */
+.app--dark .delete-confirm-dialog {
+  background: #1e293b;
+}
+
+.app--dark .delete-confirm-header {
+  background: #7f1d1d;
+  border-bottom-color: #334155;
+}
+
+.app--dark .delete-confirm-header h3 {
+  color: #f1f5f9;
+}
+
+.app--dark .delete-confirm-content p {
+  color: #cbd5e1;
+}
+
+.app--dark .delete-confirm-count {
+  color: #fca5a5;
+}
+
+.app--dark .delete-confirm-warning {
+  color: #94a3b8;
+}
+
+.app--dark .delete-confirm-actions {
+  background: #334155;
+  border-top-color: #475569;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color: #f1f5f9;
+    background-color: #0f172a;
+  }
+
+  .app {
+    background: #0f172a;
+  }
+
+  .app-header {
+    background: #1e293b;
+    border-bottom-color: #334155;
+  }
+
+  .app-header h1 {
+    color: #f1f5f9;
+  }
+
+  .connection-status.connected {
+    background: #14532d;
+    color: #22c55e;
+  }
+
+  .connection-status.disconnected {
+    background: #7f1d1d;
+    color: #ef4444;
+  }
+
+  .settings-btn {
+    background: #334155;
+    color: #94a3b8;
+  }
+
+  .settings-btn:hover {
+    background: #475569;
+    color: #e2e8f0;
+  }
+
+  .add-todo-form {
+    background: #1e293b;
+    border-bottom-color: #334155;
+  }
+
+  .add-todo-input {
+    background: #334155;
+    border-color: #475569;
+    color: #f1f5f9;
+  }
+
+  .add-todo-expanded {
+    background: #334155;
+    border-color: #475569;
+  }
+
+  .add-todo-description {
+    background: #475569;
+    border-color: #64748b;
+    color: #f1f5f9;
+  }
+
+  .todo-item {
+    background: #1e293b;
+    border-color: #334155;
+  }
+
+  .todo-item:hover {
+    border-color: #475569;
+  }
+
+  .todo-item--completed {
+    background: #0f172a;
+  }
+
+  .todo-item--selected {
+    border-color: #10b981;
+    background: #064e3b;
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+  }
+
+  .todo-item__title {
+    color: #f1f5f9;
+  }
+
+  .todo-item__description {
+    color: #cbd5e1;
+  }
+
+  .todo-item__description code {
+    background: #334155;
+  }
+
+  .todo-item__description pre {
+    background: #334155;
+  }
+
+  .check-btn {
+    border-color: #475569;
+  }
+
+  .settings-panel {
+    background: #1e293b;
+  }
+
+  .settings-header {
+    border-bottom-color: #334155;
+  }
+
+  .settings-header h2 {
+    color: #f1f5f9;
+  }
+
+  .server-url-input,
+  .custom-css-textarea {
+    background: #334155;
+    border-color: #475569;
+    color: #f1f5f9;
+  }
+
+  .todo-edit-title,
+  .todo-edit-description {
+    background: #334155;
+    border-color: #475569;
+    color: #f1f5f9;
+  }
+
+  .shortcut-item {
+    background: #334155;
+    border-color: #475569;
+  }
+
+  .shortcut-key {
+    background: #1e293b;
+    color: #e2e8f0;
+    border-color: #334155;
+  }
+
+  .shortcut-description {
+    color: #e2e8f0;
+  }
+
+  .search-bar {
+    background: #1e293b;
+    border-bottom-color: #334155;
+  }
+
+  .search-input {
+    background: #334155;
+    border-color: #475569;
+    color: #f1f5f9;
+  }
+
+  .search-input:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+
+  .search-icon,
+  .search-clear {
+    color: #94a3b8;
+  }
+
+  .search-clear:hover {
+    color: #cbd5e1;
+  }
+
+  .todo-filter {
+    background: #1e293b;
+    border-bottom-color: #334155;
+  }
+
+  .filter-title {
+    color: #f1f5f9;
+  }
+
+  .filter-btn {
+    background: #334155;
+    border-color: #475569;
+    color: #cbd5e1;
+  }
+
+  .filter-btn:hover {
+    background: #475569;
+    border-color: #64748b;
+    color: #e2e8f0;
+  }
+
+  .filter-btn--active {
+    background: #3b82f6;
+    border-color: #3b82f6;
+    color: white;
+  }
+
+  .data-manager-title {
+    color: #f1f5f9;
+  }
+
+  .data-manager-section h4 {
+    color: #e2e8f0;
+  }
+
+  .data-description {
+    color: #94a3b8;
+  }
+}
