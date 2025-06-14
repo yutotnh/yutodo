@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { Settings as SettingsIcon, X, Monitor, Palette, Server, List, Moon, FileText, Download, Upload, RotateCcw, Shield } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Settings as SettingsIcon, X, Monitor, Palette, Server, List, Moon, FileText, Download, Upload, RotateCcw, Shield, Globe } from 'lucide-react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
+import { useTranslation } from 'react-i18next';
 import { AppSettings, Todo } from '../types/todo';
 import { DataManager } from './DataManager';
 import { configManager } from '../utils/configManager';
+import { supportedLanguages } from '../i18n';
 
 interface SettingsProps {
   settings: AppSettings;
@@ -16,11 +18,43 @@ interface SettingsProps {
 }
 
 export const Settings: React.FC<SettingsProps> = ({ settings, onSettingsChange, onClose, todos = [], onImportTodos, connectionStatus = 'disconnected', reconnectAttempts = 0 }) => {
+  const { t } = useTranslation();
   const [localSettings, setLocalSettings] = useState<AppSettings>(settings);
+  const settingsPanelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setLocalSettings(settings);
   }, [settings]);
+
+  // 設定パネル外側クリック検知
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (settingsPanelRef.current && !settingsPanelRef.current.contains(event.target as Node)) {
+        onClose();
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [onClose]);
+
+  // Escキーで設定を閉じる
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        event.stopPropagation();
+        onClose();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [onClose]);
 
   const handleAlwaysOnTopChange = async (alwaysOnTop: boolean) => {
     // 現在の状態を保存
@@ -99,6 +133,12 @@ export const Settings: React.FC<SettingsProps> = ({ settings, onSettingsChange, 
 
   const handleConfirmDeleteChange = (confirmDelete: boolean) => {
     const newSettings = { ...localSettings, confirmDelete };
+    setLocalSettings(newSettings);
+    onSettingsChange(newSettings);
+  };
+
+  const handleLanguageChange = (language: 'auto' | 'en' | 'ja') => {
+    const newSettings = { ...localSettings, language };
     setLocalSettings(newSettings);
     onSettingsChange(newSettings);
   };
@@ -186,11 +226,11 @@ export const Settings: React.FC<SettingsProps> = ({ settings, onSettingsChange, 
       // ダウンロードに失敗した場合、クリップボードにコピー
       console.log('⚠️ Standard download failed, trying clipboard');
       await navigator.clipboard.writeText(tomlContent);
-      alert('設定内容をクリップボードにコピーしました。\nテキストファイルに貼り付けて保存してください。');
+      alert(t('settings.settingsCopiedToClipboard'));
       console.log('✅ Content copied to clipboard');
     } catch (error) {
       console.error('❌ Failed to export config:', error);
-      alert(`設定のエクスポートに失敗しました。\nエラー: ${error}`);
+      alert(t('settings.settingsExportFailed', { error }));
     }
   };
 
@@ -214,11 +254,11 @@ export const Settings: React.FC<SettingsProps> = ({ settings, onSettingsChange, 
       console.log('🔄 New settings:', newSettings);
       setLocalSettings(newSettings);
       onSettingsChange(newSettings);
-      alert('設定をインポートしました。');
+      alert(t('settings.settingsImported'));
       console.log('✅ Import completed successfully');
     } catch (error) {
       console.error('❌ Failed to import config:', error);
-      alert('設定のインポートに失敗しました。ファイル形式を確認してください。');
+      alert(t('settings.settingsImportFailed'));
     }
     
     // ファイル入力をリセット
@@ -226,27 +266,27 @@ export const Settings: React.FC<SettingsProps> = ({ settings, onSettingsChange, 
   };
 
   const handleResetConfig = async () => {
-    if (confirm('すべての設定をデフォルトに戻しますか？この操作は元に戻せません。')) {
+    if (confirm(t('settings.resetSettingsConfirm'))) {
       try {
         await configManager.resetToDefaults();
         const defaultSettings = configManager.getAppSettings();
         setLocalSettings(defaultSettings);
         onSettingsChange(defaultSettings);
-        alert('設定をデフォルトに戻しました。');
+        alert(t('settings.settingsReset'));
       } catch (error) {
         console.error('Failed to reset config:', error);
-        alert('設定のリセットに失敗しました。');
+        alert(t('settings.settingsResetFailed'));
       }
     }
   };
 
   return (
     <div className="settings-overlay">
-      <div className="settings-panel">
+      <div className="settings-panel" ref={settingsPanelRef}>
         <div className="settings-header">
           <h2>
             <SettingsIcon size={20} />
-            Settings
+            {t('settings.title')}
           </h2>
           <button onClick={onClose} className="settings-close">
             <X size={20} />
@@ -265,7 +305,7 @@ export const Settings: React.FC<SettingsProps> = ({ settings, onSettingsChange, 
                 checked={localSettings.alwaysOnTop}
                 onChange={(e) => handleAlwaysOnTopChange(e.target.checked)}
               />
-              <span>Always on Top</span>
+              <span>{t('settings.alwaysOnTop')}</span>
             </label>
             <label className="setting-item">
               <input
@@ -275,13 +315,13 @@ export const Settings: React.FC<SettingsProps> = ({ settings, onSettingsChange, 
               />
               <span>
                 <List size={14} />
-                Detailed Mode (Show descriptions, filters, etc.)
+                {t('settings.detailedMode')}
               </span>
             </label>
             <div className="setting-item setting-item--full">
               <span>
                 <Moon size={14} />
-                Theme
+                {t('settings.theme')}
               </span>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.5rem' }}>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -292,7 +332,7 @@ export const Settings: React.FC<SettingsProps> = ({ settings, onSettingsChange, 
                     checked={localSettings.darkMode === 'auto'}
                     onChange={() => handleDarkModeChange('auto')}
                   />
-                  <span>Auto (Follow System)</span>
+                  <span>{t('settings.auto')}</span>
                 </label>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <input
@@ -302,7 +342,7 @@ export const Settings: React.FC<SettingsProps> = ({ settings, onSettingsChange, 
                     checked={localSettings.darkMode === 'light'}
                     onChange={() => handleDarkModeChange('light')}
                   />
-                  <span>Light</span>
+                  <span>{t('settings.light')}</span>
                 </label>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <input
@@ -312,7 +352,46 @@ export const Settings: React.FC<SettingsProps> = ({ settings, onSettingsChange, 
                     checked={localSettings.darkMode === 'dark'}
                     onChange={() => handleDarkModeChange('dark')}
                   />
-                  <span>Dark</span>
+                  <span>{t('settings.dark')}</span>
+                </label>
+              </div>
+            </div>
+            
+            <div className="setting-item setting-item--full">
+              <span>
+                <Globe size={14} />
+                {t('settings.language')}
+              </span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.5rem' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <input
+                    type="radio"
+                    name="language"
+                    value="auto"
+                    checked={localSettings.language === 'auto'}
+                    onChange={() => handleLanguageChange('auto')}
+                  />
+                  <span>{t('settings.auto')}</span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <input
+                    type="radio"
+                    name="language"
+                    value="en"
+                    checked={localSettings.language === 'en'}
+                    onChange={() => handleLanguageChange('en')}
+                  />
+                  <span>{supportedLanguages.en}</span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <input
+                    type="radio"
+                    name="language"
+                    value="ja"
+                    checked={localSettings.language === 'ja'}
+                    onChange={() => handleLanguageChange('ja')}
+                  />
+                  <span>{supportedLanguages.ja}</span>
                 </label>
               </div>
             </div>
@@ -329,7 +408,7 @@ export const Settings: React.FC<SettingsProps> = ({ settings, onSettingsChange, 
                 checked={localSettings.confirmDelete}
                 onChange={(e) => handleConfirmDeleteChange(e.target.checked)}
               />
-              <span>Confirm before deleting tasks</span>
+              <span>{t('settings.confirmDelete')}</span>
             </label>
           </div>
 
@@ -350,7 +429,7 @@ export const Settings: React.FC<SettingsProps> = ({ settings, onSettingsChange, 
               </div>
             </div>
             <label className="setting-item setting-item--full">
-              <span>Server URL:</span>
+              <span>{t('settings.serverUrl')}:</span>
               <input
                 type="text"
                 value={localSettings.serverUrl}
@@ -364,10 +443,10 @@ export const Settings: React.FC<SettingsProps> = ({ settings, onSettingsChange, 
           <div className="settings-section">
             <h3>
               <Palette size={16} />
-              Custom Styling
+              {t('settings.customCss')}
             </h3>
             <label className="setting-item setting-item--full">
-              <span>Custom CSS:</span>
+              <span>{t('settings.customCss')}:</span>
               <textarea
                 value={localSettings.customCss}
                 onChange={(e) => handleCustomCssChange(e.target.value)}
@@ -385,18 +464,18 @@ export const Settings: React.FC<SettingsProps> = ({ settings, onSettingsChange, 
             </h3>
             <div className="data-manager-actions">
               <div className="data-manager-section">
-                <h4>Export/Import Settings</h4>
+                <h4>{t('settings.exportSettings')} / {t('settings.importSettings')}</h4>
                 <div className="data-manager-buttons">
                   <button
                     onClick={handleExportConfig}
                     className="data-btn data-btn--export"
                   >
                     <Download size={16} />
-                    Export Config (TOML)
+                    {t('settings.exportSettings')}
                   </button>
                   <label className="data-btn data-btn--import">
                     <Upload size={16} />
-                    Import Config
+                    {t('settings.importSettings')}
                     <input
                       type="file"
                       accept=".toml,.txt"
@@ -411,7 +490,7 @@ export const Settings: React.FC<SettingsProps> = ({ settings, onSettingsChange, 
               </div>
               
               <div className="data-manager-section">
-                <h4>Reset Settings</h4>
+                <h4>{t('settings.resetSettings')}</h4>
                 <div className="data-manager-buttons">
                   <button
                     onClick={handleResetConfig}
@@ -423,7 +502,7 @@ export const Settings: React.FC<SettingsProps> = ({ settings, onSettingsChange, 
                     }}
                   >
                     <RotateCcw size={16} />
-                    Reset to Defaults
+                    {t('settings.resetSettings')}
                   </button>
                 </div>
                 <p className="data-description">

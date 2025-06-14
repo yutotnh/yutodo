@@ -2,6 +2,7 @@ import React, { useState, forwardRef, useImperativeHandle, useRef } from 'react'
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { Plus } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Todo } from '../types/todo';
 
 interface AddTodoFormProps {
@@ -14,6 +15,7 @@ export interface AddTodoFormRef {
 }
 
 export const AddTodoForm = forwardRef<AddTodoFormRef, AddTodoFormProps>(({ onAdd, slimMode = false }, ref) => {
+  const { t } = useTranslation();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState(0);
@@ -45,14 +47,18 @@ export const AddTodoForm = forwardRef<AddTodoFormRef, AddTodoFormProps>(({ onAdd
     setScheduledFor(null);
     setIsExpanded(false);
     
-    // フォーカスをリセット
-    setTimeout(() => {
-      inputRef.current?.focus();
-    }, 0);
+    // タスク追加後はフォーカスをリセットしない（他の操作を妨げないため）
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    // フォーム内のEnterキーのみを処理し、外部への伝播を防ぐ
+    if (e.key === 'Enter') {
+      e.stopPropagation();
+    }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="add-todo-form">
+    <form onSubmit={handleSubmit} className="add-todo-form" onKeyDown={handleKeyDown}>
       <div className="add-todo-input-group">
         <input
           ref={inputRef}
@@ -96,7 +102,7 @@ export const AddTodoForm = forwardRef<AddTodoFormRef, AddTodoFormProps>(({ onAdd
               timeFormat="HH:mm"
               timeIntervals={15}
               dateFormat="yyyy/MM/dd HH:mm"
-              placeholderText="日時を選択..."
+              placeholderText={t('tasks.selectDateTime')}
               className="add-todo-schedule"
               isClearable
             />
@@ -104,7 +110,7 @@ export const AddTodoForm = forwardRef<AddTodoFormRef, AddTodoFormProps>(({ onAdd
           
           <div className="add-todo-actions">
             <button type="submit" className="btn btn--primary" disabled={!title.trim()}>
-              Add Task
+              {t('tasks.addTask')}
             </button>
             <button 
               type="button" 

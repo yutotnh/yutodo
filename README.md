@@ -11,18 +11,21 @@ A modern, feature-rich todo list application built with Tauri, React, and TypeSc
 - ✅ **Priority system** - High (2), Medium (1), Low (0) priority levels with visual indicators
 - ✅ **Due dates** - Schedule tasks with optional due dates and overdue detection
 - ✅ **Search & filtering** - Find tasks by content, status, priority, or overdue status
-- ✅ **Bulk operations** - Select and delete multiple tasks with Ctrl+click
+- ✅ **Multi-selection** - Excel-like task selection with Shift+Click (range) and Ctrl+Click (individual)
 - ✅ **Delete confirmation** - Optional confirmation dialogs (configurable)
 - ✅ **Markdown support** - Full Markdown rendering in task titles and descriptions
 
 ### User Interface
 - 🎨 **Dark/Light themes** - Auto-detect system preference or manual selection
+- 🌐 **Internationalization** - Full English/Japanese language support with auto-detection
 - 📱 **Slim mode** - Compact view for minimal desktop footprint
 - 🎯 **Auto-hiding header** - Clean interface that appears on mouse hover
 - ⌨️ **Keyboard shortcuts** - Full keyboard navigation support (Ctrl+N, Ctrl+F, etc.)
 - 🎨 **Custom CSS injection** - Personalize the appearance with custom styles
 - 🔗 **Interactive links** - Click Markdown links to open in default browser
 - 📋 **Right-click context** - Right-click links to copy URLs to clipboard
+- ✨ **Visual feedback** - Animated selection indicators and smooth transitions
+- 🎯 **Precise editing** - Click-to-position cursor in task editing with canvas-based positioning
 
 ### Data Management & Export/Import
 - 💾 **SQLite database** - Reliable local data storage with automatic persistence
@@ -87,7 +90,7 @@ A modern, feature-rich todo list application built with Tauri, React, and TypeSc
 1. **Clone the repository**
    ```bash
    git clone <repository-url>
-   cd todo
+   cd yutodo
    ```
 
 2. **Install frontend dependencies**
@@ -149,7 +152,7 @@ The app supports a comprehensive TOML configuration file with the following stru
 # YuToDo Configuration
 # Generated on 2025-06-14T12:34:56.789Z
 #
-# This file contains all settings for the Yutodo application.
+# This file contains all settings for the YuToDo application.
 # You can edit this file manually or use the settings panel in the app.
 
 # Application window settings
@@ -269,6 +272,38 @@ A complete JSON Schema is provided in `config.schema.json` for IDE autocompletio
 | `Space` | Toggle task completion |
 | `Enter` | Confirm action/Complete editing |
 | `Escape` | Cancel action/Close dialogs |
+| `Shift + Click` | Range selection (select from last selected to current) |
+| `Ctrl + Click` | Individual selection toggle |
+| `Double Click` | Edit task title (in-place editing) |
+
+## Internationalization
+
+### Supported Languages
+- **English** - Full support with native UI text
+- **Japanese (日本語)** - Complete translation coverage
+- **Auto-detection** - Automatically detects browser language preference
+
+### Language Features
+- **Real-time switching** - Change language instantly without restart
+- **Persistent settings** - Language preference saved in configuration
+- **Fallback system** - Graceful fallback to English for missing translations
+- **Type-safe translations** - TypeScript integration for translation keys
+
+### Language Settings
+Access language settings through:
+1. Open Settings panel (Ctrl+, or gear icon)
+2. Navigate to Language section (🌐 icon)
+3. Choose from:
+   - **Auto** - Follow system language preference
+   - **English** - Force English interface
+   - **日本語** - Force Japanese interface
+
+### Adding New Languages
+To contribute translations for additional languages:
+1. Create translation file in `src/i18n/locales/[language].json`
+2. Follow the existing structure from `en.json` or `ja.json`
+3. Add language configuration to the system
+4. Test translation coverage across all UI components
 
 ## Database Schema
 
@@ -314,6 +349,9 @@ SQLite table `todos`:
 - **React DatePicker** - Date selection component
 - **react-markdown** - Markdown rendering with remark-gfm
 - **@ltd/j-toml** - TOML parsing and stringification
+- **react-i18next** - Internationalization framework
+- **i18next** - Core internationalization library
+- **i18next-browser-languagedetector** - Automatic language detection
 
 ### Backend
 - **Node.js** - JavaScript runtime
@@ -418,4 +456,26 @@ npm run tauri dev
 - **URL Opening**: Links will copy to clipboard instead of opening directly
 - **File Dialogs**: May fall back to clipboard operations
 - **Window Management**: Some features like "always on top" may not work
+- **Graphics Warnings**: EGL/Mesa warnings during startup are normal and can be ignored
 - **Solution**: Use the clipboard content in Windows applications
+
+### Graphics Driver Warnings (WSL2/WSLg)
+When running in WSL2/WSLg environments, you may see graphics-related warnings like:
+```
+libEGL warning: DRI3: Screen seems not DRI3 capable
+MESA: error: ZINK: failed to choose pdev
+libEGL warning: failed to open /dev/dri/renderD128: Permission denied
+```
+
+These warnings are normal and do not affect functionality. The app automatically falls back to software rendering. To suppress these warnings, you can set:
+```bash
+export LIBGL_ALWAYS_SOFTWARE=1
+npm run tauri dev
+```
+
+## Known Issues
+
+### Keyboard Behavior
+- **Enter Key Issue**: Pressing Enter while a task is selected may occasionally cause the task to become unresponsive (background appears darker) until Escape is pressed. This is a focus management issue under investigation.
+  - **Workaround**: Use `E` or `F2` keys for task editing, or press `Escape` to clear the state
+  - **Impact**: Temporary UI issue that doesn't affect core functionality

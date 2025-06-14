@@ -1,5 +1,6 @@
 import React, { useRef } from 'react';
 import { Download, Upload, FileText, Database } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Todo } from '../types/todo';
 
 // Tauri環境チェック関数
@@ -18,6 +19,7 @@ interface DataManagerProps {
 }
 
 export const DataManager: React.FC<DataManagerProps> = ({ todos, onImport }) => {
+  const { t } = useTranslation();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // ファイルダウンロード関数（Tauri対応）
@@ -102,11 +104,11 @@ export const DataManager: React.FC<DataManagerProps> = ({ todos, onImport }) => 
       // ダウンロードに失敗した場合、クリップボードにコピー
       console.log('⚠️ Standard download failed, trying clipboard');
       await navigator.clipboard.writeText(dataStr);
-      alert('JSONデータをクリップボードにコピーしました。\nテキストファイルに貼り付けて保存してください。');
+      alert(t('dataManager.jsonCopiedToClipboard'));
       console.log('✅ JSON content copied to clipboard');
     } catch (error) {
       console.error('❌ Failed to export JSON:', error);
-      alert(`JSONエクスポートに失敗しました。\nエラー: ${error}`);
+      alert(t('dataManager.jsonExportFailed', { error }));
     }
   };
 
@@ -141,11 +143,11 @@ export const DataManager: React.FC<DataManagerProps> = ({ todos, onImport }) => 
       // ダウンロードに失敗した場合、クリップボードにコピー
       console.log('⚠️ Standard download failed, trying clipboard');
       await navigator.clipboard.writeText(csvContent);
-      alert('CSVデータをクリップボードにコピーしました。\nテキストファイルに貼り付けて保存してください。');
+      alert(t('dataManager.csvCopiedToClipboard'));
       console.log('✅ CSV content copied to clipboard');
     } catch (error) {
       console.error('❌ Failed to export CSV:', error);
-      alert(`CSVエクスポートに失敗しました。\nエラー: ${error}`);
+      alert(t('dataManager.csvExportFailed', { error }));
     }
   };
 
@@ -171,15 +173,15 @@ export const DataManager: React.FC<DataManagerProps> = ({ todos, onImport }) => 
           
           if (validTodos.length > 0) {
             onImport(validTodos);
-            alert(`${validTodos.length}個のタスクをインポートしました。`);
+            alert(t('dataManager.tasksImported', { count: validTodos.length }));
           } else {
-            alert('有効なタスクが見つかりませんでした。');
+            alert(t('dataManager.noValidTasks'));
           }
         } else {
-          alert('無効なファイル形式です。');
+          alert(t('dataManager.invalidFileFormat'));
         }
       } catch (error) {
-        alert('ファイルの読み込みに失敗しました。');
+        alert(t('dataManager.failedToReadFile'));
       }
     };
     reader.readAsText(file);
@@ -198,12 +200,12 @@ export const DataManager: React.FC<DataManagerProps> = ({ todos, onImport }) => 
     <div className="data-manager">
       <h3 className="data-manager-title">
         <Database size={16} />
-        データ管理
+        {t('dataManager.title')}
       </h3>
       
       <div className="data-manager-actions">
         <div className="data-manager-section">
-          <h4>エクスポート</h4>
+          <h4>{t('dataManager.export')}</h4>
           <div className="data-manager-buttons">
             <button
               onClick={exportToJSON}
@@ -211,7 +213,7 @@ export const DataManager: React.FC<DataManagerProps> = ({ todos, onImport }) => 
               disabled={todos.length === 0}
             >
               <FileText size={14} />
-              JSON形式
+              {t('dataManager.jsonFormat')}
             </button>
             <button
               onClick={exportToCSV}
@@ -219,27 +221,27 @@ export const DataManager: React.FC<DataManagerProps> = ({ todos, onImport }) => 
               disabled={todos.length === 0}
             >
               <Download size={14} />
-              CSV形式
+              {t('dataManager.csvFormat')}
             </button>
           </div>
           <p className="data-description">
-            {todos.length}個のタスクをファイルに保存します
+            {t('dataManager.saveTasksToFile', { count: todos.length })}
           </p>
         </div>
 
         <div className="data-manager-section">
-          <h4>インポート</h4>
+          <h4>{t('dataManager.import')}</h4>
           <div className="data-manager-buttons">
             <button
               onClick={triggerFileImport}
               className="data-btn data-btn--import"
             >
               <Upload size={14} />
-              JSONファイルを選択
+              {t('dataManager.selectJsonFile')}
             </button>
           </div>
           <p className="data-description">
-            JSONファイルからタスクを読み込みます
+            {t('dataManager.loadTasksFromJson')}
           </p>
         </div>
       </div>

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Filter, CheckCircle, Circle, Clock, AlertTriangle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 export type FilterType = 'all' | 'completed' | 'pending' | 'overdue' | 'high' | 'medium' | 'low';
 
@@ -18,21 +19,23 @@ interface TodoFilterProps {
 }
 
 export const TodoFilter: React.FC<TodoFilterProps> = ({ currentFilter, onFilterChange, counts }) => {
+  const { t } = useTranslation();
+  
   const filters = [
-    { key: 'all' as FilterType, label: 'すべて', icon: Filter, count: counts.all },
-    { key: 'pending' as FilterType, label: '未完了', icon: Circle, count: counts.pending },
-    { key: 'completed' as FilterType, label: '完了済み', icon: CheckCircle, count: counts.completed },
-    { key: 'overdue' as FilterType, label: '期限切れ', icon: AlertTriangle, count: counts.overdue },
-    { key: 'high' as FilterType, label: '高優先度', icon: AlertTriangle, count: counts.high },
-    { key: 'medium' as FilterType, label: '中優先度', icon: Clock, count: counts.medium },
-    { key: 'low' as FilterType, label: '低優先度', icon: Circle, count: counts.low }
+    { key: 'all' as FilterType, label: t('filters.all'), icon: Filter, count: counts.all },
+    { key: 'pending' as FilterType, label: t('filters.pending'), icon: Circle, count: counts.pending },
+    { key: 'completed' as FilterType, label: t('filters.completed'), icon: CheckCircle, count: counts.completed },
+    { key: 'overdue' as FilterType, label: t('filters.overdue'), icon: AlertTriangle, count: counts.overdue },
+    { key: 'high' as FilterType, label: t('filters.highPriority'), icon: AlertTriangle, count: counts.high },
+    { key: 'medium' as FilterType, label: t('filters.mediumPriority'), icon: Clock, count: counts.medium },
+    { key: 'low' as FilterType, label: t('filters.lowPriority'), icon: Circle, count: counts.low }
   ];
 
   return (
     <div className="todo-filter">
       <h3 className="filter-title">
         <Filter size={16} />
-        フィルター
+        {t('filters.title')}
       </h3>
       <div className="filter-buttons">
         {filters.map(filter => {
