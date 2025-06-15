@@ -7,6 +7,11 @@ Object.defineProperty(window, 'alert', {
   writable: true
 });
 
+// Add proper body element for JSDOM
+if (!document.body) {
+  document.body = document.createElement('body');
+}
+
 // Mock Tauri API
 const mockTauriApi = {
   dialog: {
