@@ -133,6 +133,8 @@ The app will connect to the server at `http://localhost:3001` by default.
 npm run dev          # Start Vite dev server
 npm run build        # Build React app and TypeScript
 npm run preview      # Preview built app
+npm test             # Run frontend tests with Vitest
+npm run test:ui      # Run tests with interactive UI
 ```
 
 ### Backend (Node.js Server)
@@ -141,12 +143,29 @@ cd server
 npm run dev          # Start server with ts-node
 npm run build        # Compile TypeScript
 npm run start        # Run compiled server
+npm test             # Run backend tests with Jest
+npm run test:watch   # Run tests in watch mode
+npm run test:parallel # Run tests in parallel
 ```
 
 ### Desktop (Tauri)
 ```bash
 npm run tauri dev    # Start Tauri development mode
 npm run tauri build  # Build Tauri desktop app for distribution
+```
+
+### Testing
+```bash
+# Frontend testing (from root directory)
+npm test                           # Run all frontend tests (142 tests)
+npm test src/test/TodoItem.test.tsx # Run specific test file
+npm run test:ui                    # Interactive test UI with Vitest
+
+# Backend testing (from server directory)
+cd server
+npm test                          # Run all backend tests
+npm run test:watch                # Watch mode for TDD
+npm test -- --testNamePattern="socket" # Run specific test patterns
 ```
 
 ## Configuration
@@ -394,6 +413,14 @@ SQLite table `todos`:
 - **i18next** - Core internationalization library
 - **i18next-browser-languagedetector** - Automatic language detection
 
+### Frontend Testing
+- **Vitest** - Fast unit testing framework with JSDOM environment
+- **React Testing Library** - Component testing utilities and best practices
+- **@testing-library/user-event** - Advanced user interaction simulation
+- **@testing-library/jest-dom** - Custom DOM matchers for better assertions
+- **jsdom** - Browser environment simulation for Node.js
+- **canvas** - Canvas API polyfill for JSDOM compatibility
+
 ### Backend
 - **Node.js** - JavaScript runtime
 - **Express.js** - Web framework
@@ -401,6 +428,12 @@ SQLite table `todos`:
 - **Socket.IO** - Real-time WebSocket communication
 - **sqlite3** - SQLite database driver with OS-standard data locations
 - **uuid** - Unique identifier generation
+
+### Backend Testing
+- **Jest** - Comprehensive testing framework with TypeScript support
+- **ts-jest** - TypeScript preprocessor for Jest
+- **socket.io-client** - Socket.IO client for testing real-time features
+- **@types/jest** - TypeScript definitions for Jest
 
 ### Desktop (Tauri v2)
 - **Tauri v2** - Modern Rust-based desktop framework
@@ -411,10 +444,14 @@ SQLite table `todos`:
 - **tauri-plugin-clipboard-manager** - Native clipboard operations
 - **Capability-based Security** - Fine-grained permission system
 
-### Development Tools
+### Development & Testing Tools
 - **ts-node** - TypeScript execution for development
 - **Vite** - Modern build tooling with hot reload
 - **Cargo** - Rust package manager and build system
+- **Vitest** - Fast frontend testing framework with JSDOM environment
+- **Jest** - Backend testing framework with TypeScript support
+- **React Testing Library** - Component testing utilities
+- **@testing-library/user-event** - User interaction simulation
 
 ## File System Integration
 
@@ -463,8 +500,19 @@ The app automatically detects WSLg (Windows Subsystem for Linux GUI) environment
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
+4. **Write tests** - All new features should include comprehensive tests
+   - Frontend: Add component tests in `src/test/`
+   - Backend: Add API and socket tests in `server/__tests__/`
+   - Run `npm test` to ensure all tests pass (142 frontend + backend tests)
+5. Verify test coverage and ensure no stderr errors in test output
+6. Submit a pull request
+
+### Testing Guidelines
+- **Frontend Tests**: Use Vitest + React Testing Library for component testing
+- **Backend Tests**: Use Jest for API and WebSocket functionality
+- **Mock Strategy**: Mock external dependencies (Tauri plugins, libraries) properly
+- **Error Testing**: Use console.error suppression for intentional error scenarios
+- **Coverage**: Maintain comprehensive test coverage for all new features
 
 ## License
 
@@ -486,6 +534,8 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 4. **Permission errors**: Review Tauri capabilities configuration for required permissions
 5. **URLs not opening**: In WSLg environments, URLs are copied to clipboard instead
 6. **Always on top not working**: This feature may be limited in WSLg environments
+7. **Test failures**: Run `npm test` to ensure all 142 tests pass with clean output
+8. **Mock errors in tests**: Check that external dependencies are properly mocked in test setup
 
 ### Debug Mode
 Run the app in development mode to access browser developer tools:

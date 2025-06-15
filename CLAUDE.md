@@ -32,6 +32,8 @@ npm run build        # Build React app and TypeScript
 npm run preview      # Preview built app
 npm run tauri dev    # Start Tauri development mode
 npm run tauri build  # Build Tauri desktop app
+npm test             # Run frontend tests with Vitest
+npm run test:ui      # Run tests with Vitest UI interface
 ```
 
 ### Backend (Node.js Server)
@@ -40,7 +42,23 @@ cd server
 npm run dev          # Start server with ts-node (development)
 npm run build        # Compile TypeScript to dist/
 npm run start        # Run compiled server from dist/
-npm test             # Run tests (placeholder - no tests implemented)
+npm test             # Run backend tests with Jest
+npm run test:watch   # Run tests in watch mode
+npm run test:parallel # Run tests in parallel (faster)
+```
+
+### Testing Commands
+```bash
+# Frontend testing (from root directory)
+npm test                    # Run all frontend tests
+npm test src/test/App.test.tsx  # Run specific test file
+npm run test:ui            # Launch Vitest UI for interactive testing
+
+# Backend testing (from server directory)
+cd server
+npm test                   # Run all backend tests  
+npm run test:watch         # Watch mode for development
+npm test -- --testNamePattern="socket" # Run specific tests
 ```
 
 ## Development Workflow
@@ -48,6 +66,54 @@ npm test             # Run tests (placeholder - no tests implemented)
 1. Start the backend server: `cd server && npm run dev`
 2. Start the Tauri app: `npm run tauri dev`
 3. The app connects to the server at `http://localhost:3001` by default
+
+## Testing Architecture
+
+### Frontend Testing (Vitest + React Testing Library)
+- **Framework**: Vitest with JSDOM environment for React component testing
+- **Testing Library**: @testing-library/react for component interaction testing
+- **Mock Strategy**: Comprehensive mocking of external dependencies (Tauri plugins, DnD Kit, ReactMarkdown)
+- **Setup**: Global test setup in `src/test/setup.ts` with jest-dom matchers and window mocks
+- **Coverage**: 142 tests across 6 test files covering all major components and hooks
+
+### Backend Testing (Jest + Socket.IO Testing)
+- **Framework**: Jest with ts-jest preset for TypeScript support
+- **Environment**: Node.js test environment with SQLite in-memory database
+- **Socket Testing**: Socket.IO client/server integration tests
+- **Configuration**: Tests run in band (sequential) to prevent database conflicts
+- **Setup**: Test database isolation and cleanup between tests
+
+### Test Files Structure
+```
+src/test/
+├── setup.ts                    # Global test configuration and mocks
+├── App.test.tsx                # Main application integration tests
+├── TodoItem.test.tsx           # TodoItem component behavior tests
+├── useSocket.test.ts           # WebSocket functionality tests
+├── useKeyboardShortcuts.test.ts # Keyboard shortcut system tests
+├── configManager.test.ts       # Configuration management tests
+└── utils.test.ts               # Utility function tests
+
+server/__tests__/
+├── setup.js                   # Backend test setup and teardown
+├── database.test.ts           # Database operations and migration tests
+├── socket.test.ts             # WebSocket event handling tests
+└── integration.test.ts        # End-to-end API integration tests
+```
+
+### Testing Patterns
+- **Mock Management**: External dependencies (Tauri, DnD Kit) mocked with factory functions
+- **Error Testing**: Console.error suppression for intentional error test scenarios
+- **Event Simulation**: Custom event simulation for keyboard shortcuts and DOM interactions
+- **Async Testing**: Proper handling of Socket.IO events and async operations with waitFor
+- **Type Safety**: Full TypeScript support in all test files with proper typing
+- **Cross-platform**: OS detection and platform-specific behavior testing
+
+### Running Tests
+- **Frontend**: All 142 tests pass with clean output (no stderr errors)
+- **Backend**: Comprehensive coverage of database operations and WebSocket events
+- **CI/CD Ready**: Tests designed for automated testing environments
+- **Fast Execution**: Optimized test performance with proper mocking and cleanup
 
 ## Architecture Patterns
 
@@ -262,6 +328,42 @@ To add a new language (e.g., French):
 - **WSLg fallbacks**: Always provide clipboard alternatives for file operations and URL opening
 - **Element selection**: Use CSS `user-select: none` globally with specific exceptions for text inputs
 - **OS detection**: Platform-aware keyboard shortcut labels (Ctrl vs Cmd) with automatic detection
+
+## Testing Best Practices
+
+### When Adding New Features
+1. **Component Tests**: Create comprehensive tests for new UI components in `src/test/`
+2. **Mock External Dependencies**: Use factory functions for mocking Tauri plugins, external libraries
+3. **Error Suppression**: For intentional error testing, use `vi.spyOn(console, 'error').mockImplementation(() => {})` 
+4. **Event Simulation**: Use custom event simulation for keyboard shortcuts and complex DOM interactions
+5. **Async Testing**: Always use `waitFor` for async operations, never use arbitrary timeouts
+
+### Test File Naming and Structure
+- Component tests: `ComponentName.test.tsx`
+- Hook tests: `useHookName.test.ts`
+- Utility tests: `utilityName.test.ts`
+- Integration tests: `featureName.integration.test.ts`
+
+### Mock Strategies
+- **Tauri Plugins**: Mock in beforeEach with controlled return values
+- **External Libraries**: Use vi.mock with factory functions to avoid hoisting issues
+- **Socket.IO**: Mock entire socket instance with event simulation capabilities
+- **DOM APIs**: Mock window.alert, navigator.clipboard, etc. in test setup
+
+### Running Specific Tests
+```bash
+# Run single test file
+npm test src/test/TodoItem.test.tsx
+
+# Run tests matching pattern
+npm test -- --testNamePattern="keyboard"
+
+# Run tests in UI mode for debugging
+npm run test:ui
+
+# Run tests with coverage
+npm test -- --coverage
+```
 
 ### Header Menu System Implementation
 - **Event Isolation**: Menu clicks use `preventDefault()` and `stopPropagation()` to prevent header drag conflicts
