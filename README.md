@@ -29,7 +29,11 @@ A modern, feature-rich todo list application built with Tauri, React, and TypeSc
 - 📋 **Header menu system** - Integrated File/Edit/View/Help menus with keyboard shortcuts and dropdown navigation
 
 ### Data Management & Export/Import
-- 💾 **SQLite database** - Reliable local data storage with automatic persistence
+- 💾 **SQLite database** - Reliable local data storage with OS-standard location
+  - **Linux**: `~/.local/share/YuToDo/todos.db`
+  - **Windows**: `%APPDATA%/YuToDo/todos.db` 
+  - **macOS**: `~/Library/Application Support/YuToDo/todos.db`
+- 🔄 **Automatic migration** - Seamless migration from old database location
 - 📤 **Native file operations** - Full Tauri-native file dialogs for export/import
 - 📄 **Multiple export formats**:
   - **JSON export** - Complete task data with metadata and ordering
@@ -63,10 +67,11 @@ A modern, feature-rich todo list application built with Tauri, React, and TypeSc
 
 ### Backend (Node.js + Express)
 - **Server**: Express.js with TypeScript
-- **Database**: SQLite with better-sqlite3 for high performance
+- **Database**: SQLite3 with OS-standard data directory location
 - **Real-time**: Socket.IO for WebSocket communication
 - **API**: RESTful endpoints for todo operations
 - **Schema**: Automatic database initialization and migration
+- **Data Management**: Automatic migration from old database locations
 
 ### Desktop (Tauri v2 + Rust)
 - **Framework**: Tauri v2 for modern cross-platform desktop apps
@@ -331,7 +336,17 @@ To contribute translations for additional languages:
 3. Add language configuration to the system
 4. Test translation coverage across all UI components
 
-## Database Schema
+## Database Architecture
+
+### Database Location
+The application stores data in OS-standard application data directories:
+- **Linux**: `~/.local/share/YuToDo/todos.db`
+- **Windows**: `%APPDATA%/YuToDo/todos.db`
+- **macOS**: `~/Library/Application Support/YuToDo/todos.db`
+
+The server automatically creates the data directory and migrates existing data from old locations.
+
+### Database Schema
 
 SQLite table `todos`:
 - `id` (TEXT PRIMARY KEY) - Unique task identifier
@@ -342,7 +357,7 @@ SQLite table `todos`:
 - `scheduledFor` (DATETIME) - Optional due date
 - `createdAt` (DATETIME) - Creation timestamp
 - `updatedAt` (DATETIME) - Last modification timestamp
-- `order` (INTEGER) - Custom ordering for drag & drop
+- `order_index` (INTEGER) - Custom ordering for drag & drop
 
 ## API Endpoints
 
@@ -384,8 +399,8 @@ SQLite table `todos`:
 - **Express.js** - Web framework
 - **TypeScript** - Type-safe server code
 - **Socket.IO** - Real-time WebSocket communication
-- **better-sqlite3** - High-performance SQLite driver
-- **cors** - Cross-origin resource sharing
+- **sqlite3** - SQLite database driver with OS-standard data locations
+- **uuid** - Unique identifier generation
 
 ### Desktop (Tauri v2)
 - **Tauri v2** - Modern Rust-based desktop framework

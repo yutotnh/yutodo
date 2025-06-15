@@ -19,7 +19,8 @@
     "actionCannotBeUndone": "この操作は取り消すことができません。",
     "selectDateTime": "日時を選択...",
     "selectedItems": "{{count}}件選択中",
-    "clearSelection": "選択解除"
+    "clearSelection": "選択解除",
+    "completedTasks": "完了済み ({{count}})"
   },
   "filters": {
     "title": "フィルター",

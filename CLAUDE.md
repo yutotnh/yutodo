@@ -37,9 +37,10 @@ npm run tauri build  # Build Tauri desktop app
 ### Backend (Node.js Server)
 ```bash
 cd server
-npm run dev          # Start server with ts-node
-npm run build        # Compile TypeScript
-npm run start        # Run compiled server
+npm run dev          # Start server with ts-node (development)
+npm run build        # Compile TypeScript to dist/
+npm run start        # Run compiled server from dist/
+npm test             # Run tests (placeholder - no tests implemented)
 ```
 
 ## Development Workflow
@@ -100,9 +101,9 @@ npm run start        # Run compiled server
 ## Key Features
 
 - **Real-time sync**: Multiple clients stay synchronized via Socket.IO
-- **Keyboard shortcuts**: Extensive keyboard navigation with OS-aware labels (Ctrl/Cmd), VS Code-style sequences (Ctrl+K, Ctrl+S for help)
+- **Keyboard shortcuts**: Extensive keyboard navigation with OS-aware labels (Ctrl/Cmd), VS Code-style sequences (Ctrl+K, Ctrl+S for help), Microsoft To Do-style Ctrl+D for completion toggle
 - **Filtering**: Filter todos by status, priority, and overdue items
-- **Import/Export**: Native file dialogs for JSON/CSV export, TOML config export/import
+- **Import/Export**: Native file dialogs for TOML export/import, unified format with standard `[[tasks]]` table syntax
 - **Custom styling**: Support for custom CSS injection
 - **Configuration**: TOML settings file with export/import/reset functionality
 - **Theme system**: Auto/light/dark mode with system preference detection
@@ -117,9 +118,21 @@ npm run start        # Run compiled server
 - **Overlay UI**: Non-intrusive header and Add Todo form that overlay content without displacement
 - **Element selection prevention**: CSS and keyboard handling to prevent unwanted text selection
 - **Multi-selection**: Excel-like task selection with Shift+Click (range) and Ctrl+Click (individual) with visual feedback
+- **Completed task management**: Collapsible completed tasks section (HTML `<details>`-like functionality) with expand/collapse toggle
 - **Header Menu System**: Custom menu bar integrated into header with File/Edit/View/Help menus and keyboard shortcuts
 
-## Database Schema
+## Database Architecture
+
+### Database Location & Storage
+- **OS-Standard Paths**: Database stored in OS-appropriate application data directories
+  - **Linux**: `~/.local/share/YuToDo/todos.db`
+  - **Windows**: `%APPDATA%/YuToDo/todos.db`
+  - **macOS**: `~/Library/Application Support/YuToDo/todos.db`
+- **Automatic Migration**: Server detects old database in git repository and migrates data to new location
+- **Directory Creation**: Automatically creates data directory structure if not present
+- **Git Exclusion**: Database files excluded from version control via `.gitignore`
+
+### Database Schema
 
 SQLite table `todos`:
 - `id` (TEXT PRIMARY KEY)
@@ -130,7 +143,7 @@ SQLite table `todos`:
 - `scheduledFor` (DATETIME)
 - `createdAt` (DATETIME)
 - `updatedAt` (DATETIME)
-- `order` (INTEGER) - Custom ordering for drag & drop
+- `order_index` (INTEGER) - Custom ordering for drag & drop
 
 ## Tauri v2 Plugin Configuration
 
@@ -155,14 +168,14 @@ SQLite table `todos`:
 ## Import/Export System
 
 ### Export Formats
-- **JSON**: Complete task data with metadata
-- **CSV**: Spreadsheet-compatible format
-- **TOML**: Settings configuration backup
+- **TOML Only**: Unified export format using standard TOML table syntax (`[[tasks]]`) with metadata and comments
+- **Settings Backup**: TOML configuration export/import with complete app settings
 
 ### Native File Handling
-- Uses Tauri plugin-dialog for save dialogs
-- Automatic fallback to clipboard if file operations fail
-- Cross-platform file type filtering
+- **Tauri Environment**: Native file dialogs with `.toml` extension filtering
+- **Browser Environment**: Direct file download/upload functionality  
+- **Cross-platform**: Automatic detection and appropriate file handling method
+- **Menu Integration**: Direct export/import accessible from File menu without opening settings panel
 
 ## WSLg Environment Handling
 
@@ -254,8 +267,16 @@ To add a new language (e.g., French):
 - **Event Isolation**: Menu clicks use `preventDefault()` and `stopPropagation()` to prevent header drag conflicts
 - **State Management**: Menu open state (`isMenuOpen`) prevents header auto-hide during menu interaction
 - **Dropdown Positioning**: Absolute positioned dropdowns with slide-in animation and outside-click detection
-- **Keyboard Navigation**: Esc key closes menus, Enter activates items
+- **Keyboard Navigation**: Alt+F/E/V/H shortcuts open menus, arrow keys navigate within menus, Esc key closes menus, Enter activates items
 - **Visual Feedback**: Active state styling and hover effects with theme-aware colors
+- **Windows-style Access**: Alt key displays access key hints, full keyboard navigation support
+
+### Completed Tasks Management
+- **Collapsible Section**: HTML `<details>`-like behavior with expand/collapse toggle button
+- **Visual Separation**: Clear separation between pending and completed tasks with animated arrow indicator
+- **Default State**: Expanded by default, state persists during session
+- **Sorting**: Completed tasks sorted by most recently updated first
+- **Integration**: Works seamlessly with filtering, search, and multi-selection features
 
 ## Known Issues
 
@@ -264,3 +285,12 @@ To add a new language (e.g., French):
   - **Workaround**: Press Escape to clear the state, or use E/F2 keys for task editing instead of Enter
   - **Status**: Under investigation - Enter key event handling has been removed from multiple locations but the issue persists
   - **Impact**: Does not affect core functionality, but may cause temporary UI confusion
+
+### Recent Changes and Improvements
+- **Database Location Migration**: Moved database from git repository to OS-standard application data directories with automatic migration
+- **TOML Format Unification**: Export/import now uses unified TOML format exclusively with standard `[[tasks]]` table syntax
+- **Completion Keyboard Shortcut**: Changed from Space key to Ctrl+D (Microsoft To Do style) for better UX and fewer conflicts
+- **Menu System Integration**: Settings moved from Edit menu to File menu (VS Code style), removed toggle theme from menu for simplicity
+- **Completed Tasks UI**: Added collapsible section for completed tasks with expand/collapse functionality
+- **File Operations**: Direct export/import from menu bar bypasses settings screen for streamlined workflow
+- **Git Repository Hygiene**: Database files now excluded from version control following best practices
