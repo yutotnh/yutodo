@@ -135,7 +135,7 @@ export class ConfigManager {
       // Visual appearance settings
       toml += '\n# Visual appearance settings\n';
       toml += '[appearance]\n';
-      if (cleanConfig.appearance.custom_css !== undefined) toml += `custom_css = "${cleanConfig.appearance.custom_css}"\n`;
+      if (cleanConfig.appearance.custom_css !== undefined) toml += `custom_css = ${this.escapeTomlString(cleanConfig.appearance.custom_css)}\n`;
       if (cleanConfig.appearance.font_family !== undefined) toml += `font_family = "${cleanConfig.appearance.font_family}"\n`;
       if (cleanConfig.appearance.font_size !== undefined) toml += `font_size = ${cleanConfig.appearance.font_size}\n`;
 
@@ -192,7 +192,8 @@ export class ConfigManager {
   async importConfig(tomlContent: string): Promise<TodoAppConfig> {
     try {
       const parsed = TOML.parse(tomlContent);
-      const config = this.mergeWithDefaults(parsed as any);
+      const normalizedConfig = this.normalizeParsedConfig(parsed as any);
+      const config = this.mergeWithDefaults(normalizedConfig);
       await this.saveConfig(config);
       return config;
     } catch (error) {
@@ -236,6 +237,44 @@ export class ConfigManager {
     } catch {
       return false;
     }
+  }
+
+  private normalizeParsedConfig(config: any): any {
+    if (config === null || config === undefined) {
+      return config;
+    }
+
+    if (Array.isArray(config)) {
+      return config.map(item => this.normalizeParsedConfig(item));
+    }
+
+    if (typeof config === 'object') {
+      const normalized: any = {};
+      for (const [key, value] of Object.entries(config)) {
+        // Convert BigInt to regular number
+        if (typeof value === 'bigint') {
+          normalized[key] = Number(value);
+        } else {
+          normalized[key] = this.normalizeParsedConfig(value);
+        }
+      }
+      return normalized;
+    }
+
+    // Convert BigInt to regular number
+    if (typeof config === 'bigint') {
+      return Number(config);
+    }
+
+    return config;
+  }
+
+  private escapeTomlString(str: string): string {
+    // Use TOML multi-line literal string for complex strings with special characters
+    if (str.includes('"') || str.includes('\\') || str.includes('\n')) {
+      return `'''${str}'''`;
+    }
+    return `"${str}"`;
   }
 }
 

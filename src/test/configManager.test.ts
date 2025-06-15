@@ -84,38 +84,26 @@ describe('ConfigManager', () => {
   
   describe('config operations', () => {
     it('should save and load config correctly', async () => {
-      const customConfig = {
-        ...DEFAULT_CONFIG,
-        app: {
-          ...DEFAULT_CONFIG.app,
-          window: {
-            ...DEFAULT_CONFIG.app.window,
-            always_on_top: true,
-            width: 900,
-            height: 700
-          },
-          ui: {
-            ...DEFAULT_CONFIG.app.ui,
-            theme: 'dark' as const,
-            detailed_mode: true,
-            language: 'ja'
-          }
-        },
-        server: {
-          ...DEFAULT_CONFIG.server,
-          url: 'http://localhost:3002'
-        }
+      const appSettings = {
+        alwaysOnTop: true,
+        detailedMode: true,
+        darkMode: 'dark' as const,
+        confirmDelete: false,
+        customCss: '.app { color: red; }',
+        serverUrl: 'http://localhost:3002',
+        language: 'ja' as const
       };
       
-      await configManager.saveConfig(customConfig);
-      const loadedConfig = await configManager.loadConfig();
+      await configManager.updateFromAppSettings(appSettings);
+      const loadedSettings = configManager.getAppSettings();
       
-      expect(loadedConfig.app.window.always_on_top).toBe(true);
-      expect(loadedConfig.app.window.width).toBe(900);
-      expect(loadedConfig.app.ui.theme).toBe('dark');
-      expect(loadedConfig.app.ui.detailed_mode).toBe(true);
-      expect(loadedConfig.app.ui.language).toBe('ja');
-      expect(loadedConfig.server.url).toBe('http://localhost:3002');
+      expect(loadedSettings.alwaysOnTop).toBe(true);
+      expect(loadedSettings.detailedMode).toBe(true);
+      expect(loadedSettings.darkMode).toBe('dark');
+      expect(loadedSettings.confirmDelete).toBe(false);
+      expect(loadedSettings.customCss).toBe('.app { color: red; }');
+      expect(loadedSettings.serverUrl).toBe('http://localhost:3002');
+      expect(loadedSettings.language).toBe('ja');
     });
     
     it('should update config from AppSettings', async () => {
