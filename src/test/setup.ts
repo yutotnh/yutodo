@@ -1,3 +1,12 @@
+import '@testing-library/jest-dom';
+import { vi } from 'vitest';
+
+// Mock window.alert for tests
+Object.defineProperty(window, 'alert', {
+  value: vi.fn(),
+  writable: true
+});
+
 // Mock Tauri API
 const mockTauriApi = {
   dialog: {
