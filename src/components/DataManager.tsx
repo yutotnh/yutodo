@@ -31,8 +31,8 @@ export const DataManager: React.FC<DataManagerProps> = ({ todos, onImport }) => 
           const filePath = await dialog.save({
             defaultPath: filename,
             filters: [{
-              name: 'Data Files',
-              extensions: ['json', 'csv', 'txt']
+              name: 'TOML Files',
+              extensions: ['toml']
             }]
           });
           
@@ -78,89 +78,105 @@ export const DataManager: React.FC<DataManagerProps> = ({ todos, onImport }) => 
     }
   };
 
-  const exportToJSON = async () => {
-    console.log('📤 Export to JSON clicked');
+  const exportToTOML = async () => {
+    console.log('📤 Export to TOML clicked');
     console.log('📋 Todos to export:', todos);
-    const dataStr = JSON.stringify(todos, null, 2);
-    console.log('📄 JSON content:', dataStr);
     
     try {
-      const filename = `todos_${new Date().toISOString().split('T')[0]}.json`;
-      const success = await downloadFile(dataStr, filename, 'application/json');
+      // TOML形式でのエクスポート
+      const TOML = await import('@ltd/j-toml');
+      
+      // メタデータセクションを生成
+      const metadata = {
+        exported_at: new Date().toISOString(),
+        app_version: "0.1.0",
+        format_version: "1.0",
+        total_tasks: todos.length
+      };
+
+      const metadataToml = TOML.stringify({ metadata }, {
+        newline: '\n',
+        indent: '  '
+      });
+
+      // タスクを[[tasks]]形式で手動生成
+      let tasksToml = '';
+      todos.forEach(todo => {
+        tasksToml += '\n[[tasks]]\n';
+        tasksToml += `id = "${todo.id}"\n`;
+        tasksToml += `title = "${todo.title.replace(/"/g, '\\"')}"\n`;  // エスケープ処理
+        tasksToml += `description = "${(todo.description || "").replace(/"/g, '\\"')}"\n`;
+        tasksToml += `completed = ${todo.completed}\n`;
+        tasksToml += `priority = ${todo.priority}\n`;
+        tasksToml += `scheduled_for = "${todo.scheduledFor || ""}"\n`;
+        tasksToml += `created_at = "${todo.createdAt}"\n`;
+        tasksToml += `updated_at = "${todo.updatedAt}"\n`;
+        tasksToml += `order = ${todo.order || 0}\n`;
+      });
+
+      const tomlContent = metadataToml + tasksToml;
+
+      // ヘッダーコメントを追加
+      const headerComment = `# YuToDo Tasks Export
+# Generated on ${new Date().toLocaleString()}
+#
+# This file contains all your tasks in TOML format.
+# You can re-import this file to restore your tasks.
+#
+# Format: TOML (Tom's Obvious, Minimal Language)
+# Website: https://toml.io/
+
+`;
+
+      const finalContent = headerComment + tomlContent;
+      
+      const filename = `yutodo_tasks_${new Date().toISOString().split('T')[0]}.toml`;
+      const success = await downloadFile(finalContent, filename, 'text/plain');
       if (success) {
-        console.log('✅ JSON export completed');
+        console.log('✅ TOML export completed');
         return;
       }
       
       // ダウンロードに失敗した場合、クリップボードにコピー
       console.log('⚠️ Standard download failed, trying clipboard');
-      await navigator.clipboard.writeText(dataStr);
-      alert(t('dataManager.jsonCopiedToClipboard'));
-      console.log('✅ JSON content copied to clipboard');
+      await navigator.clipboard.writeText(finalContent);
+      alert(t('dataManager.tomlCopiedToClipboard'));
+      console.log('✅ TOML content copied to clipboard');
     } catch (error) {
-      console.error('❌ Failed to export JSON:', error);
-      alert(t('dataManager.jsonExportFailed', { error }));
+      console.error('❌ Failed to export TOML:', error);
+      alert(t('dataManager.tomlExportFailed', { error }));
     }
   };
 
-  const exportToCSV = async () => {
-    console.log('📊 Export to CSV clicked');
-    console.log('📋 Todos to export:', todos);
-    const headers = ['ID', 'Title', 'Description', 'Completed', 'Priority', 'Scheduled For', 'Created At', 'Updated At'];
-    const csvContent = [
-      headers.join(','),
-      ...todos.map(todo => [
-        todo.id,
-        `"${todo.title.replace(/"/g, '""')}"`,
-        `"${(todo.description || '').replace(/"/g, '""')}"`,
-        todo.completed,
-        todo.priority,
-        todo.scheduledFor || '',
-        todo.createdAt,
-        todo.updatedAt
-      ].join(','))
-    ].join('\n');
-
-    console.log('📄 CSV content:', csvContent);
-    
-    try {
-      const filename = `todos_${new Date().toISOString().split('T')[0]}.csv`;
-      const success = await downloadFile(csvContent, filename, 'text/csv');
-      if (success) {
-        console.log('✅ CSV export completed');
-        return;
-      }
-      
-      // ダウンロードに失敗した場合、クリップボードにコピー
-      console.log('⚠️ Standard download failed, trying clipboard');
-      await navigator.clipboard.writeText(csvContent);
-      alert(t('dataManager.csvCopiedToClipboard'));
-      console.log('✅ CSV content copied to clipboard');
-    } catch (error) {
-      console.error('❌ Failed to export CSV:', error);
-      alert(t('dataManager.csvExportFailed', { error }));
-    }
-  };
-
-  const handleFileImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const content = e.target?.result as string;
-        const importedTodos = JSON.parse(content);
+    try {
+      const content = await file.text();
+      const TOML = await import('@ltd/j-toml');
+      const importedData = TOML.parse(content);
+      
+      // TOMLデータのバリデーション
+      if (importedData && typeof importedData === 'object' && 'tasks' in importedData) {
+        const tasks = importedData.tasks as any[];
         
-        // 基本的なバリデーション
-        if (Array.isArray(importedTodos)) {
-          const validTodos = importedTodos.filter((todo: any) => 
+        if (Array.isArray(tasks)) {
+          const validTodos = tasks.filter((todo: any) => 
             todo && 
             typeof todo.id === 'string' &&
             typeof todo.title === 'string' &&
             typeof todo.completed === 'boolean' &&
             typeof todo.priority === 'number'
-          );
+          ).map((todo: any) => ({
+            ...todo,
+            // TOML形式でのデータマッピング（空文字列をundefinedに変換）
+            scheduledFor: (todo.scheduled_for && todo.scheduled_for !== '') ? todo.scheduled_for : 
+                         (todo.scheduledFor && todo.scheduledFor !== '') ? todo.scheduledFor : undefined,
+            createdAt: todo.created_at || todo.createdAt,
+            updatedAt: todo.updated_at || todo.updatedAt,
+            description: (todo.description && todo.description !== '') ? todo.description : undefined
+          }));
           
           if (validTodos.length > 0) {
             onImport(validTodos);
@@ -171,11 +187,13 @@ export const DataManager: React.FC<DataManagerProps> = ({ todos, onImport }) => 
         } else {
           alert(t('dataManager.invalidFileFormat'));
         }
-      } catch (error) {
-        alert(t('dataManager.failedToReadFile'));
+      } else {
+        alert(t('dataManager.invalidFileFormat'));
       }
-    };
-    reader.readAsText(file);
+    } catch (error) {
+      console.error('Import failed:', error);
+      alert(t('dataManager.failedToReadFile'));
+    }
     
     // Reset input
     if (fileInputRef.current) {
@@ -199,20 +217,12 @@ export const DataManager: React.FC<DataManagerProps> = ({ todos, onImport }) => 
           <h4>{t('dataManager.export')}</h4>
           <div className="data-manager-buttons">
             <button
-              onClick={exportToJSON}
+              onClick={exportToTOML}
               className="data-btn data-btn--export"
               disabled={todos.length === 0}
             >
               <FileText size={14} />
-              {t('dataManager.jsonFormat')}
-            </button>
-            <button
-              onClick={exportToCSV}
-              className="data-btn data-btn--export"
-              disabled={todos.length === 0}
-            >
-              <Download size={14} />
-              {t('dataManager.csvFormat')}
+              {t('dataManager.export')}
             </button>
           </div>
           <p className="data-description">
@@ -228,11 +238,11 @@ export const DataManager: React.FC<DataManagerProps> = ({ todos, onImport }) => 
               className="data-btn data-btn--import"
             >
               <Upload size={14} />
-              {t('dataManager.selectJsonFile')}
+              {t('dataManager.import')}
             </button>
           </div>
           <p className="data-description">
-            {t('dataManager.loadTasksFromJson')}
+            {t('dataManager.loadTasksFromToml')}
           </p>
         </div>
       </div>
@@ -240,7 +250,7 @@ export const DataManager: React.FC<DataManagerProps> = ({ todos, onImport }) => 
       <input
         ref={fileInputRef}
         type="file"
-        accept=".json"
+        accept=".toml"
         onChange={handleFileImport}
         style={{ display: 'none' }}
       />

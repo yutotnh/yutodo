@@ -71,11 +71,15 @@
     "csvFormat": "CSV Format",
     "saveTasksToFile": "Save {{count}} tasks to file",
     "selectJsonFile": "Select JSON File",
+    "selectTomlFile": "Select TOML File",
     "loadTasksFromJson": "Load tasks from JSON file",
+    "loadTasksFromToml": "Load tasks from file",
     "jsonCopiedToClipboard": "JSON data copied to clipboard.\\nPaste into a text file and save.",
     "jsonExportFailed": "Failed to export JSON.\\nError: {{error}}",
     "csvCopiedToClipboard": "CSV data copied to clipboard.\\nPaste into a text file and save.",
     "csvExportFailed": "Failed to export CSV.\\nError: {{error}}",
+    "tomlCopiedToClipboard": "TOML data copied to clipboard.\\nPaste into a text file and save.",
+    "tomlExportFailed": "Failed to export TOML.\\nError: {{error}}",
     "tasksImported": "Imported {{count}} tasks.",
     "noValidTasks": "No valid tasks found.",
     "invalidFileFormat": "Invalid file format.",
@@ -122,6 +126,7 @@
     "enableAlwaysOnTop": "Enable Always on Top",
     "disableAlwaysOnTop": "Disable Always on Top",
     "keyboardShortcuts": "Keyboard Shortcuts",
-    "about": "About YuToDo"
+    "about": "About YuToDo",
+    "accessKeyHint": "Press Alt to show access keys"
   }
 }

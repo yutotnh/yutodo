@@ -2221,6 +2221,24 @@ body {
   color: #f9fafb;
 }
 
+.menu-dropdown-item--selected {
+  background: #3b82f6 !important;
+  color: white !important;
+}
+
+.menu-dropdown-item--selected .menu-shortcut {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.app--dark .menu-dropdown-item--selected {
+  background: #3b82f6 !important;
+  color: white !important;
+}
+
+.app--dark .menu-dropdown-item--selected .menu-shortcut {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
 .menu-shortcut {
   color: #9ca3af;
   font-size: 0.6875rem;
@@ -2239,4 +2257,15 @@ body {
 
 .app--dark .menu-separator {
   background: #374151;
+}
+
+/* アクセスキーのハイライト */
+.menu-access-key {
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  transition: text-decoration-color 0.2s ease;
+}
+
+.menu-access-key--visible {
+  text-decoration-color: currentColor;
 }

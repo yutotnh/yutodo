@@ -9,6 +9,7 @@ interface KeyboardShortcutHandlers {
   onShowHelp: () => void;
   onClearSelection: () => void;
   onEditSelected: () => void;
+  onToggleSelectedCompletion: () => void;
 }
 
 interface KeyboardShortcutOptions {
@@ -148,6 +149,17 @@ export const useKeyboardShortcuts = (handlers: KeyboardShortcutHandlers, options
       }
     }
     
+    // Ctrl/Cmd + D: 選択されたタスクの完了状態を切り替え
+    if ((event.ctrlKey || event.metaKey) && event.key === 'd') {
+      const activeElement = document.activeElement;
+      // 入力フィールドにフォーカスがない場合のみ完了状態を切り替え
+      if (!activeElement?.closest('input, textarea, [contenteditable="true"]')) {
+        event.preventDefault();
+        event.stopPropagation();
+        handlers.onToggleSelectedCompletion();
+      }
+    }
+    
     // Escape: 選択解除、フォーカスを外す、編集モードを終了（モーダルが開いていない場合のみ）
     if (event.key === 'Escape' && !options.isModalOpen) {
       const activeElement = document.activeElement as HTMLElement;
@@ -187,7 +199,7 @@ export const useKeyboardShortcuts = (handlers: KeyboardShortcutHandlers, options
     { key: 'Delete', description: '選択されたタスクを削除' },
     { key: 'Escape', description: '選択解除・フォーカスを外す' },
     { key: `${modifierKey} + K, ${modifierKey} + S`, description: 'ヘルプを表示' },
-    { key: 'Space', description: 'タスクを完了/未完了に切り替え' },
+    { key: `${modifierKey} + D`, description: 'タスクを完了/未完了に切り替え' },
     { key: 'E', description: 'タスクを編集' },
     { key: 'F2', description: 'タスクを編集' },
     { key: `${modifierKey} + Click`, description: '個別選択/解除' },

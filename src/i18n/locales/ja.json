@@ -71,11 +71,15 @@
     "csvFormat": "CSV形式",
     "saveTasksToFile": "{{count}}個のタスクをファイルに保存します",
     "selectJsonFile": "JSONファイルを選択",
+    "selectTomlFile": "TOMLファイルを選択",
     "loadTasksFromJson": "JSONファイルからタスクを読み込みます",
+    "loadTasksFromToml": "ファイルからタスクを読み込みます",
     "jsonCopiedToClipboard": "JSONデータをクリップボードにコピーしました。\\nテキストファイルに貼り付けて保存してください。",
     "jsonExportFailed": "JSONエクスポートに失敗しました。\\nエラー: {{error}}",
     "csvCopiedToClipboard": "CSVデータをクリップボードにコピーしました。\\nテキストファイルに貼り付けて保存してください。",
     "csvExportFailed": "CSVエクスポートに失敗しました。\\nエラー: {{error}}",
+    "tomlCopiedToClipboard": "TOMLデータをクリップボードにコピーしました。\\nテキストファイルに貼り付けて保存してください。",
+    "tomlExportFailed": "TOMLエクスポートに失敗しました。\\nエラー: {{error}}",
     "tasksImported": "{{count}}個のタスクをインポートしました。",
     "noValidTasks": "有効なタスクが見つかりませんでした。",
     "invalidFileFormat": "無効なファイル形式です。",
@@ -122,6 +126,7 @@
     "enableAlwaysOnTop": "常に最前面を有効",
     "disableAlwaysOnTop": "常に最前面を無効",
     "keyboardShortcuts": "キーボードショートカット",
-    "about": "YuToDoについて"
+    "about": "YuToDoについて",
+    "accessKeyHint": "Altキーを押すとアクセスキーが表示されます"
   }
 }

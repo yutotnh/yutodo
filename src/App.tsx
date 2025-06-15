@@ -65,6 +65,7 @@ function App() {
   }>({ isOpen: false, todoIds: [], title: '', message: '' });
   const [showConnectionTooltip, setShowConnectionTooltip] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isAltKeyActive, setIsAltKeyActive] = useState(false);
   const addTodoFormRef = useRef<AddTodoFormRef>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -234,8 +235,8 @@ function App() {
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       const threshold = 30;
-      // メニューが開いている時はヘッダーを隠さない
-      if (!isMenuOpen) {
+      // メニューが開いている時またはAltキーが押されている時はヘッダーを隠さない
+      if (!isMenuOpen && !isAltKeyActive) {
         setShowHeader(e.clientY <= threshold);
       }
     };
@@ -245,35 +246,35 @@ function App() {
     };
 
     const handleMouseLeave = () => {
-      // メニューが開いている時はヘッダーを隠さない
-      if (!isMenuOpen) {
+      // メニューが開いている時またはAltキーが押されている時はヘッダーを隠さない
+      if (!isMenuOpen && !isAltKeyActive) {
         setShowHeader(false);
       }
     };
 
     // Tauri環境での追加対応
     const handleWindowBlur = () => {
-      if (!isMenuOpen) {
+      if (!isMenuOpen && !isAltKeyActive) {
         setShowHeader(false);
       }
     };
 
     const handleVisibilityChange = () => {
-      if (document.hidden && !isMenuOpen) {
+      if (document.hidden && !isMenuOpen && !isAltKeyActive) {
         setShowHeader(false);
       }
     };
 
     // bodyレベルでもマウス追跡を追加
     const handleBodyMouseLeave = () => {
-      if (!isMenuOpen) {
+      if (!isMenuOpen && !isAltKeyActive) {
         setShowHeader(false);
       }
     };
 
     // htmlレベルでのマウス追跡
     const handleDocumentMouseLeave = () => {
-      if (!isMenuOpen) {
+      if (!isMenuOpen && !isAltKeyActive) {
         setShowHeader(false);
       }
     };
@@ -281,7 +282,7 @@ function App() {
     // ウィンドウレベルでのマウス追跡
     const handleWindowMouseOut = (e: MouseEvent) => {
       // マウスがウィンドウから完全に出た場合
-      if (!e.relatedTarget && !isMenuOpen) {
+      if (!e.relatedTarget && !isMenuOpen && !isAltKeyActive) {
         setShowHeader(false);
       }
     };
@@ -305,7 +306,7 @@ function App() {
       window.removeEventListener('blur', handleWindowBlur);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [isMenuOpen]);
+  }, [isMenuOpen, isAltKeyActive]);
 
   // ウィンドウフォーカス状態を監視
   useEffect(() => {
@@ -395,12 +396,6 @@ function App() {
   };
 
   // メニューアクションハンドラー
-  const handleToggleTheme = () => {
-    const themes = ['auto', 'light', 'dark'] as const;
-    const currentIndex = themes.indexOf(settings.darkMode);
-    const nextTheme = themes[(currentIndex + 1) % themes.length];
-    handleSettingsChange({ ...settings, darkMode: nextTheme });
-  };
 
   const handleToggleSlim = () => {
     handleSettingsChange({ ...settings, detailedMode: !settings.detailedMode });
@@ -414,14 +409,204 @@ function App() {
     alert(`YuToDo v0.1.0\n\nA modern, feature-rich todo list application built with Tauri, React, and TypeScript.\n\nFeatures real-time synchronization, keyboard shortcuts, and native desktop integration.`);
   };
 
-  const handleImportTasksFromMenu = () => {
-    setShowSettings(true);
-    // 設定画面のデータマネージャータブにフォーカス
+  const handleImportTasksFromMenu = async () => {
+    try {
+      // Tauri環境でのファイルインポート
+      if (typeof window !== 'undefined' && (window as any).__TAURI_INTERNALS__) {
+        const dialog = await import('@tauri-apps/plugin-dialog');
+        const fs = await import('@tauri-apps/plugin-fs');
+        const TOML = await import('@ltd/j-toml');
+        
+        const filePath = await dialog.open({
+          title: t('dataManager.selectTomlFile'),
+          filters: [{
+            name: 'TOML Files',
+            extensions: ['toml']
+          }]
+        });
+        
+        if (filePath && typeof filePath === 'string') {
+          const content = await fs.readTextFile(filePath);
+          const importedData = TOML.parse(content);
+          
+          // TOMLデータのバリデーション
+          if (importedData && typeof importedData === 'object' && 'tasks' in importedData) {
+            const tasks = importedData.tasks as any[];
+            
+            if (Array.isArray(tasks)) {
+              const validTodos = tasks.filter((todo: any) => 
+                todo && 
+                typeof todo.id === 'string' &&
+                typeof todo.title === 'string' &&
+                typeof todo.completed === 'boolean' &&
+                typeof todo.priority === 'number'
+              ).map((todo: any) => ({
+                ...todo,
+                // TOML形式でのデータマッピング（空文字列をundefinedに変換）
+                scheduledFor: (todo.scheduled_for && todo.scheduled_for !== '') ? todo.scheduled_for : 
+                             (todo.scheduledFor && todo.scheduledFor !== '') ? todo.scheduledFor : undefined,
+                createdAt: todo.created_at || todo.createdAt,
+                updatedAt: todo.updated_at || todo.updatedAt,
+                description: (todo.description && todo.description !== '') ? todo.description : undefined
+              }));
+              
+              if (validTodos.length > 0) {
+                handleImportTodos(validTodos);
+                alert(t('dataManager.tasksImported', { count: validTodos.length }));
+              } else {
+                alert(t('dataManager.noValidTasks'));
+              }
+            } else {
+              alert(t('dataManager.invalidFileFormat'));
+            }
+          } else {
+            alert(t('dataManager.invalidFileFormat'));
+          }
+        }
+      } else {
+        // ブラウザ環境ではファイル選択
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.toml';
+        input.onchange = async (e) => {
+          const file = (e.target as HTMLInputElement).files?.[0];
+          if (file) {
+            try {
+              const content = await file.text();
+              const TOML = await import('@ltd/j-toml');
+              const importedData = TOML.parse(content);
+              
+              // TOMLデータのバリデーション
+              if (importedData && typeof importedData === 'object' && 'tasks' in importedData) {
+                const tasks = importedData.tasks as any[];
+                
+                if (Array.isArray(tasks)) {
+                  const validTodos = tasks.filter((todo: any) => 
+                    todo && 
+                    typeof todo.id === 'string' &&
+                    typeof todo.title === 'string' &&
+                    typeof todo.completed === 'boolean' &&
+                    typeof todo.priority === 'number'
+                  ).map((todo: any) => ({
+                    ...todo,
+                    // TOML形式でのデータマッピング（空文字列をundefinedに変換）
+                    scheduledFor: (todo.scheduled_for && todo.scheduled_for !== '') ? todo.scheduled_for : 
+                                 (todo.scheduledFor && todo.scheduledFor !== '') ? todo.scheduledFor : undefined,
+                    createdAt: todo.created_at || todo.createdAt,
+                    updatedAt: todo.updated_at || todo.updatedAt,
+                    description: (todo.description && todo.description !== '') ? todo.description : undefined
+                  }));
+                  
+                  if (validTodos.length > 0) {
+                    handleImportTodos(validTodos);
+                    alert(t('dataManager.tasksImported', { count: validTodos.length }));
+                  } else {
+                    alert(t('dataManager.noValidTasks'));
+                  }
+                } else {
+                  alert(t('dataManager.invalidFileFormat'));
+                }
+              } else {
+                alert(t('dataManager.invalidFileFormat'));
+              }
+            } catch (error) {
+              console.error('Import failed:', error);
+              alert(t('dataManager.failedToReadFile'));
+            }
+          }
+        };
+        input.click();
+      }
+    } catch (error) {
+      console.error('Import failed:', error);
+      alert(t('dataManager.failedToReadFile'));
+    }
   };
 
-  const handleExportTasksFromMenu = () => {
-    setShowSettings(true);
-    // 設定画面のデータマネージャータブにフォーカス
+  const handleExportTasksFromMenu = async () => {
+    try {
+      // TOML形式でのエクスポート
+      const TOML = await import('@ltd/j-toml');
+      
+      // メタデータセクションを生成
+      const metadata = {
+        exported_at: new Date().toISOString(),
+        app_version: "0.1.0",
+        format_version: "1.0",
+        total_tasks: todos.length
+      };
+
+      const metadataToml = TOML.stringify({ metadata }, {
+        newline: '\n',
+        indent: '  '
+      });
+
+      // タスクを[[tasks]]形式で手動生成
+      let tasksToml = '';
+      todos.forEach(todo => {
+        tasksToml += '\n[[tasks]]\n';
+        tasksToml += `id = "${todo.id}"\n`;
+        tasksToml += `title = "${todo.title.replace(/"/g, '\\"')}"\n`;  // エスケープ処理
+        tasksToml += `description = "${(todo.description || "").replace(/"/g, '\\"')}"\n`;
+        tasksToml += `completed = ${todo.completed}\n`;
+        tasksToml += `priority = ${todo.priority}\n`;
+        tasksToml += `scheduled_for = "${todo.scheduledFor || ""}"\n`;
+        tasksToml += `created_at = "${todo.createdAt}"\n`;
+        tasksToml += `updated_at = "${todo.updatedAt}"\n`;
+        tasksToml += `order = ${todo.order || 0}\n`;
+      });
+
+      const tomlContent = metadataToml + tasksToml;
+
+      // ヘッダーコメントを追加
+      const headerComment = `# YuToDo Tasks Export
+# Generated on ${new Date().toLocaleString()}
+#
+# This file contains all your tasks in TOML format.
+# You can re-import this file to restore your tasks.
+#
+# Format: TOML (Tom's Obvious, Minimal Language)
+# Website: https://toml.io/
+
+`;
+
+      const finalContent = headerComment + tomlContent;
+
+      // Tauri環境でのTOMLエクスポート
+      if (typeof window !== 'undefined' && (window as any).__TAURI_INTERNALS__) {
+        const dialog = await import('@tauri-apps/plugin-dialog');
+        const fs = await import('@tauri-apps/plugin-fs');
+        
+        const filename = `yutodo_tasks_${new Date().toISOString().split('T')[0]}.toml`;
+        const filePath = await dialog.save({
+          title: t('dataManager.export'),
+          defaultPath: filename,
+          filters: [{
+            name: 'TOML Files',
+            extensions: ['toml']
+          }]
+        });
+        
+        if (filePath) {
+          await fs.writeTextFile(filePath, finalContent);
+          alert(`${t('dataManager.export')} ${t('buttons.save')}: ${filePath}`);
+        }
+      } else {
+        // ブラウザ環境ではファイルダウンロード
+        const blob = new Blob([finalContent], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `yutodo_tasks_${new Date().toISOString().split('T')[0]}.toml`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+    } catch (error) {
+      console.error('TOML Export failed:', error);
+      alert(t('dataManager.tomlExportFailed', { error: error }));
+    }
   };
 
   // ヘッダードラッグハンドラ
@@ -483,10 +668,69 @@ function App() {
           }, 10);
         }
       }
+    },
+    onToggleSelectedCompletion: () => {
+      console.log('Space key pressed - toggling completion for selected todos:', selectedTodos.size);
+      
+      // 選択されたタスクの完了状態を一括切り替え
+      if (selectedTodos.size > 0) {
+        const selectedIds = Array.from(selectedTodos);
+        const selectedTodosList = todos.filter(todo => selectedIds.includes(todo.id));
+        
+        console.log('Selected todos to toggle:', selectedTodosList.length);
+        
+        // すべて完了している場合は未完了に、それ以外は完了にする
+        const allCompleted = selectedTodosList.every(todo => todo.completed);
+        const newCompletedState = !allCompleted;
+        
+        console.log('All completed:', allCompleted, 'New state:', newCompletedState);
+        
+        selectedTodosList.forEach(todo => {
+          if (todo.completed !== newCompletedState) {
+            console.log('Toggling todo:', todo.id, 'from', todo.completed, 'to', newCompletedState);
+            toggleTodo(todo.id);
+          }
+        });
+      } else {
+        console.log('No todos selected');
+      }
     }
   };
 
   useKeyboardShortcuts(keyboardHandlers, { isModalOpen: showSettings || showShortcutHelp || deleteConfirm.isOpen });
+
+  // Altキーの状態を監視してヘッダー表示を制御
+  useEffect(() => {
+    const handleGlobalKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Alt') {
+        setIsAltKeyActive(true);
+        setShowHeader(true); // Altキーが押されたらヘッダーを表示
+      }
+    };
+
+    const handleGlobalKeyUp = (event: KeyboardEvent) => {
+      if (event.key === 'Alt') {
+        setIsAltKeyActive(false);
+        // Altキーが離されたときの処理（メニューが開いていない場合はヘッダーを隠す）
+        if (!isMenuOpen) {
+          // 少し遅延してからヘッダーを隠す（メニュー操作の時間を確保）
+          setTimeout(() => {
+            if (!isMenuOpen) {
+              setShowHeader(false);
+            }
+          }, 500);
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleGlobalKeyDown);
+    document.addEventListener('keyup', handleGlobalKeyUp);
+
+    return () => {
+      document.removeEventListener('keydown', handleGlobalKeyDown);
+      document.removeEventListener('keyup', handleGlobalKeyUp);
+    };
+  }, [isMenuOpen]);
 
 
   // 実際のダークモード状態を計算
@@ -682,13 +926,13 @@ function App() {
             onDeleteSelected={keyboardHandlers.onDeleteSelected}
             onShowSettings={() => setShowSettings(true)}
             onToggleSlim={handleToggleSlim}
-            onToggleTheme={handleToggleTheme}
             onToggleAlwaysOnTop={handleToggleAlwaysOnTop}
             onShowShortcuts={() => setShowShortcutHelp(true)}
             onShowAbout={handleShowAbout}
             onImportTasks={handleImportTasksFromMenu}
             onExportTasks={handleExportTasksFromMenu}
             onMenuStateChange={setIsMenuOpen}
+            isAltKeyActive={isAltKeyActive}
           />
         </div>
         <div className="header-center">
@@ -701,12 +945,6 @@ function App() {
           )}
         </div>
         <div className="header-right">
-          <button
-            onClick={() => setShowSettings(true)}
-            className="settings-btn"
-          >
-            <SettingsIcon size={12} />
-          </button>
           <button
             onClick={handleMinimize}
             className="window-control minimize-btn"
