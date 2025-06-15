@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Database files
+server/todos.db
+server/todos-*.db
+server/test.db

@@ -66,6 +66,7 @@ function App() {
   const [showConnectionTooltip, setShowConnectionTooltip] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAltKeyActive, setIsAltKeyActive] = useState(false);
+  const [isCompletedExpanded, setIsCompletedExpanded] = useState(true);
   const addTodoFormRef = useRef<AddTodoFormRef>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -670,29 +671,20 @@ function App() {
       }
     },
     onToggleSelectedCompletion: () => {
-      console.log('Space key pressed - toggling completion for selected todos:', selectedTodos.size);
-      
       // 選択されたタスクの完了状態を一括切り替え
       if (selectedTodos.size > 0) {
         const selectedIds = Array.from(selectedTodos);
         const selectedTodosList = todos.filter(todo => selectedIds.includes(todo.id));
         
-        console.log('Selected todos to toggle:', selectedTodosList.length);
-        
         // すべて完了している場合は未完了に、それ以外は完了にする
         const allCompleted = selectedTodosList.every(todo => todo.completed);
         const newCompletedState = !allCompleted;
         
-        console.log('All completed:', allCompleted, 'New state:', newCompletedState);
-        
         selectedTodosList.forEach(todo => {
           if (todo.completed !== newCompletedState) {
-            console.log('Toggling todo:', todo.id, 'from', todo.completed, 'to', newCompletedState);
             toggleTodo(todo.id);
           }
         });
-      } else {
-        console.log('No todos selected');
       }
     }
   };
@@ -830,13 +822,23 @@ function App() {
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
-      const oldIndex = sortedTodos.findIndex(todo => todo.id === active.id);
-      const newIndex = sortedTodos.findIndex(todo => todo.id === over.id);
+      // ドラッグされたタスクがどのセクション（未完了または完了済み）にあるかを判定
+      const draggedTodo = [...pendingTodos, ...completedTodos].find(todo => todo.id === active.id);
+      const targetTodo = [...pendingTodos, ...completedTodos].find(todo => todo.id === over.id);
+      
+      if (!draggedTodo || !targetTodo) return;
 
-      const reorderedTodos = arrayMove(sortedTodos, oldIndex, newIndex);
+      // 同じ完了状態のタスク同士でのみ並び替えを許可
+      if (draggedTodo.completed !== targetTodo.completed) return;
 
-      // 新しいorderを計算して送信
-      const reorderData = reorderedTodos.map((todo, index) => ({
+      const sourceList = draggedTodo.completed ? completedTodos : pendingTodos;
+      const oldIndex = sourceList.findIndex(todo => todo.id === active.id);
+      const newIndex = sourceList.findIndex(todo => todo.id === over.id);
+
+      const reorderedList = arrayMove(sourceList, oldIndex, newIndex);
+
+      // 新しいorderを計算して送信（各セクション内で0からの連番）
+      const reorderData = reorderedList.map((todo, index) => ({
         id: todo.id,
         order: index
       }));
@@ -890,14 +892,11 @@ function App() {
     low: todos.filter(todo => todo.priority === 0).length
   };
 
-  const sortedTodos = [...filteredTodos].sort((a, b) => {
+  // 未完了と完了済みタスクを分離
+  const pendingTodos = filteredTodos.filter(todo => !todo.completed).sort((a, b) => {
     // カスタムorderがある場合はそれを優先
     if (a.order !== undefined && b.order !== undefined) {
       return a.order - b.order;
-    }
-
-    if (a.completed !== b.completed) {
-      return a.completed ? 1 : -1;
     }
 
     if (a.priority !== b.priority) {
@@ -913,6 +912,22 @@ function App() {
 
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
+
+  const completedTodos = filteredTodos.filter(todo => todo.completed).sort((a, b) => {
+    // カスタムorderがある場合はそれを優先
+    if (a.order !== undefined && b.order !== undefined) {
+      return a.order - b.order;
+    }
+
+    // デフォルトは更新日時の新しい順
+    return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+  });
+
+  // 表示用のタスクリスト（折りたたみ状態を考慮）
+  const sortedTodos = [
+    ...pendingTodos,
+    ...(isCompletedExpanded ? completedTodos : [])
+  ];
 
   return (
     <div className={`app ${!settings.detailedMode ? 'app--slim' : ''} ${isDarkMode ? 'app--dark' : ''}`}>
@@ -1005,7 +1020,7 @@ function App() {
           autoScroll={false} // 自動スクロール無効化でパフォーマンス向上
         >
           <div className="todo-list">
-            {sortedTodos.length === 0 ? (
+            {pendingTodos.length === 0 && completedTodos.length === 0 ? (
               <div className="empty-state">
                 {todos.length === 0 ? (
                   <p>{t('tasks.noTasks')}</p>
@@ -1014,54 +1029,122 @@ function App() {
                 )}
               </div>
             ) : (
-              <SortableContext
-                items={sortedTodos.map(todo => todo.id)}
-                strategy={verticalListSortingStrategy}
-              >
-                {sortedTodos.map((todo) => (
-                  <TodoItem
-                    key={todo.id}
-                    todo={todo}
-                    onToggle={toggleTodo}
-                    onUpdate={updateTodo}
-                    onDelete={handleDeleteWithConfirm}
-                    isSelected={selectedTodos.has(todo.id)}
-                    slimMode={!settings.detailedMode}
-                    onSelect={(id, selected, event) => {
-                      const currentIndex = sortedTodos.findIndex(todo => todo.id === id);
-                      const newSelected = new Set(selectedTodos);
+              <>
+                {/* 未完了タスク */}
+                {pendingTodos.length > 0 && (
+                  <SortableContext
+                    items={pendingTodos.map(todo => todo.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    {pendingTodos.map((todo) => (
+                      <TodoItem
+                        key={todo.id}
+                        todo={todo}
+                        onToggle={toggleTodo}
+                        onUpdate={updateTodo}
+                        onDelete={handleDeleteWithConfirm}
+                        isSelected={selectedTodos.has(todo.id)}
+                        slimMode={!settings.detailedMode}
+                        onSelect={(id, selected, event) => {
+                          const allTodos = [...pendingTodos, ...completedTodos];
+                          const currentIndex = allTodos.findIndex(todo => todo.id === id);
+                          const newSelected = new Set(selectedTodos);
 
-                      if (event?.shiftKey && lastSelectedIndex !== -1) {
-                        // Shift+クリック: 範囲選択
-                        const startIndex = Math.min(lastSelectedIndex, currentIndex);
-                        const endIndex = Math.max(lastSelectedIndex, currentIndex);
-                        
-                        for (let i = startIndex; i <= endIndex; i++) {
-                          newSelected.add(sortedTodos[i].id);
-                        }
-                        setSelectedTodos(newSelected);
-                      } else if (event?.ctrlKey || event?.metaKey) {
-                        // Ctrl+クリック: 個別選択/解除
-                        if (selected) {
-                          newSelected.add(id);
-                        } else {
-                          newSelected.delete(id);
-                        }
-                        setSelectedTodos(newSelected);
-                        setLastSelectedIndex(currentIndex);
-                      } else {
-                        // 通常クリック: 単一選択
-                        if (selected) {
-                          setSelectedTodos(new Set([id]));
-                        } else {
-                          setSelectedTodos(new Set());
-                        }
-                        setLastSelectedIndex(currentIndex);
-                      }
-                    }}
-                  />
-                ))}
-              </SortableContext>
+                          if (event?.shiftKey && lastSelectedIndex !== -1) {
+                            // Shift+クリック: 範囲選択
+                            const startIndex = Math.min(lastSelectedIndex, currentIndex);
+                            const endIndex = Math.max(lastSelectedIndex, currentIndex);
+                            
+                            for (let i = startIndex; i <= endIndex; i++) {
+                              newSelected.add(allTodos[i].id);
+                            }
+                            setSelectedTodos(newSelected);
+                          } else if (event?.ctrlKey || event?.metaKey) {
+                            // Ctrl+クリック: 個別選択/解除
+                            if (selected) {
+                              newSelected.add(id);
+                            } else {
+                              newSelected.delete(id);
+                            }
+                            setSelectedTodos(newSelected);
+                            setLastSelectedIndex(currentIndex);
+                          } else {
+                            // 通常クリック: 単一選択
+                            if (selected) {
+                              setSelectedTodos(new Set([id]));
+                            } else {
+                              setSelectedTodos(new Set());
+                            }
+                            setLastSelectedIndex(currentIndex);
+                          }
+                        }}
+                      />
+                    ))}
+                  </SortableContext>
+                )}
+
+                {/* 完了済みタスクセクション */}
+                {completedTodos.length > 0 && (
+                  <div className="completed-section">
+                    <button
+                      className="completed-section__header"
+                      onClick={() => setIsCompletedExpanded(!isCompletedExpanded)}
+                    >
+                      <span className={`completed-section__arrow ${isCompletedExpanded ? 'expanded' : ''}`}>
+                        ▶
+                      </span>
+                      <span className="completed-section__title">
+                        {t('tasks.completedTasks', { count: completedTodos.length })}
+                      </span>
+                    </button>
+                    
+                    {isCompletedExpanded && (
+                      <div className="completed-section__content">
+                        <SortableContext
+                          items={completedTodos.map(todo => todo.id)}
+                          strategy={verticalListSortingStrategy}
+                        >
+                          {completedTodos.map((todo) => (
+                            <TodoItem
+                              key={todo.id}
+                              todo={todo}
+                              onToggle={toggleTodo}
+                              onUpdate={updateTodo}
+                              onDelete={handleDeleteWithConfirm}
+                              isSelected={selectedTodos.has(todo.id)}
+                              slimMode={!settings.detailedMode}
+                              onSelect={(id, selected, event) => {
+                                const allTodos = [...pendingTodos, ...completedTodos];
+                                const currentIndex = allTodos.findIndex(todo => todo.id === id);
+                                const newSelected = new Set(selectedTodos);
+
+                                if (event?.ctrlKey || event?.metaKey) {
+                                  // Ctrl+クリック: 個別選択/解除
+                                  if (selected) {
+                                    newSelected.add(id);
+                                  } else {
+                                    newSelected.delete(id);
+                                  }
+                                  setSelectedTodos(newSelected);
+                                  setLastSelectedIndex(currentIndex);
+                                } else {
+                                  // 通常クリック: 単一選択
+                                  if (selected) {
+                                    setSelectedTodos(new Set([id]));
+                                  } else {
+                                    setSelectedTodos(new Set());
+                                  }
+                                  setLastSelectedIndex(currentIndex);
+                                }
+                              }}
+                            />
+                          ))}
+                        </SortableContext>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </>
             )}
           </div>
         </DndContext>

@@ -19,7 +19,8 @@
     "actionCannotBeUndone": "This action cannot be undone.",
     "selectDateTime": "Select date and time...",
     "selectedItems": "{{count}} items selected",
-    "clearSelection": "Clear selection"
+    "clearSelection": "Clear selection",
+    "completedTasks": "Completed ({{count}})"
   },
   "filters": {
     "title": "Filter",
