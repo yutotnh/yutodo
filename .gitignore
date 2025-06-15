@@ -27,3 +27,7 @@ dist-ssr
 server/todos.db
 server/todos-*.db
 server/test.db
+
+# Test files
+server/test-data/
+test-data/
