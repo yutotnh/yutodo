@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ChevronDown, FileText, Edit, Eye, HelpCircle } from 'lucide-react';
+import { ChevronDown, Menu } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { AppSettings } from '../types/todo';
 
@@ -49,6 +49,9 @@ export const MenuBar: React.FC<MenuBarProps> = ({
   const [isAltPressed, setIsAltPressed] = useState(false);
   const [selectedItemIndex, setSelectedItemIndex] = useState<number>(-1);
   const [isKeyboardNavigation, setIsKeyboardNavigation] = useState(false);
+  const [isHamburgerMode, setIsHamburgerMode] = useState(false);
+  const [showHamburgerMenu, setShowHamburgerMenu] = useState(false);
+  const [activeSubmenu, setActiveSubmenu] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   // 親コンポーネントからのAltキー状態を反映
@@ -61,7 +64,6 @@ export const MenuBar: React.FC<MenuBarProps> = ({
     file: {
       label: t('menu.file'),
       accessKey: 'F',
-      icon: <FileText size={12} />,
       items: [
         { id: 'new-task', label: t('menu.newTask'), shortcut: 'Ctrl+N', action: onNewTask },
         { id: 'separator-1', separator: true },
@@ -75,7 +77,6 @@ export const MenuBar: React.FC<MenuBarProps> = ({
     edit: {
       label: t('menu.edit'),
       accessKey: 'E',
-      icon: <Edit size={12} />,
       items: [
         { id: 'select-all', label: t('menu.selectAll'), shortcut: 'Ctrl+A', action: onSelectAll },
         { id: 'delete-selected', label: t('menu.deleteSelected'), shortcut: 'Del', action: onDeleteSelected }
@@ -84,7 +85,6 @@ export const MenuBar: React.FC<MenuBarProps> = ({
     view: {
       label: t('menu.view'),
       accessKey: 'V',
-      icon: <Eye size={12} />,
       items: [
         { id: 'toggle-slim', label: settings.detailedMode ? t('menu.enableSlimMode') : t('menu.disableSlimMode'), action: onToggleSlim },
         { id: 'separator-1', separator: true },
@@ -94,7 +94,6 @@ export const MenuBar: React.FC<MenuBarProps> = ({
     help: {
       label: t('menu.help'),
       accessKey: 'H',
-      icon: <HelpCircle size={12} />,
       items: [
         { id: 'shortcuts', label: t('menu.keyboardShortcuts'), shortcut: 'Ctrl+K Ctrl+S', action: onShowShortcuts },
         { id: 'separator-1', separator: true },
@@ -102,6 +101,7 @@ export const MenuBar: React.FC<MenuBarProps> = ({
       ] as MenuItemData[]
     }
   };
+
 
   // 外部クリックでメニューを閉じる
   useEffect(() => {
@@ -117,6 +117,47 @@ export const MenuBar: React.FC<MenuBarProps> = ({
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }
   }, [activeMenu, onMenuStateChange]);
+
+  // ウィンドウ幅を監視してハンバーガーモードを切り替え
+  useEffect(() => {
+    const checkWindowWidth = () => {
+      // メニューが必要とする最小幅を計算
+      // File(50px) + Edit(50px) + View(50px) + Help(50px) + ウィンドウコントロール(60px) + 余白(40px) = 約300px
+      const minWidth = 300;
+      const shouldUseHamburger = window.innerWidth < minWidth;
+      
+      if (shouldUseHamburger !== isHamburgerMode) {
+        setIsHamburgerMode(shouldUseHamburger);
+        // モード切り替え時にメニューを閉じる
+        setActiveMenu(null);
+        setShowHamburgerMenu(false);
+        onMenuStateChange?.(false);
+      }
+    };
+
+    // 初期チェック
+    checkWindowWidth();
+
+    // リサイズイベントリスナー
+    window.addEventListener('resize', checkWindowWidth);
+    return () => window.removeEventListener('resize', checkWindowWidth);
+  }, [isHamburgerMode, onMenuStateChange]);
+
+  // ハンバーガーメニューの外部クリックを処理
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setShowHamburgerMenu(false);
+        setActiveSubmenu(null);
+        onMenuStateChange?.(false);
+      }
+    };
+
+    if (showHamburgerMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showHamburgerMenu, onMenuStateChange]);
 
   // キーボードイベントハンドラー（Alt+キー、ESC、矢印キー）
   useEffect(() => {
@@ -255,6 +296,38 @@ export const MenuBar: React.FC<MenuBarProps> = ({
     onMenuStateChange?.(false);
   };
 
+  // ハンバーガーメニューのクリックハンドラー
+  const handleHamburgerClick = (event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setShowHamburgerMenu(!showHamburgerMenu);
+    setActiveMenu(null);
+    setActiveSubmenu(null);
+    onMenuStateChange?.(!showHamburgerMenu);
+  };
+
+  // ハンバーガーメニュー内のアイテムクリックハンドラー
+  const handleHamburgerItemClick = (action: () => void, event?: React.MouseEvent) => {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    action();
+    setShowHamburgerMenu(false);
+    setActiveMenu(null);
+    setActiveSubmenu(null);
+    onMenuStateChange?.(false);
+  };
+
+  // サブメニューのホバーハンドラー
+  const handleSubmenuHover = (menuKey: string) => {
+    setActiveSubmenu(menuKey);
+  };
+
+  const handleSubmenuLeave = () => {
+    setActiveSubmenu(null);
+  };
+
   // アクセスキーをハイライト表示するヘルパー関数
   const renderLabelWithAccessKey = (label: string, accessKey: string) => {
     const accessKeyIndex = label.toLowerCase().indexOf(accessKey.toLowerCase());
@@ -275,53 +348,114 @@ export const MenuBar: React.FC<MenuBarProps> = ({
 
   return (
     <div ref={menuRef} className="menu-bar">
-      {Object.entries(menus).map(([key, menu]) => (
-        <div key={key} className="menu-item">
+      {isHamburgerMode ? (
+        // ハンバーガーメニューモード
+        <div className="menu-item">
           <button
-            className={`menu-button ${activeMenu === key ? 'menu-button--active' : ''}`}
-            onClick={(e) => handleMenuClick(key, e)}
-            onMouseEnter={() => activeMenu && setActiveMenu(key)}
-            title={`${menu.label} (Alt+${menu.accessKey})`}
+            className={`menu-button menu-button--hamburger ${showHamburgerMenu ? 'menu-button--active' : ''}`}
+            onClick={handleHamburgerClick}
+            title={t('menu.menu')}
           >
-            {menu.icon}
-            {renderLabelWithAccessKey(menu.label, menu.accessKey)}
-            <ChevronDown size={10} />
+            <Menu size={16} />
           </button>
           
-          {activeMenu === key && (
-            <div className="menu-dropdown">
-              {menu.items.map((item, index) => {
-                if (item.separator) {
-                  return <div key={`${item.id}-${index}`} className="menu-separator" />;
-                }
-
-                // セパレーターを除いた実際のメニュー項目のインデックスを計算
-                const validItems = menu.items.filter(i => !i.separator);
-                const validItemIndex = validItems.findIndex(i => i.id === item.id);
-                const isSelected = isKeyboardNavigation && selectedItemIndex === validItemIndex;
-
-                return (
+          {showHamburgerMenu && (
+            <div className="side-menu">
+              {/* 左側: メイン項目 */}
+              <div className="side-menu-main">
+                {Object.entries(menus).map(([menuKey, menu]) => (
                   <button
-                    key={item.id}
-                    className={`menu-dropdown-item ${isSelected ? 'menu-dropdown-item--selected' : ''}`}
-                    onClick={(e) => handleMenuItemClick(item.action, e)}
-                    onMouseEnter={() => {
-                      // マウスが項目に入ったときはキーボードナビゲーションをリセット
-                      if (isKeyboardNavigation) {
-                        setIsKeyboardNavigation(false);
-                        setSelectedItemIndex(-1);
-                      }
-                    }}
+                    key={menuKey}
+                    className={`side-menu-item ${activeSubmenu === menuKey ? 'side-menu-item--active' : ''}`}
+                    onMouseEnter={() => handleSubmenuHover(menuKey)}
+                    onMouseLeave={handleSubmenuLeave}
+                    onClick={() => handleSubmenuHover(menuKey)}
                   >
-                    <span>{item.label}</span>
-                    {item.shortcut && <span className="menu-shortcut">{item.shortcut}</span>}
+                    <span>{menu.label}</span>
+                    <span className="side-menu-arrow">▶</span>
                   </button>
-                );
-              })}
+                ))}
+              </div>
+              
+              {/* 右側: サブメニュー */}
+              {activeSubmenu && (
+                <div 
+                  className="side-menu-submenu"
+                  style={{
+                    top: `${Object.keys(menus).indexOf(activeSubmenu) * 3}rem` // 各項目の高さ分だけオフセット
+                  }}
+                  onMouseEnter={() => setActiveSubmenu(activeSubmenu)}
+                  onMouseLeave={handleSubmenuLeave}
+                >
+                  {menus[activeSubmenu as keyof typeof menus].items.map((item, index) => {
+                    if (item.separator) {
+                      return <div key={`${item.id}-${index}`} className="menu-separator" />;
+                    }
+                    return (
+                      <button
+                        key={item.id}
+                        className="menu-dropdown-item side-menu-subitem"
+                        onClick={(e) => handleHamburgerItemClick(item.action, e)}
+                      >
+                        <span>{item.label}</span>
+                        {item.shortcut && <span className="menu-shortcut">{item.shortcut}</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           )}
         </div>
-      ))}
+      ) : (
+        // 通常メニューモード
+        Object.entries(menus).map(([key, menu]) => (
+          <div key={key} className="menu-item">
+            <button
+              className={`menu-button ${activeMenu === key ? 'menu-button--active' : ''}`}
+              onClick={(e) => handleMenuClick(key, e)}
+              onMouseEnter={() => activeMenu && setActiveMenu(key)}
+              title={`${menu.label} (Alt+${menu.accessKey})`}
+            >
+              {renderLabelWithAccessKey(menu.label, menu.accessKey)}
+              <ChevronDown size={10} />
+            </button>
+            
+            {activeMenu === key && (
+              <div className="menu-dropdown">
+                {menu.items.map((item, index) => {
+                  if (item.separator) {
+                    return <div key={`${item.id}-${index}`} className="menu-separator" />;
+                  }
+
+                  // セパレーターを除いた実際のメニュー項目のインデックスを計算
+                  const validItems = menu.items.filter(i => !i.separator);
+                  const validItemIndex = validItems.findIndex(i => i.id === item.id);
+                  const isSelected = isKeyboardNavigation && selectedItemIndex === validItemIndex;
+
+                  return (
+                    <button
+                      key={item.id}
+                      className={`menu-dropdown-item ${isSelected ? 'menu-dropdown-item--selected' : ''}`}
+                      onClick={(e) => handleMenuItemClick(item.action, e)}
+                      onMouseEnter={() => {
+                        // マウスが項目に入ったときはキーボードナビゲーションをリセット
+                        if (isKeyboardNavigation) {
+                          setIsKeyboardNavigation(false);
+                          setSelectedItemIndex(-1);
+                        }
+                      }}
+                    >
+                      <span>{item.label}</span>
+                      {item.shortcut && <span className="menu-shortcut">{item.shortcut}</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        ))
+      )}
     </div>
   );
 };
