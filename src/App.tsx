@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Settings as SettingsIcon, Minus, X } from 'lucide-react';
+import { Minus, X } from 'lucide-react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { useTranslation } from 'react-i18next';
 import {
@@ -325,26 +325,11 @@ function App() {
 
   // ウィンドウタイトルを接続状態に応じて更新
   useEffect(() => {
-    const getStatusIcon = () => {
-      switch (connectionStatus) {
-        case 'connected':
-          return '●';
-        case 'connecting':
-          return '○';
-        case 'disconnected':
-          return '×';
-        case 'error':
-          return '!';
-        default:
-          return '?';
-      }
-    };
 
     const updateTitle = async () => {
       try {
-        const statusIcon = getStatusIcon();
         const reconnectText = reconnectAttempts > 0 ? ` (${reconnectAttempts})` : '';
-        const newTitle = `${statusIcon} YuToDo${reconnectText}`;
+        const newTitle = `YuToDo${reconnectText}`;
 
         // Tauriの場合
         if ((window as any).__TAURI__) {
@@ -923,17 +908,11 @@ function App() {
     return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
   });
 
-  // 表示用のタスクリスト（折りたたみ状態を考慮）
-  const sortedTodos = [
-    ...pendingTodos,
-    ...(isCompletedExpanded ? completedTodos : [])
-  ];
 
   return (
     <div className={`app ${!settings.detailedMode ? 'app--slim' : ''} ${isDarkMode ? 'app--dark' : ''}`}>
       <header className={`app-header ${showHeader ? 'app-header--visible' : 'app-header--hidden'}`} onMouseDown={handleHeaderMouseDown}>
         <div className="header-left">
-          <h1>YuToDo</h1>
           <MenuBar
             settings={settings}
             onNewTask={keyboardHandlers.onNewTask}

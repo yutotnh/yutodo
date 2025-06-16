@@ -110,6 +110,7 @@
     "settingsResetFailed": "Failed to reset settings."
   },
   "menu": {
+    "menu": "Menu",
     "file": "File",
     "edit": "Edit",
     "view": "View",

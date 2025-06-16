@@ -110,6 +110,7 @@
     "settingsResetFailed": "設定のリセットに失敗しました。"
   },
   "menu": {
+    "menu": "メニュー",
     "file": "ファイル",
     "edit": "編集",
     "view": "表示",
