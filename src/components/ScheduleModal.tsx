@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 import { X, Calendar, Clock, Repeat } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Schedule, ScheduleType, WeeklyConfig, MonthlyConfig, CustomConfig } from '../types/todo';
@@ -23,8 +25,8 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState(0);
   const [type, setType] = useState<ScheduleType>('once');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const [startDate, setStartDate] = useState<Date | null>(new Date());
+  const [endDate, setEndDate] = useState<Date | null>(null);
   const [time, setTime] = useState('09:00');
   const [isActive, setIsActive] = useState(true);
   const [excludeWeekends, setExcludeWeekends] = useState(false);
@@ -69,8 +71,8 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({
       setDescription(schedule.description || '');
       setPriority(schedule.priority);
       setType(schedule.type);
-      setStartDate(schedule.startDate);
-      setEndDate(schedule.endDate || '');
+      setStartDate(new Date(schedule.startDate));
+      setEndDate(schedule.endDate ? new Date(schedule.endDate) : null);
       setTime(schedule.time || '09:00');
       setIsActive(schedule.isActive);
       setExcludeWeekends(schedule.excludeWeekends || false);
@@ -98,8 +100,8 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({
       setDescription('');
       setPriority(0);
       setType('once');
-      setStartDate(new Date().toISOString().split('T')[0]);
-      setEndDate('');
+      setStartDate(new Date());
+      setEndDate(null);
       setTime('09:00');
       setIsActive(true);
       setExcludeWeekends(false);
@@ -157,8 +159,8 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({
           interval: customInterval,
           unit: customUnit,
           time: time,
-          startDate: startDate,
-          ...(endDate && { endDate }),
+          startDate: startDate?.toISOString().split('T')[0] || '',
+          ...(endDate && { endDate: endDate.toISOString().split('T')[0] }),
           ...(customMaxOccurrences && { maxOccurrences: customMaxOccurrences })
         };
         break;
@@ -169,8 +171,8 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({
       description: description.trim() || undefined,
       priority,
       type,
-      startDate,
-      endDate: endDate || undefined,
+      startDate: startDate?.toISOString().split('T')[0] || '',
+      endDate: endDate?.toISOString().split('T')[0] || undefined,
       time: (type === 'once' || type === 'daily') ? time : undefined,
       weeklyConfig,
       monthlyConfig,
@@ -250,14 +252,13 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({
               </div>
 
               <div className="form-group">
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={isActive}
-                    onChange={(e) => setIsActive(e.target.checked)}
-                  />
-                  {t('schedule.active')}
-                </label>
+                <label>{t('schedule.active')}</label>
+                <input
+                  type="checkbox"
+                  checked={isActive}
+                  onChange={(e) => setIsActive(e.target.checked)}
+                  className="simple-checkbox"
+                />
               </div>
             </div>
           </div>
@@ -288,11 +289,13 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({
             <div className="form-row">
               <div className="form-group">
                 <label htmlFor="schedule-start-date">{t('schedule.startDate')}</label>
-                <input
+                <DatePicker
                   id="schedule-start-date"
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
+                  selected={startDate}
+                  onChange={(date: Date | null) => setStartDate(date)}
+                  dateFormat="yyyy/MM/dd"
+                  placeholderText="Select start date"
+                  className="form-control"
                   required
                 />
               </div>
@@ -300,11 +303,15 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({
               {type !== 'once' && (
                 <div className="form-group">
                   <label htmlFor="schedule-end-date">{t('schedule.endDate')} ({t('schedule.optional')})</label>
-                  <input
+                  <DatePicker
                     id="schedule-end-date"
-                    type="date"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
+                    selected={endDate}
+                    onChange={(date: Date | null) => setEndDate(date)}
+                    dateFormat="yyyy/MM/dd"
+                    placeholderText="Select end date"
+                    className="form-control"
+                    isClearable
+                    minDate={startDate || undefined}
                   />
                 </div>
               )}

@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { Plus, Calendar, Clock, Repeat, Edit, Trash2 } from 'lucide-react';
+import React from 'react';
+import { Plus, Calendar, Clock, Repeat, Edit, Trash2, Zap, RefreshCw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Schedule } from '../types/todo';
 
@@ -55,6 +55,28 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
     }
   };
 
+  const getScheduleTypeIcon = (type: string) => {
+    switch (type) {
+      case 'once': return <Calendar size={14} />;
+      case 'daily': return <RefreshCw size={14} />;
+      case 'weekly': return <Repeat size={14} />;
+      case 'monthly': return <Calendar size={14} />;
+      case 'custom': return <Zap size={14} />;
+      default: return <Repeat size={14} />;
+    }
+  };
+
+  const getScheduleTypeColor = (type: string) => {
+    switch (type) {
+      case 'once': return '#3b82f6';
+      case 'daily': return '#10b981';
+      case 'weekly': return '#f59e0b';
+      case 'monthly': return '#8b5cf6';
+      case 'custom': return '#ef4444';
+      default: return '#6b7280';
+    }
+  };
+
   const formatNextExecution = (schedule: Schedule): string => {
     if (!schedule.nextExecution) return t('schedule.notScheduled');
     return new Date(schedule.nextExecution).toLocaleDateString() + ' ' + 
@@ -67,14 +89,14 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
       <div className="schedule-header">
         <div className="schedule-header-content">
           <h1 className="schedule-title">
-            <Calendar className="schedule-title-icon" size={24} />
+            <Calendar className="schedule-title-icon" size={28} />
             {t('schedule.title')}
           </h1>
           <button 
-            className="btn btn--primary schedule-add-btn"
+            className="schedule-add-btn"
             onClick={onCreateSchedule}
           >
-            <Plus size={16} />
+            <Plus size={18} />
             {t('schedule.addNew')}
           </button>
         </div>
@@ -93,20 +115,26 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
             <div 
               key={schedule.id} 
               className={`schedule-item ${!schedule.isActive ? 'schedule-item--disabled' : ''}`}
+              style={{
+                borderLeftColor: getScheduleTypeColor(schedule.type),
+                borderLeftWidth: '4px'
+              }}
             >
               <div className="schedule-item-main">
                 <div className="schedule-item-header">
                   <div className="schedule-item-title-section">
-                    <div className="schedule-item-toggle">
-                      <input
-                        type="checkbox"
-                        checked={schedule.isActive}
-                        onChange={() => onToggleSchedule(schedule.id)}
-                        className="schedule-toggle"
-                      />
-                    </div>
                     <div className="schedule-item-content">
-                      <h3 className="schedule-item-title">{schedule.title}</h3>
+                      <div className="schedule-title-with-toggle">
+                        <h3 className="schedule-item-title">{schedule.title}</h3>
+                        <div className="schedule-item-toggle">
+                          <input
+                            type="checkbox"
+                            checked={schedule.isActive}
+                            onChange={() => onToggleSchedule(schedule.id)}
+                            className="schedule-toggle"
+                          />
+                        </div>
+                      </div>
                       {schedule.description && (
                         <p className="schedule-item-description">{schedule.description}</p>
                       )}
@@ -117,6 +145,14 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
                       className="btn btn--ghost btn--small"
                       onClick={() => onEditSchedule(schedule)}
                       title={t('schedule.edit')}
+                      style={{
+                        background: 'rgba(59, 130, 246, 0.1)',
+                        color: '#3b82f6',
+                        border: '1px solid rgba(59, 130, 246, 0.2)',
+                        borderRadius: '0.5rem',
+                        padding: '0.375rem',
+                        transition: 'all 0.2s ease'
+                      }}
                     >
                       <Edit size={14} />
                     </button>
@@ -124,6 +160,14 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
                       className="btn btn--ghost btn--small btn--danger"
                       onClick={() => onDeleteSchedule(schedule.id)}
                       title={t('schedule.delete')}
+                      style={{
+                        background: 'rgba(239, 68, 68, 0.1)',
+                        color: '#ef4444',
+                        border: '1px solid rgba(239, 68, 68, 0.2)',
+                        borderRadius: '0.5rem',
+                        padding: '0.375rem',
+                        transition: 'all 0.2s ease'
+                      }}
                     >
                       <Trash2 size={14} />
                     </button>
@@ -132,7 +176,9 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
 
                 <div className="schedule-item-details">
                   <div className="schedule-detail">
-                    <Repeat size={14} className="schedule-detail-icon" />
+                    <span style={{ color: getScheduleTypeColor(schedule.type) }}>
+                      {getScheduleTypeIcon(schedule.type)}
+                    </span>
                     <span>{formatScheduleDescription(schedule)}</span>
                   </div>
                   {schedule.time && (
