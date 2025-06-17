@@ -26,10 +26,14 @@ export const ShortcutHelp: React.FC<ShortcutHelpProps> = ({ onClose }) => {
     };
   }, [onClose]);
 
-  // ヘルプパネル外側クリック検知
+  // ヘルプパネル外側クリック検知（タイトルバー除く）
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (shortcutPanelRef.current && !shortcutPanelRef.current.contains(event.target as Node)) {
+        // タイトルバー領域（上部30px）をクリックした場合はモーダルを閉じない
+        if (event.clientY <= 30) {
+          return;
+        }
         onClose();
       }
     };

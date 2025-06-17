@@ -201,6 +201,15 @@ interface Todo {
   order?: number;
 }
 
+interface MonthlyConfig {
+  type: 'date' | 'weekday' | 'lastDay';
+  date?: number;
+  weekNumber?: number;
+  dayOfWeek?: number;
+  daysFromEnd?: number;
+  time?: string;
+}
+
 interface Schedule {
   id: string;
   title: string;
@@ -214,14 +223,7 @@ interface Schedule {
     daysOfWeek: number[];
     time?: string;
   };
-  monthlyConfig?: {
-    type: 'date' | 'weekday' | 'lastDay';
-    date?: number;
-    weekNumber?: number;
-    dayOfWeek?: number;
-    daysFromEnd?: number;
-    time?: string;
-  };
+  monthlyConfig?: MonthlyConfig;
   customConfig?: {
     interval: number;
     unit: 'days' | 'weeks' | 'months';
@@ -490,6 +492,14 @@ io.on('connection', (socket) => {
     const id = uuidv4();
     const now = new Date().toISOString();
     
+    // Calculate initial next execution time
+    const nextExecution = scheduleExecutor.calculateInitialNextExecution({
+      ...scheduleData,
+      id,
+      createdAt: now,
+      updatedAt: now
+    } as Schedule);
+    
     db.run(
       `INSERT INTO schedules (
         id, title, description, priority, type, startDate, endDate, time,
@@ -504,7 +514,7 @@ io.on('connection', (socket) => {
         scheduleData.customConfig ? JSON.stringify(scheduleData.customConfig) : null,
         scheduleData.excludeWeekends, 
         scheduleData.excludeDates ? JSON.stringify(scheduleData.excludeDates) : null,
-        scheduleData.isActive, now, now, scheduleData.lastExecuted, scheduleData.nextExecution
+        scheduleData.isActive, now, now, null, nextExecution
       ],
       function(err) {
         if (err) {
@@ -529,8 +539,8 @@ io.on('connection', (socket) => {
           isActive: scheduleData.isActive,
           createdAt: now,
           updatedAt: now,
-          lastExecuted: scheduleData.lastExecuted,
-          nextExecution: scheduleData.nextExecution
+          lastExecuted: undefined,
+          nextExecution: nextExecution || undefined
         };
         
         // Broadcast to all clients
@@ -543,11 +553,14 @@ io.on('connection', (socket) => {
   socket.on('update-schedule', (scheduleData: Schedule) => {
     const now = new Date().toISOString();
     
+    // Recalculate next execution time for updated schedule
+    const nextExecution = scheduleExecutor.calculateInitialNextExecution(scheduleData);
+    
     db.run(
       `UPDATE schedules SET 
         title=?, description=?, priority=?, type=?, startDate=?, endDate=?, time=?,
         weeklyConfig=?, monthlyConfig=?, customConfig=?, excludeWeekends=?, excludeDates=?,
-        isActive=?, updatedAt=?, lastExecuted=?, nextExecution=?
+        isActive=?, updatedAt=?, nextExecution=?
       WHERE id=?`,
       [
         scheduleData.title, scheduleData.description, scheduleData.priority,
@@ -557,7 +570,7 @@ io.on('connection', (socket) => {
         scheduleData.customConfig ? JSON.stringify(scheduleData.customConfig) : null,
         scheduleData.excludeWeekends,
         scheduleData.excludeDates ? JSON.stringify(scheduleData.excludeDates) : null,
-        scheduleData.isActive, now, scheduleData.lastExecuted, scheduleData.nextExecution,
+        scheduleData.isActive, now, nextExecution,
         scheduleData.id
       ],
       function(err) {
@@ -566,7 +579,11 @@ io.on('connection', (socket) => {
           return;
         }
         
-        const updatedSchedule = { ...scheduleData, updatedAt: now };
+        const updatedSchedule = { 
+          ...scheduleData, 
+          updatedAt: now,
+          nextExecution: nextExecution || undefined
+        };
         io.emit('schedule-updated', updatedSchedule);
       }
     );
@@ -637,14 +654,528 @@ io.on('connection', (socket) => {
   });
 });
 
+// Schedule execution engine
+class ScheduleExecutor {
+  private intervalId: NodeJS.Timeout | null = null;
+  private readonly CHECK_INTERVAL = 60000; // Check every minute
+
+  start() {
+    if (this.intervalId) {
+      console.log('⚠️  Schedule executor already running');
+      return;
+    }
+
+    console.log('🚀 Starting schedule execution engine...');
+    this.intervalId = setInterval(() => {
+      this.checkSchedules();
+    }, this.CHECK_INTERVAL);
+
+    // Also check immediately on startup
+    this.checkSchedules();
+  }
+
+  stop() {
+    if (this.intervalId) {
+      clearInterval(this.intervalId);
+      this.intervalId = null;
+      console.log('⏹️  Schedule execution engine stopped');
+    }
+  }
+
+  private checkSchedules() {
+    const now = new Date();
+    console.log(`🔍 Checking schedules at ${now.toISOString()}`);
+
+    db.all(
+      'SELECT * FROM schedules WHERE isActive = 1',
+      (err, rows: any[]) => {
+        if (err) {
+          console.error('❌ Error fetching schedules:', err);
+          return;
+        }
+
+        console.log(`📋 Found ${rows.length} active schedules`);
+
+        rows.forEach(row => {
+          const schedule = this.parseScheduleRow(row);
+          this.processSchedule(schedule, now);
+        });
+      }
+    );
+  }
+
+  private parseScheduleRow(row: any): Schedule {
+    return {
+      id: row.id,
+      title: row.title,
+      description: row.description,
+      priority: row.priority,
+      type: row.type,
+      startDate: row.startDate,
+      endDate: row.endDate,
+      time: row.time,
+      weeklyConfig: row.weeklyConfig ? JSON.parse(row.weeklyConfig) : undefined,
+      monthlyConfig: row.monthlyConfig ? JSON.parse(row.monthlyConfig) : undefined,
+      customConfig: row.customConfig ? JSON.parse(row.customConfig) : undefined,
+      excludeWeekends: Boolean(row.excludeWeekends),
+      excludeDates: row.excludeDates ? JSON.parse(row.excludeDates) : undefined,
+      isActive: Boolean(row.isActive),
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+      lastExecuted: row.lastExecuted,
+      nextExecution: row.nextExecution
+    };
+  }
+
+  private processSchedule(schedule: Schedule, now: Date) {
+    const shouldExecute = this.shouldExecuteSchedule(schedule, now);
+    
+    if (shouldExecute) {
+      console.log(`⚡ Executing schedule: ${schedule.title}`);
+      this.executeSchedule(schedule, now);
+    }
+  }
+
+  private shouldExecuteSchedule(schedule: Schedule, now: Date): boolean {
+    // Check if schedule has a nextExecution time
+    if (!schedule.nextExecution) {
+      return false;
+    }
+
+    // Check if schedule has already been executed recently (within the last minute)
+    if (schedule.lastExecuted) {
+      const lastExec = new Date(schedule.lastExecuted);
+      const timeDiff = now.getTime() - lastExec.getTime();
+      if (timeDiff < 60000) { // Less than 1 minute ago
+        return false;
+      }
+    }
+
+    // Check if current time has passed the next execution time
+    const nextExecTime = new Date(schedule.nextExecution);
+    return now >= nextExecTime;
+  }
+
+  private isScheduleTimeMatch(schedule: Schedule, now: Date): boolean {
+    const currentDate = now.toISOString().split('T')[0]; // YYYY-MM-DD
+    const currentTime = now.toTimeString().slice(0, 5); // HH:MM in local time
+    const currentDayOfWeek = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
+
+    // Check if we're before the start date
+    if (currentDate < schedule.startDate) {
+      return false;
+    }
+
+    // Check if we're after the end date
+    if (schedule.endDate && currentDate > schedule.endDate) {
+      return false;
+    }
+
+    // Check exclude dates
+    if (schedule.excludeDates && schedule.excludeDates.includes(currentDate)) {
+      return false;
+    }
+
+    switch (schedule.type) {
+      case 'once':
+        return currentDate === schedule.startDate && 
+               currentTime === (schedule.time || '09:00');
+
+      case 'daily':
+        // Check if weekends should be excluded
+        if (schedule.excludeWeekends && (currentDayOfWeek === 0 || currentDayOfWeek === 6)) {
+          return false;
+        }
+        return currentTime === (schedule.time || '09:00');
+
+      case 'weekly':
+        if (!schedule.weeklyConfig?.daysOfWeek) return false;
+        return schedule.weeklyConfig.daysOfWeek.includes(currentDayOfWeek) &&
+               currentTime === (schedule.weeklyConfig.time || schedule.time || '09:00');
+
+      case 'monthly':
+        return this.isMonthlyScheduleMatch(schedule, now);
+
+      case 'custom':
+        return this.isCustomScheduleMatch(schedule, now);
+
+      default:
+        return false;
+    }
+  }
+
+  private isMonthlyScheduleMatch(schedule: Schedule, now: Date): boolean {
+    if (!schedule.monthlyConfig) return false;
+
+    const currentTime = now.toTimeString().slice(0, 5);
+    const scheduleTime = schedule.monthlyConfig.time || schedule.time || '09:00';
+    
+    if (currentTime !== scheduleTime) return false;
+
+    const { monthlyConfig } = schedule;
+    const currentDate = now.getDate();
+    const currentDayOfWeek = now.getDay();
+
+    switch (monthlyConfig.type) {
+      case 'date':
+        return currentDate === (monthlyConfig.date || 1);
+
+      case 'weekday':
+        if (!monthlyConfig.weekNumber || monthlyConfig.dayOfWeek === undefined) return false;
+        return this.isNthWeekdayOfMonth(now, monthlyConfig.weekNumber, monthlyConfig.dayOfWeek);
+
+      case 'lastDay':
+        const daysFromEnd = monthlyConfig.daysFromEnd || 1;
+        const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+        return currentDate === (lastDayOfMonth - daysFromEnd + 1);
+
+      default:
+        return false;
+    }
+  }
+
+  private isNthWeekdayOfMonth(date: Date, weekNumber: number, dayOfWeek: number): boolean {
+    const currentDayOfWeek = date.getDay();
+    if (currentDayOfWeek !== dayOfWeek) return false;
+
+    if (weekNumber === -1) {
+      // Last occurrence of the weekday in the month
+      const nextWeek = new Date(date);
+      nextWeek.setDate(date.getDate() + 7);
+      return nextWeek.getMonth() !== date.getMonth();
+    } else {
+      // Nth occurrence (1st, 2nd, 3rd, 4th)
+      const firstDayOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+      const firstOccurrence = new Date(firstDayOfMonth);
+      
+      // Find the first occurrence of this weekday in the month
+      const daysToAdd = (dayOfWeek - firstDayOfMonth.getDay() + 7) % 7;
+      firstOccurrence.setDate(1 + daysToAdd);
+      
+      // Calculate the Nth occurrence
+      const nthOccurrence = new Date(firstOccurrence);
+      nthOccurrence.setDate(firstOccurrence.getDate() + (weekNumber - 1) * 7);
+      
+      return date.getDate() === nthOccurrence.getDate() && 
+             date.getMonth() === nthOccurrence.getMonth();
+    }
+  }
+
+  private isCustomScheduleMatch(schedule: Schedule, now: Date): boolean {
+    if (!schedule.customConfig) return false;
+
+    const { customConfig } = schedule;
+    const currentTime = now.toTimeString().slice(0, 5);
+    const scheduleTime = customConfig.time || schedule.time || '09:00';
+    
+    if (currentTime !== scheduleTime) return false;
+
+    // Calculate if current date matches the custom interval
+    const startDate = new Date(customConfig.startDate || schedule.startDate);
+    const daysDiff = Math.floor((now.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+
+    switch (customConfig.unit) {
+      case 'days':
+        return daysDiff >= 0 && daysDiff % customConfig.interval === 0;
+
+      case 'weeks':
+        const weeksDiff = Math.floor(daysDiff / 7);
+        return weeksDiff >= 0 && weeksDiff % customConfig.interval === 0 && now.getDay() === startDate.getDay();
+
+      case 'months':
+        const monthsDiff = (now.getFullYear() - startDate.getFullYear()) * 12 + 
+                          (now.getMonth() - startDate.getMonth());
+        return monthsDiff >= 0 && monthsDiff % customConfig.interval === 0 && 
+               now.getDate() === startDate.getDate();
+
+      default:
+        return false;
+    }
+  }
+
+  private executeSchedule(schedule: Schedule, executionTime: Date) {
+    // Create a new todo based on the schedule
+    const todoId = uuidv4();
+    const now = executionTime.toISOString();
+
+    const todoData = {
+      id: todoId,
+      title: schedule.title,
+      description: schedule.description || `Generated from schedule: ${schedule.title}`,
+      completed: false,
+      priority: schedule.priority,
+      scheduledFor: schedule.time ? `${executionTime.toISOString().split('T')[0]}T${schedule.time}:00.000Z` : undefined,
+      createdAt: now,
+      updatedAt: now
+    };
+
+    // Insert the new todo
+    db.run(
+      'INSERT INTO todos (id, title, description, completed, priority, scheduledFor, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      [todoId, todoData.title, todoData.description, todoData.completed, todoData.priority, todoData.scheduledFor, todoData.createdAt, todoData.updatedAt],
+      (err) => {
+        if (err) {
+          console.error('❌ Error creating todo from schedule:', err);
+          return;
+        }
+
+        console.log(`✅ Created todo "${todoData.title}" from schedule`);
+
+        // Broadcast the new todo to all connected clients
+        io.emit('todo-added', todoData);
+
+        // Update the schedule's lastExecuted time and calculate nextExecution
+        this.updateScheduleExecution(schedule, executionTime);
+      }
+    );
+  }
+
+  private updateScheduleExecution(schedule: Schedule, executionTime: Date) {
+    const lastExecuted = executionTime.toISOString();
+    const nextExecution = this.calculateNextExecution(schedule, executionTime);
+
+    db.run(
+      'UPDATE schedules SET lastExecuted = ?, nextExecution = ?, updatedAt = ? WHERE id = ?',
+      [lastExecuted, nextExecution, lastExecuted, schedule.id],
+      (err) => {
+        if (err) {
+          console.error('❌ Error updating schedule execution times:', err);
+          return;
+        }
+
+        console.log(`📅 Updated schedule "${schedule.title}" - Next execution: ${nextExecution || 'N/A'}`);
+
+        // Broadcast updated schedule to all connected clients
+        const updatedSchedule = {
+          ...schedule,
+          lastExecuted,
+          nextExecution,
+          updatedAt: lastExecuted
+        };
+        io.emit('schedule-updated', updatedSchedule);
+      }
+    );
+  }
+
+  public calculateInitialNextExecution(schedule: Schedule): string | null {
+    // For 'once' type schedules, the next execution is the start date + time
+    if (schedule.type === 'once') {
+      // Parse the date as local time, not UTC
+      const startDateTime = new Date(schedule.startDate + 'T00:00:00');
+      if (schedule.time) {
+        const [hours, minutes] = schedule.time.split(':').map(Number);
+        startDateTime.setHours(hours, minutes, 0, 0);
+      } else {
+        startDateTime.setHours(9, 0, 0, 0); // Default to 9:00 AM
+      }
+      
+      // Return the scheduled time regardless of whether it's past or future
+      // This allows users to see when it was/will be scheduled
+      return startDateTime.toISOString();
+    }
+    
+    // For recurring schedules, calculate the next execution time from now
+    const now = new Date();
+    const startDate = new Date(schedule.startDate + 'T00:00:00');
+    
+    // If start date is in the future, use start date; otherwise use current time
+    const calculationBase = startDate > now ? startDate : now;
+    
+    return this.calculateNextExecutionFromDate(schedule, calculationBase);
+  }
+
+  private calculateNextExecutionFromDate(schedule: Schedule, fromDate: Date): string | null {
+    // This method calculates the next execution time for recurring schedules
+    if (schedule.type === 'once') {
+      return null; // Once schedules don't have recurring executions
+    }
+
+    const next = new Date(fromDate);
+
+    switch (schedule.type) {
+      case 'daily':
+        // For daily schedules, find the next occurrence
+        const targetTime = schedule.time || '09:00';
+        const [hours, minutes] = targetTime.split(':').map(Number);
+        
+        next.setHours(hours, minutes, 0, 0);
+        
+        // If today's time has already passed, move to tomorrow
+        if (next <= fromDate) {
+          next.setDate(next.getDate() + 1);
+        }
+        
+        // Skip weekends if configured
+        if (schedule.excludeWeekends) {
+          while (next.getDay() === 0 || next.getDay() === 6) {
+            next.setDate(next.getDate() + 1);
+          }
+        }
+        break;
+
+      case 'weekly':
+        // For weekly schedules, find the next scheduled day
+        if (schedule.weeklyConfig?.daysOfWeek) {
+          const currentDayOfWeek = next.getDay();
+          const sortedDays = [...schedule.weeklyConfig.daysOfWeek].sort();
+          const targetTime = schedule.weeklyConfig.time || schedule.time || '09:00';
+          const [hours, minutes] = targetTime.split(':').map(Number);
+          
+          // Find next scheduled day
+          let nextDay = sortedDays.find(day => {
+            if (day > currentDayOfWeek) return true;
+            if (day === currentDayOfWeek) {
+              // Same day - check if time hasn't passed
+              const testDate = new Date(next);
+              testDate.setHours(hours, minutes, 0, 0);
+              return testDate > fromDate;
+            }
+            return false;
+          });
+          
+          if (!nextDay) {
+            // Go to next week, first scheduled day
+            nextDay = sortedDays[0];
+            const daysToAdd = 7 - currentDayOfWeek + nextDay;
+            next.setDate(next.getDate() + daysToAdd);
+          } else {
+            next.setDate(next.getDate() + (nextDay - currentDayOfWeek));
+          }
+          
+          next.setHours(hours, minutes, 0, 0);
+        }
+        break;
+
+      case 'monthly':
+        if (schedule.monthlyConfig) {
+          const targetTime = schedule.monthlyConfig.time || schedule.time || '09:00';
+          const [hours, minutes] = targetTime.split(':').map(Number);
+          
+          // Calculate this month's target date
+          this.adjustToMonthlySchedule(next, schedule.monthlyConfig);
+          next.setHours(hours, minutes, 0, 0);
+          
+          // If this month's date has passed, move to next month
+          if (next <= fromDate) {
+            next.setMonth(next.getMonth() + 1);
+            this.adjustToMonthlySchedule(next, schedule.monthlyConfig);
+            next.setHours(hours, minutes, 0, 0);
+          }
+        }
+        break;
+
+      case 'custom':
+        if (schedule.customConfig) {
+          const targetTime = schedule.customConfig.time || schedule.time || '09:00';
+          const [hours, minutes] = targetTime.split(':').map(Number);
+          const startDate = new Date(schedule.startDate + 'T00:00:00');
+          
+          // Calculate next occurrence based on interval
+          let intervalCount = 0;
+          const testDate = new Date(startDate);
+          
+          while (testDate <= fromDate) {
+            intervalCount++;
+            testDate.setTime(startDate.getTime());
+            
+            switch (schedule.customConfig.unit) {
+              case 'days':
+                testDate.setDate(startDate.getDate() + (intervalCount * schedule.customConfig.interval));
+                break;
+              case 'weeks':
+                testDate.setDate(startDate.getDate() + (intervalCount * schedule.customConfig.interval * 7));
+                break;
+              case 'months':
+                testDate.setMonth(startDate.getMonth() + (intervalCount * schedule.customConfig.interval));
+                break;
+            }
+            
+            testDate.setHours(hours, minutes, 0, 0);
+          }
+          
+          next.setTime(testDate.getTime());
+        }
+        break;
+
+      default:
+        return null;
+    }
+
+    // Check if we've exceeded the end date
+    if (schedule.endDate && next.toISOString().split('T')[0] > schedule.endDate) {
+      return null;
+    }
+
+    return next.toISOString();
+  }
+
+  private calculateNextExecution(schedule: Schedule, lastExecution: Date): string | null {
+    // For 'once' type schedules, there's no next execution after completion
+    if (schedule.type === 'once') {
+      return null;
+    }
+
+    // Use the new method to calculate next execution from the last execution time
+    return this.calculateNextExecutionFromDate(schedule, lastExecution);
+  }
+
+  private adjustToMonthlySchedule(date: Date, monthlyConfig: MonthlyConfig) {
+    switch (monthlyConfig.type) {
+      case 'date':
+        const targetDate = monthlyConfig.date || 1;
+        const lastDayOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+        date.setDate(Math.min(targetDate, lastDayOfMonth));
+        break;
+
+      case 'weekday':
+        if (monthlyConfig.weekNumber && monthlyConfig.dayOfWeek !== undefined) {
+          const firstDayOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+          const firstOccurrence = new Date(firstDayOfMonth);
+          const daysToAdd = (monthlyConfig.dayOfWeek - firstDayOfMonth.getDay() + 7) % 7;
+          firstOccurrence.setDate(1 + daysToAdd);
+          
+          if (monthlyConfig.weekNumber === -1) {
+            // Last occurrence
+            const lastOccurrence = new Date(firstOccurrence);
+            while (lastOccurrence.getMonth() === date.getMonth()) {
+              lastOccurrence.setDate(lastOccurrence.getDate() + 7);
+            }
+            lastOccurrence.setDate(lastOccurrence.getDate() - 7);
+            date.setDate(lastOccurrence.getDate());
+          } else {
+            // Nth occurrence
+            const nthOccurrence = new Date(firstOccurrence);
+            nthOccurrence.setDate(firstOccurrence.getDate() + (monthlyConfig.weekNumber - 1) * 7);
+            if (nthOccurrence.getMonth() === date.getMonth()) {
+              date.setDate(nthOccurrence.getDate());
+            }
+          }
+        }
+        break;
+
+      case 'lastDay':
+        const daysFromEnd = monthlyConfig.daysFromEnd || 1;
+        const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+        date.setDate(lastDay - daysFromEnd + 1);
+        break;
+    }
+  }
+}
+
+// Create and start the schedule executor
+const scheduleExecutor = new ScheduleExecutor();
+
 const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+  // Start the schedule execution engine after server starts
+  scheduleExecutor.start();
 });
 
 // Graceful shutdown
 process.on('SIGINT', () => {
   console.log('Shutting down server...');
+  scheduleExecutor.stop();
   db.close();
   server.close();
   process.exit(0);

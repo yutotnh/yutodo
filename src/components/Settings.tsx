@@ -27,10 +27,14 @@ export const Settings: React.FC<SettingsProps> = ({ settings, onSettingsChange, 
     setLocalSettings(settings);
   }, [settings]);
 
-  // 設定パネル外側クリック検知
+  // 設定パネル外側クリック検知（タイトルバー除く）
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (settingsPanelRef.current && !settingsPanelRef.current.contains(event.target as Node)) {
+        // タイトルバー領域（上部30px）をクリックした場合はモーダルを閉じない
+        if (event.clientY <= 30) {
+          return;
+        }
         onClose();
       }
     };

@@ -1198,6 +1198,7 @@ body {
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  pointer-events: none; /* Allow window dragging through overlay */
 }
 
 .settings-panel {
@@ -1208,6 +1209,7 @@ body {
   border-radius: 0.75rem;
   overflow: hidden;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  pointer-events: auto; /* Modal content should be interactive */
 }
 
 .settings-header {
@@ -1560,6 +1562,7 @@ body {
   align-items: center;
   justify-content: center;
   z-index: 1001;
+  pointer-events: none; /* Allow window dragging through overlay */
 }
 
 .delete-confirm-dialog {
@@ -1569,6 +1572,7 @@ body {
   border-radius: 0.75rem;
   overflow: hidden;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  pointer-events: auto; /* Modal content should be interactive */
 }
 
 .delete-confirm-header {
@@ -3051,6 +3055,11 @@ body {
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  pointer-events: none; /* Allow window dragging through overlay */
+}
+
+.modal {
+  pointer-events: auto;
 }
 
 .schedule-modal {
@@ -3060,6 +3069,7 @@ body {
   background: white;
   border-radius: 0.75rem;
   overflow: hidden;
+  pointer-events: auto; /* Modal content should be interactive */
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
 }
 

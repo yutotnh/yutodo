@@ -22,12 +22,16 @@ export const DeleteConfirmDialog: React.FC<DeleteConfirmDialogProps> = ({
   const { t } = useTranslation();
   const dialogRef = useRef<HTMLDivElement>(null);
   
-  // 外側クリック検知
+  // 外側クリック検知（タイトルバー除く）
   useEffect(() => {
     if (!isOpen) return;
 
     const handleClickOutside = (event: MouseEvent) => {
       if (dialogRef.current && !dialogRef.current.contains(event.target as Node)) {
+        // タイトルバー領域（上部30px）をクリックした場合はモーダルを閉じない
+        if (event.clientY <= 30) {
+          return;
+        }
         onClose();
       }
     };

@@ -194,10 +194,19 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({
     t('schedule.dayOfWeek.6')  // 土曜日
   ];
 
+  // オーバーレイクリック処理（タイトルバー除く）
+  const handleOverlayClick = (e: React.MouseEvent) => {
+    // タイトルバー領域（上部30px）をクリックした場合はモーダルを閉じない
+    if (e.clientY <= 30) {
+      return;
+    }
+    onClose();
+  };
+
   if (!isOpen) return null;
 
   return (
-    <div className="modal-overlay" onClick={onClose} data-testid="modal-overlay">
+    <div className="modal-overlay" onClick={handleOverlayClick} data-testid="modal-overlay">
       <div className="modal schedule-modal" onClick={e => e.stopPropagation()} data-testid="modal-content">
         <div className="modal-header">
           <h2>

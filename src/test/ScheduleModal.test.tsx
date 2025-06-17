@@ -85,12 +85,10 @@ describe('ScheduleModal', () => {
     
     const titleInput = screen.getByLabelText('schedule.title');
     const typeSelect = screen.getByLabelText('schedule.type');
-    const startDateInput = screen.getByLabelText('schedule.startDate');
     const submitButton = screen.getByRole('button', { name: 'common.create' });
 
     fireEvent.change(titleInput, { target: { value: 'Test Schedule' } });
     fireEvent.change(typeSelect, { target: { value: 'daily' } });
-    fireEvent.change(startDateInput, { target: { value: '2024-01-01' } });
     
     fireEvent.click(submitButton);
 
@@ -99,7 +97,10 @@ describe('ScheduleModal', () => {
         expect.objectContaining({
           title: 'Test Schedule',
           type: 'daily',
-          startDate: '2024-01-01',
+          isActive: true,
+          priority: 0,
+          time: '09:00',
+          excludeWeekends: false,
         })
       );
     });
