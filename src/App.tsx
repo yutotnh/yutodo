@@ -32,6 +32,7 @@ import { useSocket } from './hooks/useSocket';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { AppSettings, Todo, Schedule } from './types/todo';
 import { configManager } from './utils/configManager';
+import logger from './utils/logger';
 import './App.css';
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -70,37 +71,50 @@ function App() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAltKeyActive, setIsAltKeyActive] = useState(false);
   const [isCompletedExpanded, setIsCompletedExpanded] = useState(true);
-  const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [editingSchedule, setEditingSchedule] = useState<Schedule | null>(null);
   const addTodoFormRef = useRef<AddTodoFormRef>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  const { todos, connectionStatus, reconnectAttempts, addTodo, updateTodo, deleteTodo, toggleTodo, bulkImport, reorderTodos } = useSocket(settings.serverUrl);
+  const { 
+    todos, 
+    schedules, 
+    connectionStatus, 
+    reconnectAttempts, 
+    addTodo, 
+    updateTodo, 
+    deleteTodo, 
+    toggleTodo, 
+    bulkImport, 
+    reorderTodos,
+    addSchedule,
+    updateSchedule,
+    deleteSchedule,
+    toggleSchedule
+  } = useSocket(settings.serverUrl);
 
   useEffect(() => {
     const initializeConfig = async () => {
       try {
-        console.log('Initializing config manager...');
+        logger.debug('Initializing config manager');
         
         // 古いlocalStorageキーからのマイグレーション
         const oldSettings = localStorage.getItem('todoAppSettings');
         if (oldSettings && !localStorage.getItem('yutodoAppSettings')) {
-          console.log('🔄 Migrating old localStorage data...');
+          logger.info('Migrating old localStorage data');
           localStorage.setItem('yutodoAppSettings', oldSettings);
           localStorage.removeItem('todoAppSettings');
         }
         
         // 古いi18n言語設定をクリア（アプリ設定に統一）
         if (localStorage.getItem('yutodo-language')) {
-          console.log('🔄 Removing old i18n language setting...');
+          logger.debug('Removing old i18n language setting');
           localStorage.removeItem('yutodo-language');
         }
         
         await configManager.initialize();
         const appSettings = configManager.getAppSettings();
-        console.log('Loaded app settings:', appSettings);
-        console.log('🔍 Language setting from config:', appSettings.language);
+        logger.debug('Loaded app settings:', appSettings);
         
         // 設定を適用
         const finalSettings = { ...DEFAULT_SETTINGS, ...appSettings };
@@ -117,12 +131,12 @@ function App() {
         
         setIsInitialized(true);
       } catch (error) {
-        console.error('Failed to initialize config:', error);
+        logger.error('Failed to initialize config:', error);
         // フォールバック: localStorage
-        console.log('Attempting localStorage fallback...');
+        logger.debug('Attempting localStorage fallback');
         const savedSettings = localStorage.getItem('yutodoAppSettings');
         if (savedSettings) {
-          console.log('Found saved settings in localStorage:', savedSettings);
+          logger.debug('Found saved settings in localStorage');
           const parsed = JSON.parse(savedSettings);
           const finalSettings = { ...DEFAULT_SETTINGS, ...parsed };
           setSettings(finalSettings);
@@ -138,7 +152,7 @@ function App() {
           
           setIsInitialized(true);
         } else {
-          console.log('No saved settings found in localStorage');
+          logger.debug('No saved settings found in localStorage');
           // デフォルト言語設定を適用
           i18n.changeLanguage('en');
           setIsInitialized(true);
@@ -166,25 +180,23 @@ function App() {
     // 初期化完了後にのみ保存処理を実行
     if (!isInitialized) return;
 
-    console.log('🔄 Settings changed, saving to both localStorage and config file:', settings);
-    console.log('🔍 Language being saved:', settings.language);
+    logger.debug('Settings changed, saving to localStorage and config file');
 
     // localStorageに保存
     try {
       localStorage.setItem('yutodoAppSettings', JSON.stringify(settings));
-      console.log('✅ Settings saved to localStorage');
-      console.log('🔍 Verification - localStorage content:', localStorage.getItem('yutodoAppSettings'));
+      logger.debug('Settings saved to localStorage');
     } catch (error) {
-      console.error('❌ Failed to save to localStorage:', error);
+      logger.error('Failed to save to localStorage:', error);
     }
 
     // 設定ファイルにも保存
     configManager.updateFromAppSettings(settings)
       .then(() => {
-        console.log('✅ Settings successfully saved to config file');
+        logger.debug('Settings successfully saved to config file');
       })
       .catch(error => {
-        console.error('❌ Failed to update config file:', error);
+        logger.error('Failed to update config file:', error);
       });
   }, [settings, isInitialized]);
 
@@ -196,13 +208,13 @@ function App() {
       try {
         // Tauri環境でのみ実行
         if (typeof window !== 'undefined' && (window as any).__TAURI_INTERNALS__) {
-          console.log('🔝 Applying always on top setting:', settings.alwaysOnTop);
+          logger.debug('Applying always on top setting:', settings.alwaysOnTop);
           const appWindow = getCurrentWindow();
           await appWindow.setAlwaysOnTop(settings.alwaysOnTop);
-          console.log('✅ Always on top applied successfully');
+          logger.debug('Always on top applied successfully');
         }
       } catch (error) {
-        console.error('❌ Failed to apply always on top:', error);
+        logger.error('Failed to apply always on top:', error);
       }
     };
 
@@ -812,39 +824,28 @@ function App() {
   };
 
   const handleDeleteSchedule = (scheduleId: string) => {
-    setSchedules(prev => prev.filter(s => s.id !== scheduleId));
+    deleteSchedule(scheduleId);
   };
 
   const handleToggleSchedule = (scheduleId: string) => {
-    setSchedules(prev => prev.map(s => 
-      s.id === scheduleId ? { ...s, isActive: !s.isActive } : s
-    ));
+    toggleSchedule(scheduleId);
   };
 
   const handleSaveSchedule = (scheduleData: Omit<Schedule, 'id' | 'createdAt' | 'updatedAt' | 'lastExecuted' | 'nextExecution'>) => {
     if (editingSchedule) {
       // 編集
-      setSchedules(prev => prev.map(s => 
-        s.id === editingSchedule.id 
-          ? { 
-            ...scheduleData, 
-            id: editingSchedule.id,
-            createdAt: editingSchedule.createdAt,
-            updatedAt: new Date().toISOString(),
-            lastExecuted: editingSchedule.lastExecuted,
-            nextExecution: editingSchedule.nextExecution
-          }
-          : s
-      ));
+      const updatedSchedule: Schedule = {
+        ...scheduleData,
+        id: editingSchedule.id,
+        createdAt: editingSchedule.createdAt,
+        updatedAt: new Date().toISOString(),
+        lastExecuted: editingSchedule.lastExecuted,
+        nextExecution: editingSchedule.nextExecution
+      };
+      updateSchedule(updatedSchedule);
     } else {
       // 新規作成
-      const newSchedule: Schedule = {
-        ...scheduleData,
-        id: crypto.randomUUID(),
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      };
-      setSchedules(prev => [...prev, newSchedule]);
+      addSchedule(scheduleData);
     }
     setShowScheduleModal(false);
     setEditingSchedule(null);

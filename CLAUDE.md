@@ -427,3 +427,125 @@ npm test -- --coverage
 - **Completed Tasks UI**: Added collapsible section for completed tasks with expand/collapse functionality
 - **File Operations**: Direct export/import from menu bar bypasses settings screen for streamlined workflow
 - **Git Repository Hygiene**: Database files now excluded from version control following best practices
+
+## Logging Best Practices
+
+### Logging Philosophy
+This codebase follows production-ready logging practices with environment-based control and proper log levels. All logging is handled through a centralized logger utility that ensures clean console output in production.
+
+### Logger Utility (`src/utils/logger.ts`)
+```typescript
+import logger from '../utils/logger';
+
+// Available log levels:
+logger.debug('Development-only detailed information');    // Development only
+logger.info('Important application flow information');     // All environments  
+logger.warn('Potential issues that don't break functionality'); // All environments
+logger.error('Errors and exceptions');                    // All environments
+logger.network('Socket.IO and API debugging');           // Development only
+logger.ui('Component state and interaction debugging');   // Development only
+```
+
+### Log Level Guidelines
+
+#### ✅ **Use logger.debug() for:**
+- Detailed debugging information
+- Component state changes
+- Configuration loading details
+- File operation details
+- Development workflow information
+
+#### ✅ **Use logger.info() for:**
+- Important application milestones
+- Successful reconnections
+- Major state transitions
+- User-facing operations completion
+
+#### ✅ **Use logger.warn() for:**
+- Fallback method usage (Tauri → browser)
+- Non-critical errors with recovery
+- Deprecated feature usage
+- Performance concerns
+
+#### ✅ **Use logger.error() for:**
+- Connection failures
+- File operation failures  
+- API errors
+- Unexpected exceptions
+- Critical system errors
+
+#### ✅ **Use logger.network() for:**
+- Socket.IO connection events
+- Data synchronization logging
+- API request/response details
+- Reconnection attempts
+
+#### ✅ **Use logger.ui() for:**
+- Component render cycles
+- User interaction debugging
+- Modal state changes
+- Form validation details
+
+### Log Output Control
+
+**Development Environment** (`npm run dev`):
+- All log levels are displayed
+- Detailed debugging information available
+- Console output includes prefixed log levels `[DEBUG]`, `[INFO]`, etc.
+
+**Production Environment** (`npm run build`):
+- Only `logger.info()`, `logger.warn()`, and `logger.error()` are displayed
+- Debug and development logs are suppressed
+- Clean console output for end users
+
+### Implementation Rules
+
+#### ❌ **NEVER use console.log() directly**
+```typescript
+// Wrong - bypasses environment control
+console.log('This will always appear');
+
+// Correct - respects environment settings
+logger.debug('This appears only in development');
+```
+
+#### ❌ **NEVER log sensitive information**
+```typescript
+// Wrong - security risk
+logger.debug('User password:', password);
+
+// Correct - safe information only
+logger.debug('User authentication attempt');
+```
+
+#### ❌ **NEVER use excessive logging in loops**
+```typescript
+// Wrong - performance impact
+todos.forEach(todo => {
+  logger.debug('Processing todo:', todo.id);
+});
+
+// Correct - summary logging
+logger.debug('Processing todos batch:', todos.length, 'items');
+```
+
+### Cross-Platform Considerations
+
+- **WSLg Environment**: Important warnings for URL handling limitations
+- **Tauri vs Browser**: Environment detection with appropriate fallbacks
+- **Error Context**: Include enough context for debugging across different platforms
+
+### Maintenance Guidelines
+
+1. **Regular Cleanup**: Remove temporary debug logs before committing
+2. **Log Level Review**: Ensure appropriate log levels are used
+3. **Performance Impact**: Monitor log volume in development
+4. **User Experience**: Keep production logs minimal and user-friendly
+
+### Testing Integration
+
+- **Test Isolation**: Logger is mocked in tests to avoid console pollution
+- **Error Testing**: Use logger.error() for expected error scenarios
+- **Debug Testing**: Test logs are captured for verification when needed
+
+This logging strategy ensures clean production deployments while maintaining powerful debugging capabilities during development.

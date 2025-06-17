@@ -19,6 +19,7 @@ vi.mock('socket.io-client', () => {
   };
 });
 
+
 describe('useSocket', () => {
   let mockSocket: any;
   let mockIo: any;
@@ -299,7 +300,7 @@ describe('useSocket', () => {
     });
 
     it('should handle socket errors', async () => {
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const { default: logger } = await import('../utils/logger');
       renderHook(() => useSocket('http://localhost:3001'));
 
       const errorCallback = (mockSocket.on as Mock).mock.calls.find(
@@ -310,8 +311,7 @@ describe('useSocket', () => {
         errorCallback('Test error message');
       });
 
-      expect(consoleSpy).toHaveBeenCalledWith('Socket error:', 'Test error message');
-      consoleSpy.mockRestore();
+      expect(logger.error).toHaveBeenCalledWith('Socket error:', 'Test error message');
     });
   });
 

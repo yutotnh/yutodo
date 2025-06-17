@@ -88,3 +88,15 @@ HTMLCanvasElement.prototype.getContext = vi.fn(() => ({
   font: '',
   measureText: vi.fn(() => ({ width: 100 })),
 })) as any;
+
+// Global logger mock to suppress console output in tests
+vi.mock('../utils/logger', () => ({
+  default: {
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    network: vi.fn(),
+    ui: vi.fn(),
+  },
+}));

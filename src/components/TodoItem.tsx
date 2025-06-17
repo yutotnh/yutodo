@@ -8,6 +8,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useTranslation } from 'react-i18next';
 import { Todo } from '../types/todo';
+import logger from '../utils/logger';
 
 interface TodoItemProps {
   todo: Todo;
@@ -45,66 +46,66 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onUpdate, on
   const handleLinkClick = async (e: React.MouseEvent, href: string) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log('🔗 Link clicked:', href);
+    logger.debug("Link clicked:", href);
     
     if (href) {
       try {
         // Tauri環境でのみopenerプラグインを使用
         if (typeof window !== 'undefined' && (window as any).__TAURI_INTERNALS__) {
-          console.log('🖥️ Tauri environment detected, using opener plugin');
+          logger.debug("Tauri environment detected, using opener plugin");
           try {
             // まずTauri v2のプラグイン方式を試行
             const opener = await import('@tauri-apps/plugin-opener');
-            console.log('📥 Opener plugin imported successfully:', opener);
-            console.log('📊 Available methods:', Object.keys(opener));
+            logger.debug("Opener plugin imported successfully");
+            // logger.debug("Available methods:", Object.keys(opener));
             
             // 正しいopenメソッドを使用
-            console.log('🔧 Using opener.open');
+            logger.debug("Using opener.open");
             await (opener as any).open(href);
-            console.log('✅ URL opened successfully via Tauri opener');
+            logger.debug("URL opened successfully via Tauri opener");
             
             // WSLg環境での追加対応
             if (isWSLg()) {
-              console.log('🐧 WSLg environment detected');
+              logger.debug("WSLg environment detected");
               try {
                 // Tauriのクリップボード機能を使用
                 const { writeText } = await import('@tauri-apps/plugin-clipboard-manager');
                 await writeText(href);
-                console.log('📋 URL copied to clipboard using Tauri clipboard');
+                logger.debug("URL copied to clipboard using Tauri clipboard");
                 alert(`🐧 WSLg Environment\nURL copied to clipboard:\n${href}\n\nPaste in Windows browser (Ctrl+V)`);
               } catch (clipError) {
-                console.log('⚠️ Could not copy via Tauri clipboard:', clipError);
+                logger.warn("Could not copy via Tauri clipboard:", clipError);
                 // フォールバック: ユーザーに手動コピーを促す
                 alert(`🐧 WSLg Environment\nPlease copy this URL manually:\n${href}`);
               }
             }
           } catch (importError) {
-            console.error('❌ Tauri opener import/call failed:', importError);
+            logger.error("Tauri opener import/call failed:", importError);
             throw importError;
           }
         } else {
           // ブラウザ環境では新しいタブで開く
-          console.log('🌐 Browser environment, using window.open');
+          logger.debug("Browser environment, using window.open");
           window.open(href, '_blank', 'noopener,noreferrer');
-          console.log('✅ URL opened successfully via window.open');
+          logger.debug("URL opened successfully via window.open");
         }
       } catch (error) {
-        console.error('❌ Failed to open URL via primary method:', error);
-        console.log('🔄 Trying fallback: window.open');
+        logger.error("Failed to open URL via primary method:", error);
+        logger.debug("Trying fallback: window.open");
         try {
           // フォールバック: ブラウザで開く
           window.open(href, '_blank', 'noopener,noreferrer');
-          console.log('✅ URL opened successfully via fallback');
+          logger.debug("URL opened successfully via fallback");
         } catch (fallbackError) {
-          console.error('❌ Fallback also failed:', fallbackError);
+          logger.error("Fallback also failed:", fallbackError);
           
           // 最終手段: クリップボードにコピー
           try {
             await navigator.clipboard.writeText(href);
             alert(`Failed to open URL directly. URL copied to clipboard:\n${href}`);
-            console.log('📋 URL copied to clipboard as last resort');
+            logger.debug("URL copied to clipboard as last resort");
           } catch (clipboardError) {
-            console.error('❌ Clipboard copy also failed:', clipboardError);
+            logger.error("Clipboard copy also failed:", clipboardError);
             alert(`Failed to open URL: ${href}\nPlease copy manually.`);
           }
         }
@@ -422,14 +423,14 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onUpdate, on
                           if (typeof window !== 'undefined' && (window as any).__TAURI_INTERNALS__) {
                             const { writeText } = await import('@tauri-apps/plugin-clipboard-manager');
                             await writeText(href);
-                            console.log('📋 URL copied to clipboard via Tauri (right-click):', href);
+                            logger.debug("URL copied to clipboard via Tauri (right-click):", href);
                             alert(`📋 URL copied to clipboard:\n${href}`);
                           } else {
                             await navigator.clipboard.writeText(href);
-                            console.log('📋 URL copied to clipboard via browser (right-click):', href);
+                            logger.debug("URL copied to clipboard via browser (right-click):", href);
                           }
                         } catch (error) {
-                          console.error('Failed to copy URL to clipboard:', error);
+                          logger.error("Failed to copy URL to clipboard:", error);
                           alert(`Failed to copy URL. Please copy manually:\n${href}`);
                         }
                       }
@@ -465,14 +466,14 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onUpdate, on
                           if (typeof window !== 'undefined' && (window as any).__TAURI_INTERNALS__) {
                             const { writeText } = await import('@tauri-apps/plugin-clipboard-manager');
                             await writeText(href);
-                            console.log('📋 URL copied to clipboard via Tauri (right-click):', href);
+                            logger.debug("URL copied to clipboard via Tauri (right-click):", href);
                             alert(`📋 URL copied to clipboard:\n${href}`);
                           } else {
                             await navigator.clipboard.writeText(href);
-                            console.log('📋 URL copied to clipboard via browser (right-click):', href);
+                            logger.debug("URL copied to clipboard via browser (right-click):", href);
                           }
                         } catch (error) {
-                          console.error('Failed to copy URL to clipboard:', error);
+                          logger.error("Failed to copy URL to clipboard:", error);
                           alert(`Failed to copy URL. Please copy manually:\n${href}`);
                         }
                       }

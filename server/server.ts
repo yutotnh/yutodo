@@ -72,6 +72,29 @@ function migrateFromOldDatabase(): void {
           )
         `);
         
+        newDb.run(`
+          CREATE TABLE IF NOT EXISTS schedules (
+            id TEXT PRIMARY KEY,
+            title TEXT NOT NULL,
+            description TEXT,
+            priority INTEGER DEFAULT 0,
+            type TEXT NOT NULL,
+            startDate TEXT NOT NULL,
+            endDate TEXT,
+            time TEXT,
+            weeklyConfig TEXT,
+            monthlyConfig TEXT,
+            customConfig TEXT,
+            excludeWeekends BOOLEAN DEFAULT FALSE,
+            excludeDates TEXT,
+            isActive BOOLEAN DEFAULT TRUE,
+            createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+            lastExecuted DATETIME,
+            nextExecution DATETIME
+          )
+        `);
+        
         // データをコピー
         oldDb.all("SELECT * FROM todos", (err, rows) => {
           if (err) {
@@ -141,6 +164,29 @@ db.serialize(() => {
       order_index INTEGER DEFAULT 0
     )
   `);
+  
+  db.run(`
+    CREATE TABLE IF NOT EXISTS schedules (
+      id TEXT PRIMARY KEY,
+      title TEXT NOT NULL,
+      description TEXT,
+      priority INTEGER DEFAULT 0,
+      type TEXT NOT NULL,
+      startDate TEXT NOT NULL,
+      endDate TEXT,
+      time TEXT,
+      weeklyConfig TEXT,
+      monthlyConfig TEXT,
+      customConfig TEXT,
+      excludeWeekends BOOLEAN DEFAULT FALSE,
+      excludeDates TEXT,
+      isActive BOOLEAN DEFAULT TRUE,
+      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+      lastExecuted DATETIME,
+      nextExecution DATETIME
+    )
+  `);
 });
 
 interface Todo {
@@ -153,6 +199,44 @@ interface Todo {
   createdAt: string;
   updatedAt: string;
   order?: number;
+}
+
+interface Schedule {
+  id: string;
+  title: string;
+  description?: string;
+  priority: number;
+  type: 'once' | 'daily' | 'weekly' | 'monthly' | 'custom';
+  startDate: string;
+  endDate?: string;
+  time?: string;
+  weeklyConfig?: {
+    daysOfWeek: number[];
+    time?: string;
+  };
+  monthlyConfig?: {
+    type: 'date' | 'weekday' | 'lastDay';
+    date?: number;
+    weekNumber?: number;
+    dayOfWeek?: number;
+    daysFromEnd?: number;
+    time?: string;
+  };
+  customConfig?: {
+    interval: number;
+    unit: 'days' | 'weeks' | 'months';
+    time?: string;
+    startDate?: string;
+    endDate?: string;
+    maxOccurrences?: number;
+  };
+  excludeWeekends?: boolean;
+  excludeDates?: string[];
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  lastExecuted?: string;
+  nextExecution?: string;
 }
 
 // Socket.IO connection handling
@@ -360,6 +444,191 @@ io.on('connection', (socket) => {
         // Broadcast updated todos to all clients
         io.emit('todos', todos);
       });
+    });
+  });
+
+  // Schedule operations
+  socket.on('get-schedules', () => {
+    console.log('📤 Client requested schedules');
+    db.all('SELECT * FROM schedules ORDER BY createdAt DESC', (err, rows) => {
+      if (err) {
+        console.error('❌ Database error:', err);
+        socket.emit('error', err.message);
+        return;
+      }
+      
+      console.log(`📋 Found ${rows.length} schedules in database`);
+      
+      const schedules = rows.map((row: any) => ({
+        id: row.id,
+        title: row.title,
+        description: row.description,
+        priority: row.priority,
+        type: row.type,
+        startDate: row.startDate,
+        endDate: row.endDate,
+        time: row.time,
+        weeklyConfig: row.weeklyConfig ? JSON.parse(row.weeklyConfig) : undefined,
+        monthlyConfig: row.monthlyConfig ? JSON.parse(row.monthlyConfig) : undefined,
+        customConfig: row.customConfig ? JSON.parse(row.customConfig) : undefined,
+        excludeWeekends: Boolean(row.excludeWeekends),
+        excludeDates: row.excludeDates ? JSON.parse(row.excludeDates) : undefined,
+        isActive: Boolean(row.isActive),
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
+        lastExecuted: row.lastExecuted,
+        nextExecution: row.nextExecution
+      }));
+      
+      console.log('📤 Sending schedules to client:', schedules);
+      socket.emit('schedules', schedules);
+    });
+  });
+
+  // Add new schedule
+  socket.on('add-schedule', (scheduleData: Omit<Schedule, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const id = uuidv4();
+    const now = new Date().toISOString();
+    
+    db.run(
+      `INSERT INTO schedules (
+        id, title, description, priority, type, startDate, endDate, time,
+        weeklyConfig, monthlyConfig, customConfig, excludeWeekends, excludeDates,
+        isActive, createdAt, updatedAt, lastExecuted, nextExecution
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        id, scheduleData.title, scheduleData.description, scheduleData.priority,
+        scheduleData.type, scheduleData.startDate, scheduleData.endDate, scheduleData.time,
+        scheduleData.weeklyConfig ? JSON.stringify(scheduleData.weeklyConfig) : null,
+        scheduleData.monthlyConfig ? JSON.stringify(scheduleData.monthlyConfig) : null,
+        scheduleData.customConfig ? JSON.stringify(scheduleData.customConfig) : null,
+        scheduleData.excludeWeekends, 
+        scheduleData.excludeDates ? JSON.stringify(scheduleData.excludeDates) : null,
+        scheduleData.isActive, now, now, scheduleData.lastExecuted, scheduleData.nextExecution
+      ],
+      function(err) {
+        if (err) {
+          socket.emit('error', err.message);
+          return;
+        }
+        
+        const newSchedule: Schedule = {
+          id,
+          title: scheduleData.title,
+          description: scheduleData.description,
+          priority: scheduleData.priority,
+          type: scheduleData.type,
+          startDate: scheduleData.startDate,
+          endDate: scheduleData.endDate,
+          time: scheduleData.time,
+          weeklyConfig: scheduleData.weeklyConfig,
+          monthlyConfig: scheduleData.monthlyConfig,
+          customConfig: scheduleData.customConfig,
+          excludeWeekends: scheduleData.excludeWeekends,
+          excludeDates: scheduleData.excludeDates,
+          isActive: scheduleData.isActive,
+          createdAt: now,
+          updatedAt: now,
+          lastExecuted: scheduleData.lastExecuted,
+          nextExecution: scheduleData.nextExecution
+        };
+        
+        // Broadcast to all clients
+        io.emit('schedule-added', newSchedule);
+      }
+    );
+  });
+
+  // Update schedule
+  socket.on('update-schedule', (scheduleData: Schedule) => {
+    const now = new Date().toISOString();
+    
+    db.run(
+      `UPDATE schedules SET 
+        title=?, description=?, priority=?, type=?, startDate=?, endDate=?, time=?,
+        weeklyConfig=?, monthlyConfig=?, customConfig=?, excludeWeekends=?, excludeDates=?,
+        isActive=?, updatedAt=?, lastExecuted=?, nextExecution=?
+      WHERE id=?`,
+      [
+        scheduleData.title, scheduleData.description, scheduleData.priority,
+        scheduleData.type, scheduleData.startDate, scheduleData.endDate, scheduleData.time,
+        scheduleData.weeklyConfig ? JSON.stringify(scheduleData.weeklyConfig) : null,
+        scheduleData.monthlyConfig ? JSON.stringify(scheduleData.monthlyConfig) : null,
+        scheduleData.customConfig ? JSON.stringify(scheduleData.customConfig) : null,
+        scheduleData.excludeWeekends,
+        scheduleData.excludeDates ? JSON.stringify(scheduleData.excludeDates) : null,
+        scheduleData.isActive, now, scheduleData.lastExecuted, scheduleData.nextExecution,
+        scheduleData.id
+      ],
+      function(err) {
+        if (err) {
+          socket.emit('error', err.message);
+          return;
+        }
+        
+        const updatedSchedule = { ...scheduleData, updatedAt: now };
+        io.emit('schedule-updated', updatedSchedule);
+      }
+    );
+  });
+
+  // Delete schedule
+  socket.on('delete-schedule', (scheduleId: string) => {
+    db.run('DELETE FROM schedules WHERE id=?', [scheduleId], function(err) {
+      if (err) {
+        socket.emit('error', err.message);
+        return;
+      }
+      
+      io.emit('schedule-deleted', scheduleId);
+    });
+  });
+
+  // Toggle schedule active status
+  socket.on('toggle-schedule', (scheduleId: string) => {
+    const now = new Date().toISOString();
+    
+    db.get('SELECT * FROM schedules WHERE id=?', [scheduleId], (err, row: any) => {
+      if (err) {
+        socket.emit('error', err.message);
+        return;
+      }
+      
+      if (row) {
+        const newIsActive = !Boolean(row.isActive);
+        db.run(
+          'UPDATE schedules SET isActive=?, updatedAt=? WHERE id=?',
+          [newIsActive, now, scheduleId],
+          function(err) {
+            if (err) {
+              socket.emit('error', err.message);
+              return;
+            }
+            
+            const updatedSchedule = {
+              id: row.id,
+              title: row.title,
+              description: row.description,
+              priority: row.priority,
+              type: row.type,
+              startDate: row.startDate,
+              endDate: row.endDate,
+              time: row.time,
+              weeklyConfig: row.weeklyConfig ? JSON.parse(row.weeklyConfig) : undefined,
+              monthlyConfig: row.monthlyConfig ? JSON.parse(row.monthlyConfig) : undefined,
+              customConfig: row.customConfig ? JSON.parse(row.customConfig) : undefined,
+              excludeWeekends: Boolean(row.excludeWeekends),
+              excludeDates: row.excludeDates ? JSON.parse(row.excludeDates) : undefined,
+              isActive: newIsActive,
+              createdAt: row.createdAt,
+              updatedAt: now,
+              lastExecuted: row.lastExecuted,
+              nextExecution: row.nextExecution
+            };
+            io.emit('schedule-updated', updatedSchedule);
+          }
+        );
+      }
     });
   });
 

@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
-import { Todo } from '../types/todo';
+import { Todo, Schedule } from '../types/todo';
+import logger from '../utils/logger';
 
 export const useSocket = (serverUrl: string) => {
   const [todos, setTodos] = useState<Todo[]>([]);
+  const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [connected, setConnected] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected' | 'error'>('disconnected');
   const [reconnectAttempts, setReconnectAttempts] = useState(0);
@@ -22,44 +24,45 @@ export const useSocket = (serverUrl: string) => {
     socketRef.current = socket;
 
     socket.on('connect', () => {
-      console.log('🔌 Socket connected to server');
+      logger.network('Socket connected to server');
       setConnected(true);
       setConnectionStatus('connected');
       setReconnectAttempts(0);
-      console.log('📤 Requesting todos from server');
+      logger.network('Requesting todos and schedules from server');
       socket.emit('get-todos');
+      socket.emit('get-schedules');
     });
 
     socket.on('disconnect', (reason) => {
-      console.log('🔌 Socket disconnected:', reason);
+      logger.network('Socket disconnected:', reason);
       setConnected(false);
       setConnectionStatus('disconnected');
     });
 
     socket.on('connect_error', (error) => {
-      console.error('🔌 Socket connection error:', error);
+      logger.error('Socket connection error:', error);
       setConnected(false);
       setConnectionStatus('error');
     });
 
     socket.on('reconnect_attempt', (attemptNumber) => {
-      console.log(`🔄 Reconnection attempt ${attemptNumber}`);
+      logger.network(`Reconnection attempt ${attemptNumber}`);
       setReconnectAttempts(attemptNumber);
       setConnectionStatus('connecting');
     });
 
     socket.on('reconnect', (attemptNumber) => {
-      console.log(`✅ Reconnected after ${attemptNumber} attempts`);
+      logger.info(`Reconnected after ${attemptNumber} attempts`);
       setReconnectAttempts(0);
     });
 
     socket.on('reconnect_failed', () => {
-      console.error('❌ Failed to reconnect to server');
+      logger.error('Failed to reconnect to server');
       setConnectionStatus('error');
     });
 
     socket.on('todos', (todoList: Todo[]) => {
-      console.log('📥 Received todos from server:', todoList);
+      logger.network('Received todos from server:', todoList.length, 'items');
       setTodos(todoList);
     });
 
@@ -78,7 +81,27 @@ export const useSocket = (serverUrl: string) => {
     });
 
     socket.on('error', (error: string) => {
-      console.error('Socket error:', error);
+      logger.error('Socket error:', error);
+    });
+
+    // Schedule event listeners
+    socket.on('schedules', (scheduleList: Schedule[]) => {
+      logger.network('Received schedules from server:', scheduleList.length, 'items');
+      setSchedules(scheduleList);
+    });
+
+    socket.on('schedule-added', (schedule: Schedule) => {
+      setSchedules(prev => [schedule, ...prev]);
+    });
+
+    socket.on('schedule-updated', (updatedSchedule: Schedule) => {
+      setSchedules(prev => prev.map(schedule => 
+        schedule.id === updatedSchedule.id ? updatedSchedule : schedule
+      ));
+    });
+
+    socket.on('schedule-deleted', (scheduleId: string) => {
+      setSchedules(prev => prev.filter(schedule => schedule.id !== scheduleId));
     });
 
     return () => {
@@ -130,8 +153,34 @@ export const useSocket = (serverUrl: string) => {
     }
   };
 
+  // Schedule functions
+  const addSchedule = (scheduleData: Omit<Schedule, 'id' | 'createdAt' | 'updatedAt'>) => {
+    if (socketRef.current) {
+      socketRef.current.emit('add-schedule', scheduleData);
+    }
+  };
+
+  const updateSchedule = (schedule: Schedule) => {
+    if (socketRef.current) {
+      socketRef.current.emit('update-schedule', schedule);
+    }
+  };
+
+  const deleteSchedule = (scheduleId: string) => {
+    if (socketRef.current) {
+      socketRef.current.emit('delete-schedule', scheduleId);
+    }
+  };
+
+  const toggleSchedule = (scheduleId: string) => {
+    if (socketRef.current) {
+      socketRef.current.emit('toggle-schedule', scheduleId);
+    }
+  };
+
   return {
     todos,
+    schedules,
     connected,
     connectionStatus,
     reconnectAttempts,
@@ -140,6 +189,10 @@ export const useSocket = (serverUrl: string) => {
     deleteTodo,
     toggleTodo,
     bulkImport,
-    reorderTodos
+    reorderTodos,
+    addSchedule,
+    updateSchedule,
+    deleteSchedule,
+    toggleSchedule
   };
 };

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Plus, Calendar, Clock, Repeat, Edit, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Schedule } from '../types/todo';
@@ -20,6 +20,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
 }) => {
   const { t } = useTranslation();
 
+
   const formatScheduleDescription = (schedule: Schedule): string => {
     switch (schedule.type) {
       case 'once':
@@ -30,22 +31,23 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
           : t('schedule.daily');
       case 'weekly':
         if (schedule.weeklyConfig?.daysOfWeek) {
+          const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
           const days = schedule.weeklyConfig.daysOfWeek.map(day => 
-            t(`schedule.dayOfWeek.${day}`)
+            dayNames[day]
           ).join(', ');
-          return `${t('schedule.weekly')} - ${days}`;
+          return `Weekly - ${days}`;
         }
         return t('schedule.weekly');
       case 'monthly':
         if (schedule.monthlyConfig?.type === 'date') {
-          return `${t('schedule.monthly')} - ${schedule.monthlyConfig.date}${t('schedule.dayOfMonth')}`;
+          return `Monthly - ${schedule.monthlyConfig.date}日`;
         } else if (schedule.monthlyConfig?.type === 'weekday') {
-          return `${t('schedule.monthly')} - ${t('schedule.weekNumber.' + schedule.monthlyConfig.weekNumber)}${t('schedule.dayOfWeek.' + schedule.monthlyConfig.dayOfWeek)}`;
+          return `Monthly - ${schedule.monthlyConfig.weekNumber}週目 ${schedule.monthlyConfig.dayOfWeek}曜日`;
         }
         return t('schedule.monthly');
       case 'custom':
         if (schedule.customConfig) {
-          return `${t('schedule.every')} ${schedule.customConfig.interval} ${t('schedule.unit.' + schedule.customConfig.unit)}`;
+          return `Custom - ${schedule.customConfig.interval} ${schedule.customConfig.unit}`;
         }
         return t('schedule.custom');
       default:
@@ -147,7 +149,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
 
                 {schedule.priority > 0 && (
                   <div className={`schedule-priority schedule-priority--${schedule.priority}`}>
-                    {schedule.priority === 2 ? t('priority.high') : t('priority.medium')}
+                    {schedule.priority === 2 ? 'High' : 'Medium'}
                   </div>
                 )}
               </div>

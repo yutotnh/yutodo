@@ -243,9 +243,9 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({
                   value={priority}
                   onChange={(e) => setPriority(Number(e.target.value))}
                 >
-                  <option value={0}>{t('priority.low')}</option>
-                  <option value={1}>{t('priority.medium')}</option>
-                  <option value={2}>{t('priority.high')}</option>
+                  <option value={0}>Low</option>
+                  <option value={1}>Medium</option>
+                  <option value={2}>High</option>
                 </select>
               </div>
 
