@@ -82,3 +82,9 @@ Object.defineProperty(window, 'matchMedia', {
     dispatchEvent: vi.fn()
   }))
 });
+
+// Canvas mock for TodoItem cursor positioning
+HTMLCanvasElement.prototype.getContext = vi.fn(() => ({
+  font: '',
+  measureText: vi.fn(() => ({ width: 100 })),
+})) as any;

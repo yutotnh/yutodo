@@ -105,6 +105,10 @@ export const AddTodoForm = forwardRef<AddTodoFormRef, AddTodoFormProps>(({ onAdd
               placeholderText={t('tasks.selectDateTime')}
               className="add-todo-schedule"
               isClearable
+              shouldCloseOnSelect={false}
+              closeOnScroll={true}
+              preventOpenOnFocus={false}
+              autoComplete="off"
             />
           </div>
           

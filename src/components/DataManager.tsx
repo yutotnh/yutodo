@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { Download, Upload, FileText, Database } from 'lucide-react';
+import { Upload, FileText, Database } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Todo } from '../types/todo';
 

@@ -17,6 +17,7 @@ export interface TodoAppConfig {
       detailed_mode: boolean;
       auto_hide_header: boolean;
       language: 'auto' | 'en' | 'ja';
+      current_view: 'tasks' | 'schedules';
     };
     // 動作設定
     behavior: {
@@ -64,6 +65,7 @@ export const DEFAULT_CONFIG: TodoAppConfig = {
       detailed_mode: false,
       auto_hide_header: true,
       language: 'auto',
+      current_view: 'tasks',
     },
     behavior: {
       auto_save: true,
@@ -102,6 +104,7 @@ export function configToAppSettings(config: TodoAppConfig) {
     customCss: config.appearance.custom_css || '',
     serverUrl: config.server.url,
     language: config.app.ui.language,
+    currentView: config.app.ui.current_view,
   };
 }
 
@@ -119,6 +122,7 @@ export function appSettingsToConfig(settings: any, existingConfig: TodoAppConfig
         theme: settings.darkMode,
         detailed_mode: settings.detailedMode,
         language: settings.language,
+        current_view: settings.currentView,
       },
       behavior: {
         ...existingConfig.app.behavior,

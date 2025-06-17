@@ -26,9 +26,11 @@ import { SearchBar } from './components/SearchBar';
 import { DeleteConfirmDialog } from './components/DeleteConfirmDialog';
 import { ConnectionStatus } from './components/ConnectionStatus';
 import { MenuBar } from './components/MenuBar';
+import { ScheduleView } from './components/ScheduleView';
+import { ScheduleModal } from './components/ScheduleModal';
 import { useSocket } from './hooks/useSocket';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
-import { AppSettings, Todo } from './types/todo';
+import { AppSettings, Todo, Schedule } from './types/todo';
 import { configManager } from './utils/configManager';
 import './App.css';
 
@@ -39,7 +41,8 @@ const DEFAULT_SETTINGS: AppSettings = {
   confirmDelete: true,
   customCss: '',
   serverUrl: 'http://localhost:3001',
-  language: 'auto'
+  language: 'auto',
+  currentView: 'tasks'
 };
 
 function App() {
@@ -67,6 +70,9 @@ function App() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAltKeyActive, setIsAltKeyActive] = useState(false);
   const [isCompletedExpanded, setIsCompletedExpanded] = useState(true);
+  const [schedules, setSchedules] = useState<Schedule[]>([]);
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [editingSchedule, setEditingSchedule] = useState<Schedule | null>(null);
   const addTodoFormRef = useRef<AddTodoFormRef>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -674,7 +680,7 @@ function App() {
     }
   };
 
-  useKeyboardShortcuts(keyboardHandlers, { isModalOpen: showSettings || showShortcutHelp || deleteConfirm.isOpen });
+  useKeyboardShortcuts(keyboardHandlers, { isModalOpen: showSettings || showShortcutHelp || deleteConfirm.isOpen || showScheduleModal });
 
   // Altキーの状態を監視してヘッダー表示を制御
   useEffect(() => {
@@ -787,6 +793,61 @@ function App() {
       deleteTodo(todoId);
     });
     setSelectedTodos(new Set());
+  };
+
+  // ビュー切り替えハンドラー
+  const handleViewChange = (view: 'tasks' | 'schedules') => {
+    setSettings(prev => ({ ...prev, currentView: view }));
+  };
+
+  // スケジュール関連ハンドラー
+  const handleCreateSchedule = () => {
+    setEditingSchedule(null);
+    setShowScheduleModal(true);
+  };
+
+  const handleEditSchedule = (schedule: Schedule) => {
+    setEditingSchedule(schedule);
+    setShowScheduleModal(true);
+  };
+
+  const handleDeleteSchedule = (scheduleId: string) => {
+    setSchedules(prev => prev.filter(s => s.id !== scheduleId));
+  };
+
+  const handleToggleSchedule = (scheduleId: string) => {
+    setSchedules(prev => prev.map(s => 
+      s.id === scheduleId ? { ...s, isActive: !s.isActive } : s
+    ));
+  };
+
+  const handleSaveSchedule = (scheduleData: Omit<Schedule, 'id' | 'createdAt' | 'updatedAt' | 'lastExecuted' | 'nextExecution'>) => {
+    if (editingSchedule) {
+      // 編集
+      setSchedules(prev => prev.map(s => 
+        s.id === editingSchedule.id 
+          ? { 
+            ...scheduleData, 
+            id: editingSchedule.id,
+            createdAt: editingSchedule.createdAt,
+            updatedAt: new Date().toISOString(),
+            lastExecuted: editingSchedule.lastExecuted,
+            nextExecution: editingSchedule.nextExecution
+          }
+          : s
+      ));
+    } else {
+      // 新規作成
+      const newSchedule: Schedule = {
+        ...scheduleData,
+        id: crypto.randomUUID(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      setSchedules(prev => [...prev, newSchedule]);
+    }
+    setShowScheduleModal(false);
+    setEditingSchedule(null);
   };
 
 
@@ -927,6 +988,7 @@ function App() {
             onExportTasks={handleExportTasksFromMenu}
             onMenuStateChange={setIsMenuOpen}
             isAltKeyActive={isAltKeyActive}
+            onViewChange={handleViewChange}
           />
         </div>
         <div className="header-center">
@@ -957,40 +1019,42 @@ function App() {
       </header>
 
       <main className="app-main">
-        {isWindowFocused && settings.detailedMode && (
+        {settings.currentView === 'tasks' ? (
           <>
-            <SearchBar
-              ref={searchInputRef}
-              searchQuery={searchQuery}
-              onSearchChange={setSearchQuery}
-            />
+            {isWindowFocused && settings.detailedMode && (
+              <>
+                <SearchBar
+                  ref={searchInputRef}
+                  searchQuery={searchQuery}
+                  onSearchChange={setSearchQuery}
+                />
 
-            <TodoFilter
-              currentFilter={currentFilter}
-              onFilterChange={setCurrentFilter}
-              counts={filterCounts}
-            />
-          </>
-        )}
+                <TodoFilter
+                  currentFilter={currentFilter}
+                  onFilterChange={setCurrentFilter}
+                  counts={filterCounts}
+                />
+              </>
+            )}
 
-        {/* 選択カウンター */}
-        {selectedTodos.size > 1 && (
-          <div className="selection-counter">
-            <span className="selection-counter__text">
-              {t('tasks.selectedItems', { count: selectedTodos.size })}
-            </span>
-            <button 
-              onClick={() => {
-                setSelectedTodos(new Set());
-                setLastSelectedIndex(-1);
-              }}
-              className="selection-counter__clear"
-              title={t('tasks.clearSelection')}
-            >
-              <X size={14} />
-            </button>
-          </div>
-        )}
+            {/* 選択カウンター */}
+            {selectedTodos.size > 1 && (
+              <div className="selection-counter">
+                <span className="selection-counter__text">
+                  {t('tasks.selectedItems', { count: selectedTodos.size })}
+                </span>
+                <button 
+                  onClick={() => {
+                    setSelectedTodos(new Set());
+                    setLastSelectedIndex(-1);
+                  }}
+                  className="selection-counter__clear"
+                  title={t('tasks.clearSelection')}
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            )}
 
         <DndContext
           sensors={sensors}
@@ -1127,6 +1191,17 @@ function App() {
             )}
           </div>
         </DndContext>
+          </>
+        ) : (
+          /* スケジュールビュー */
+          <ScheduleView
+            schedules={schedules}
+            onCreateSchedule={handleCreateSchedule}
+            onEditSchedule={handleEditSchedule}
+            onDeleteSchedule={handleDeleteSchedule}
+            onToggleSchedule={handleToggleSchedule}
+          />
+        )}
       </main>
 
       {showSettings && (
@@ -1156,8 +1231,20 @@ function App() {
         itemCount={deleteConfirm.todoIds.length}
       />
 
-      {/* 底部固定のAddTodoForm */}
-      {isWindowFocused && (
+      {showScheduleModal && (
+        <ScheduleModal
+          isOpen={showScheduleModal}
+          schedule={editingSchedule}
+          onClose={() => {
+            setShowScheduleModal(false);
+            setEditingSchedule(null);
+          }}
+          onSave={handleSaveSchedule}
+        />
+      )}
+
+      {/* 底部固定のAddTodoForm (タスクビューのみ) */}
+      {isWindowFocused && settings.currentView === 'tasks' && (
         <div className="add-todo-overlay">
           <AddTodoForm ref={addTodoFormRef} onAdd={addTodo} slimMode={!settings.detailedMode} />
         </div>

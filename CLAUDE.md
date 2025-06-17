@@ -50,14 +50,16 @@ npm run test:parallel # Run tests in parallel (faster)
 ### Testing Commands
 ```bash
 # Frontend testing (from root directory)
-npm test                    # Run all frontend tests
+npm test                    # Run all frontend tests (257 total)
 npm test src/test/App.test.tsx  # Run specific test file
+npm test -- --run          # Run tests once (no watch mode)
 npm run test:ui            # Launch Vitest UI for interactive testing
 
-# Backend testing (from server directory)
+# Backend testing (from server directory)  
 cd server
-npm test                   # Run all backend tests  
+npm test                   # Run all backend tests (sequential due to SQLite)
 npm run test:watch         # Watch mode for development
+npm run test:parallel      # Run tests in parallel (faster but may conflict)
 npm test -- --testNamePattern="socket" # Run specific tests
 ```
 
@@ -74,7 +76,7 @@ npm test -- --testNamePattern="socket" # Run specific tests
 - **Testing Library**: @testing-library/react for component interaction testing
 - **Mock Strategy**: Comprehensive mocking of external dependencies (Tauri plugins, DnD Kit, ReactMarkdown)
 - **Setup**: Global test setup in `src/test/setup.ts` with jest-dom matchers and window mocks
-- **Coverage**: 142 tests across 6 test files covering all major components and hooks
+- **Coverage**: 257 tests across 16 test files covering all major components and hooks
 
 ### Backend Testing (Jest + Socket.IO Testing)
 - **Framework**: Jest with ts-jest preset for TypeScript support
@@ -88,11 +90,21 @@ npm test -- --testNamePattern="socket" # Run specific tests
 src/test/
 ├── setup.ts                    # Global test configuration and mocks
 ├── App.test.tsx                # Main application integration tests
-├── TodoItem.test.tsx           # TodoItem component behavior tests
-├── useSocket.test.ts           # WebSocket functionality tests
-├── useKeyboardShortcuts.test.ts # Keyboard shortcut system tests
-├── configManager.test.ts       # Configuration management tests
-└── utils.test.ts               # Utility function tests
+├── TodoItem.test.tsx           # TodoItem component behavior tests (37 tests)
+├── useSocket.test.ts           # WebSocket functionality tests (28 tests)
+├── useKeyboardShortcuts.test.ts # Keyboard shortcut system tests (40 tests)
+├── configManager.test.ts       # Configuration management tests (17 tests)
+├── utils.test.ts               # Utility function tests (16 tests)
+├── AddTodoForm.test.tsx        # Form component tests (14 tests)
+├── ConnectionStatus.test.tsx   # Connection status tests (8 tests)
+├── DarkMode.test.tsx           # Dark mode functionality tests (9 tests)
+├── DeleteConfirmDialog.test.tsx # Delete confirmation tests (9 tests)
+├── MenuBar.test.tsx            # Menu bar functionality tests (12 tests)
+├── ScheduleModal.test.tsx      # Schedule modal tests (14 tests)
+├── ScheduleView.test.tsx       # Schedule view tests (13 tests)
+├── SearchBar.test.tsx          # Search functionality tests (11 tests)
+├── ShortcutHelp.test.tsx       # Shortcut help modal tests (15 tests)
+└── TodoFilter.test.tsx         # Todo filtering tests (10 tests)
 
 server/__tests__/
 ├── setup.js                   # Backend test setup and teardown
@@ -110,10 +122,11 @@ server/__tests__/
 - **Cross-platform**: OS detection and platform-specific behavior testing
 
 ### Running Tests
-- **Frontend**: All 142 tests pass with clean output (no stderr errors)
-- **Backend**: Comprehensive coverage of database operations and WebSocket events
+- **Frontend**: All 257 tests pass with clean output (some non-critical stderr warnings from DatePicker)
+- **Backend**: Comprehensive coverage of database operations and WebSocket events  
 - **CI/CD Ready**: Tests designed for automated testing environments
 - **Fast Execution**: Optimized test performance with proper mocking and cleanup
+- **100% Pass Rate**: Complete test coverage achieved with comprehensive component testing
 
 ## Architecture Patterns
 
@@ -331,18 +344,36 @@ To add a new language (e.g., French):
 
 ## Testing Best Practices
 
+### Mandatory Testing Policy
+**IMPORTANT**: Always write or update tests when adding features or making modifications. This is a strict requirement for this codebase.
+
 ### When Adding New Features
-1. **Component Tests**: Create comprehensive tests for new UI components in `src/test/`
-2. **Mock External Dependencies**: Use factory functions for mocking Tauri plugins, external libraries
-3. **Error Suppression**: For intentional error testing, use `vi.spyOn(console, 'error').mockImplementation(() => {})` 
-4. **Event Simulation**: Use custom event simulation for keyboard shortcuts and complex DOM interactions
-5. **Async Testing**: Always use `waitFor` for async operations, never use arbitrary timeouts
+1. **Component Tests**: Create comprehensive tests for new UI components in `src/test/ComponentName.test.tsx`
+2. **Hook Tests**: Create tests for custom hooks in `src/test/useHookName.test.ts`
+3. **Utility Tests**: Add tests for new utility functions in appropriate test files
+4. **Integration Tests**: Create feature integration tests when needed
+5. **Mock External Dependencies**: Use factory functions for mocking Tauri plugins, external libraries
+6. **Error Suppression**: For intentional error testing, use `vi.spyOn(console, 'error').mockImplementation(() => {})` 
+7. **Event Simulation**: Use custom event simulation for keyboard shortcuts and complex DOM interactions
+8. **Async Testing**: Always use `waitFor` for async operations, never use arbitrary timeouts
+
+### When Modifying Existing Features
+1. **Update Existing Tests**: Modify test cases to match changes
+2. **Add New Test Cases**: Test newly added behavior
+3. **Edge Case Testing**: Add tests to prevent regression, especially for bug fixes
+4. **Maintain 100% Pass Rate**: Ensure all 257 tests continue to pass
 
 ### Test File Naming and Structure
 - Component tests: `ComponentName.test.tsx`
 - Hook tests: `useHookName.test.ts`
 - Utility tests: `utilityName.test.ts`
 - Integration tests: `featureName.integration.test.ts`
+
+### Test Quality Standards
+- **100% Pass Rate Requirement**: All tests must pass before any commit or deployment
+- **Comprehensive Coverage**: Aim for complete test coverage of new functionality
+- **No Breaking Changes**: Never commit code that breaks existing tests
+- **Clean Test Output**: Address any stderr warnings when possible
 
 ### Mock Strategies
 - **Tauri Plugins**: Mock in beforeEach with controlled return values

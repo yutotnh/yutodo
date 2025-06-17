@@ -111,12 +111,118 @@ body {
   border: 1px solid #d1d5db;
   border-radius: 0.375rem;
   font-size: 0.875rem;
+  background: white;
+  color: #1f2937;
 }
 
 .react-datepicker__input-container input:focus {
   outline: 2px solid #3b82f6;
   outline-offset: 2px;
   border-color: #3b82f6;
+}
+
+/* DatePickerポップアップのz-index調整 */
+.react-datepicker-popper {
+  z-index: 9999 !important;
+}
+
+.react-datepicker-popper[data-placement^="bottom"] {
+  padding-top: 5px;
+}
+
+.react-datepicker-popper[data-placement^="top"] {
+  padding-bottom: 5px;
+}
+
+.react-datepicker {
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  font-family: inherit;
+}
+
+.react-datepicker__header {
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  border-radius: 0.5rem 0.5rem 0 0;
+}
+
+.react-datepicker__current-month {
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.react-datepicker__day--selected,
+.react-datepicker__day--keyboard-selected {
+  background: #3b82f6;
+  color: white;
+}
+
+.react-datepicker__day--today {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.react-datepicker__time-container {
+  border-left: 1px solid #e2e8f0;
+}
+
+.react-datepicker__time-list-item--selected {
+  background: #3b82f6;
+  color: white;
+}
+
+/* ダークモード対応 */
+.app--dark .react-datepicker__input-container input {
+  background: #374151;
+  border-color: #4b5563;
+  color: #f3f4f6;
+}
+
+.app--dark .react-datepicker {
+  background: #1f2937;
+  border-color: #374151;
+  color: #f3f4f6;
+}
+
+.app--dark .react-datepicker__header {
+  background: #374151;
+  border-bottom-color: #4b5563;
+}
+
+.app--dark .react-datepicker__current-month,
+.app--dark .react-datepicker__day-name {
+  color: #f3f4f6;
+}
+
+.app--dark .react-datepicker__day {
+  color: #d1d5db;
+}
+
+.app--dark .react-datepicker__day:hover {
+  background: #4b5563;
+}
+
+.app--dark .react-datepicker__day--today {
+  background: #1e40af;
+  color: #dbeafe;
+}
+
+.app--dark .react-datepicker__time-container {
+  border-left-color: #4b5563;
+  background: #374151;
+}
+
+.app--dark .react-datepicker__time-list {
+  background: #374151;
+}
+
+.app--dark .react-datepicker__time-list-item {
+  color: #d1d5db;
+}
+
+.app--dark .react-datepicker__time-list-item:hover {
+  background: #4b5563;
 }
 
 
@@ -692,6 +798,16 @@ body {
   border: 1px solid #d1d5db;
   border-radius: 0.375rem;
   font-size: 0.875rem;
+  background: white;
+  color: #1f2937;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+  background-position: right 0.5rem center;
+  background-repeat: no-repeat;
+  background-size: 1em 1em;
+  padding-right: 2rem;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
 }
 
 .add-todo-actions {
@@ -1024,6 +1140,16 @@ body {
   border: 1px solid #d1d5db;
   border-radius: 0.375rem;
   font-size: 0.875rem;
+  background: white;
+  color: #1f2937;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+  background-position: right 0.5rem center;
+  background-repeat: no-repeat;
+  background-size: 1em 1em;
+  padding-right: 2rem;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
 }
 
 .todo-edit-actions {
@@ -1653,6 +1779,20 @@ body {
   color: #f1f5f9;
 }
 
+.app--dark .add-todo-priority,
+.app--dark .add-todo-schedule {
+  background: #374151;
+  border-color: #4b5563;
+  color: #f3f4f6;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+}
+
+.app--dark .add-todo-priority option,
+.app--dark .add-todo-schedule option {
+  background: #374151;
+  color: #f3f4f6;
+}
+
 .app--dark .todo-item {
   background: #1e293b;
   border-color: #334155;
@@ -1807,6 +1947,20 @@ body {
   background: #334155;
   border-color: #475569;
   color: #f1f5f9;
+}
+
+.app--dark .todo-edit-priority,
+.app--dark .todo-edit-schedule {
+  background: #374151;
+  border-color: #4b5563;
+  color: #f3f4f6;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+}
+
+.app--dark .todo-edit-priority option,
+.app--dark .todo-edit-schedule option {
+  background: #374151;
+  color: #f3f4f6;
 }
 
 /* スリムモードのダークモード対応 */
@@ -2516,4 +2670,339 @@ body {
 .side-menu-subitem {
   margin: 0;
   border-radius: 0.25rem;
+}
+
+/* Schedule Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.schedule-modal {
+  width: 90%;
+  max-width: 700px;
+  max-height: 90vh;
+  background: white;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.app--dark .schedule-modal {
+  background: #1f2937;
+  color: #f3f4f6;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.app--dark .modal-header {
+  border-bottom-color: #374151;
+}
+
+.modal-header h2 {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.app--dark .modal-header h2 {
+  color: #f3f4f6;
+}
+
+.modal-close {
+  padding: 0.5rem;
+  background: transparent;
+  border: none;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  color: #64748b;
+  transition: all 0.2s;
+}
+
+.modal-close:hover {
+  background: #f1f5f9;
+  color: #1e293b;
+}
+
+.app--dark .modal-close {
+  color: #9ca3af;
+}
+
+.app--dark .modal-close:hover {
+  background: #374151;
+  color: #f3f4f6;
+}
+
+.schedule-form {
+  padding: 1.5rem;
+  max-height: calc(90vh - 120px);
+  overflow-y: auto;
+}
+
+.form-section {
+  margin-bottom: 2rem;
+}
+
+.form-section:last-child {
+  margin-bottom: 0;
+}
+
+.form-section h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #374151;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.app--dark .form-section h3 {
+  color: #e5e7eb;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #374151;
+}
+
+.app--dark .form-group label {
+  color: #d1d5db;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  background: white;
+  transition: border-color 0.2s;
+}
+
+/* 通常モードのselect矢印スタイル */
+.form-group select {
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+  background-position: right 0.5rem center;
+  background-repeat: no-repeat;
+  background-size: 1.5em 1.5em;
+  padding-right: 2.5rem;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+}
+
+.app--dark .form-group input,
+.app--dark .form-group select,
+.app--dark .form-group textarea {
+  background: #374151;
+  border-color: #4b5563;
+  color: #f3f4f6;
+}
+
+.app--dark .form-group select option {
+  background: #374151;
+  color: #f3f4f6;
+}
+
+/* WebKit系ブラウザでのselect矢印も暗くする */
+.app--dark .form-group select {
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+  background-position: right 0.5rem center;
+  background-repeat: no-repeat;
+  background-size: 1.5em 1.5em;
+  padding-right: 2.5rem;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.checkbox-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.checkbox-item:hover {
+  background: #f8fafc;
+}
+
+.checkbox-item.selected {
+  background: #dbeafe;
+  border-color: #3b82f6;
+  color: #1e40af;
+}
+
+.app--dark .checkbox-item {
+  border-color: #4b5563;
+  color: #d1d5db;
+}
+
+.app--dark .checkbox-item:hover {
+  background: #374151;
+}
+
+.app--dark .checkbox-item.selected {
+  background: #1e3a8a;
+  border-color: #3b82f6;
+  color: #dbeafe;
+}
+
+.checkbox-item input[type="checkbox"] {
+  width: auto;
+  margin: 0;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.app--dark .form-actions {
+  border-top-color: #374151;
+}
+
+.btn {
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  font-size: 0.875rem;
+}
+
+.btn--secondary {
+  background: #f8fafc;
+  color: #475569;
+  border: 1px solid #d1d5db;
+}
+
+.btn--secondary:hover {
+  background: #f1f5f9;
+}
+
+.btn--primary {
+  background: #3b82f6;
+  color: white;
+}
+
+.btn--primary:hover {
+  background: #2563eb;
+}
+
+.btn--primary:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+
+.app--dark .btn--secondary {
+  background: #374151;
+  color: #d1d5db;
+  border-color: #4b5563;
+}
+
+.app--dark .btn--secondary:hover {
+  background: #4b5563;
+}
+
+/* インラインselect要素のスタイル */
+.inline-select {
+  display: inline-block;
+  margin: 0 0.25rem;
+  padding: 0.25rem 1.5rem 0.25rem 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.25rem;
+  background: white;
+  font-size: 0.875rem;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+  background-position: right 0.25rem center;
+  background-repeat: no-repeat;
+  background-size: 1em 1em;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+}
+
+.app--dark .inline-select {
+  background: #374151;
+  border-color: #4b5563;
+  color: #f3f4f6;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+}
+
+.app--dark .inline-select option {
+  background: #374151;
+  color: #f3f4f6;
+}
+
+/* 全てのselect要素の包括的なダークモード対応 */
+.app--dark select {
+  background: #374151;
+  border-color: #4b5563;
+  color: #f3f4f6;
+}
+
+.app--dark select option {
+  background: #374151;
+  color: #f3f4f6;
+}
+
+/* フォーカス時のスタイル統一 */
+.app--dark select:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }

@@ -18,6 +18,7 @@ interface MenuBarProps {
   onQuit?: () => void;
   onMenuStateChange?: (isOpen: boolean) => void;
   isAltKeyActive?: boolean;
+  onViewChange: (view: 'tasks' | 'schedules') => void;
 }
 
 interface MenuItemData {
@@ -42,7 +43,8 @@ export const MenuBar: React.FC<MenuBarProps> = ({
   onExportTasks,
   onQuit,
   onMenuStateChange,
-  isAltKeyActive = false
+  isAltKeyActive = false,
+  onViewChange
 }) => {
   const { t } = useTranslation();
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
@@ -86,8 +88,11 @@ export const MenuBar: React.FC<MenuBarProps> = ({
       label: t('menu.view'),
       accessKey: 'V',
       items: [
-        { id: 'toggle-slim', label: settings.detailedMode ? t('menu.enableSlimMode') : t('menu.disableSlimMode'), action: onToggleSlim },
+        { id: 'show-tasks', label: settings.currentView === 'tasks' ? t('menu.showingTasks') : t('menu.showTasks'), action: () => onViewChange('tasks') },
+        { id: 'show-schedules', label: settings.currentView === 'schedules' ? t('menu.showingSchedules') : t('menu.showSchedules'), action: () => onViewChange('schedules') },
         { id: 'separator-1', separator: true },
+        { id: 'toggle-slim', label: settings.detailedMode ? t('menu.enableSlimMode') : t('menu.disableSlimMode'), action: onToggleSlim },
+        { id: 'separator-2', separator: true },
         { id: 'always-on-top', label: settings.alwaysOnTop ? t('menu.disableAlwaysOnTop') : t('menu.enableAlwaysOnTop'), action: onToggleAlwaysOnTop }
       ] as MenuItemData[]
     },
@@ -355,6 +360,7 @@ export const MenuBar: React.FC<MenuBarProps> = ({
             className={`menu-button menu-button--hamburger ${showHamburgerMenu ? 'menu-button--active' : ''}`}
             onClick={handleHamburgerClick}
             title={t('menu.menu')}
+            data-testid="hamburger-menu"
           >
             <Menu size={16} />
           </button>

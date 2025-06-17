@@ -341,6 +341,10 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onUpdate, on
               placeholderText={t('tasks.selectDateTime')}
               className="todo-edit-schedule"
               isClearable
+              shouldCloseOnSelect={false}
+              closeOnScroll={true}
+              preventOpenOnFocus={false}
+              autoComplete="off"
             />
           </div>
           <div className="todo-edit-actions">

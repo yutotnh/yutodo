@@ -55,7 +55,8 @@ describe('ConfigManager', () => {
         confirmDelete: false,
         customCss: 'body { color: red; }',
         serverUrl: 'http://custom-server:3000',
-        language: 'ja'
+        language: 'ja',
+        currentView: 'tasks'
       };
       
       localStorage.setItem('yutodoAppSettings', JSON.stringify(mockSettings));
