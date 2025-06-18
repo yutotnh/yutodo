@@ -232,6 +232,74 @@ describe('TodoItem', () => {
       expect(screen.getByTestId('edit-icon')).toBeInTheDocument();
       expect(screen.getByTestId('trash-icon')).toBeInTheDocument();
     });
+
+    it('should display priority and date in slim mode with small text', () => {
+      const todoWithDetails = {
+        ...mockTodo,
+        priority: 2,
+        scheduledFor: '2023-12-25T10:00:00.000Z',
+        description: 'This is a test description'
+      };
+      
+      render(
+        <TodoItemWrapper>
+          <TodoItem todo={todoWithDetails} {...mockHandlers} slimMode={true} />
+        </TodoItemWrapper>
+      );
+
+      // スリムモード専用のメタ情報が表示されることを確認
+      const slimMeta = document.querySelector('.todo-item__slim-meta');
+      expect(slimMeta).toBeInTheDocument();
+      
+      // 優先度が小さく表示されることを確認
+      expect(screen.getByText('High')).toBeInTheDocument();
+      
+      // 日付が簡潔に表示されることを確認
+      expect(screen.getByTestId('clock-icon')).toBeInTheDocument();
+      
+      // 詳細が小さく表示されることを確認
+      expect(screen.getByText('This is a test description')).toBeInTheDocument();
+    });
+
+    it('should not show slim mode details when not in slim mode', () => {
+      const todoWithDetails = {
+        ...mockTodo,
+        priority: 2,
+        scheduledFor: '2023-12-25T10:00:00.000Z',
+        description: 'This is a test description'
+      };
+      
+      render(
+        <TodoItemWrapper>
+          <TodoItem todo={todoWithDetails} {...mockHandlers} slimMode={false} />
+        </TodoItemWrapper>
+      );
+
+      // スリムモード専用のメタ情報が表示されないことを確認
+      const slimMeta = document.querySelector('.todo-item__slim-meta');
+      expect(slimMeta).not.toBeInTheDocument();
+      
+      // 通常のメタ情報が表示されることを確認
+      const normalMeta = document.querySelector('.todo-item__meta');
+      expect(normalMeta).toBeInTheDocument();
+    });
+
+    it('should show description inline in slim mode', () => {
+      const todoWithDescription = {
+        ...mockTodo,
+        description: 'A very long description that should be truncated in slim mode'
+      };
+      
+      render(
+        <TodoItemWrapper>
+          <TodoItem todo={todoWithDescription} {...mockHandlers} slimMode={true} />
+        </TodoItemWrapper>
+      );
+
+      const slimDescription = document.querySelector('.todo-item__description--slim');
+      expect(slimDescription).toBeInTheDocument();
+      expect(slimDescription).toHaveTextContent('A very long description that should be truncated in slim mode');
+    });
   });
 
   describe('priority handling', () => {

@@ -482,64 +482,144 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onUpdate, on
             </ReactMarkdown>
           </div>
         )}
-        {todo.description && (
-          <div className="todo-item__description">
-            <ReactMarkdown 
-              remarkPlugins={[remarkGfm]}
-              components={{
-                // リンクをクリックでブラウザで開く
-                a: ({ href, children }) => (
-                  <a
-                    href={href}
-                    onClick={(e) => handleLinkClick(e, href || '')}
-                    onContextMenu={async (e) => {
-                      // 右クリックでURLをクリップボードにコピー
-                      e.preventDefault();
-                      e.stopPropagation();
-                      if (href) {
-                        try {
-                          // Tauri環境ではTauriクリップボードを使用
-                          if (typeof window !== 'undefined' && (window as any).__TAURI_INTERNALS__) {
-                            const { writeText } = await import('@tauri-apps/plugin-clipboard-manager');
-                            await writeText(href);
-                            logger.debug("URL copied to clipboard via Tauri (right-click):", href);
-                            alert(`📋 URL copied to clipboard:\n${href}`);
-                          } else {
-                            await navigator.clipboard.writeText(href);
-                            logger.debug("URL copied to clipboard via browser (right-click):", href);
-                          }
-                        } catch (error) {
-                          logger.error("Failed to copy URL to clipboard:", error);
-                          alert(`Failed to copy URL. Please copy manually:\n${href}`);
-                        }
-                      }
-                    }}
-                    title={`Click to open: ${href} | Right-click to copy`}
-                  >
-                    {children}
-                  </a>
-                ),
-              }}
-            >
-              {todo.description}
-            </ReactMarkdown>
-          </div>
-        )}
         
-        <div className="todo-item__meta">
-          <span className={`priority-badge ${getPriorityColor(todo.priority)}`}>
-            <AlertCircle size={12} />
-            {getPriorityText(todo.priority)}
-          </span>
-          
-          {todo.scheduledFor && (
-            <span className={`schedule-badge ${isOverdue ? 'schedule-badge--overdue' : ''}`}>
-              <Clock size={12} />
-              {new Date(todo.scheduledFor).toLocaleString()}
+        {/* スリムモードでも詳細情報を小さく表示 */}
+        {slimMode ? (
+          <div className="todo-item__slim-meta">
+            {/* 優先度表示 */}
+            <span className={`priority-badge priority-badge--slim ${getPriorityColor(todo.priority)}`}>
+              <AlertCircle size={10} />
+              {getPriorityText(todo.priority)}
             </span>
-          )}
-          
-        </div>
+            
+            {/* 日時表示 */}
+            {todo.scheduledFor && (
+              <span className={`schedule-badge schedule-badge--slim ${isOverdue ? 'schedule-badge--overdue' : ''}`}>
+                <Clock size={10} />
+                {new Date(todo.scheduledFor).toLocaleDateString()}
+              </span>
+            )}
+            
+            {/* 詳細を1行で表示 */}
+            {todo.description && (
+              <span className="todo-item__description--slim">
+                <ReactMarkdown 
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    // すべての要素をspanとして表示してインライン化
+                    p: ({ children }) => <span>{children}</span>,
+                    h1: ({ children }) => <span className="markdown-h1">{children}</span>,
+                    h2: ({ children }) => <span className="markdown-h2">{children}</span>,
+                    h3: ({ children }) => <span className="markdown-h3">{children}</span>,
+                    h4: ({ children }) => <span className="markdown-h4">{children}</span>,
+                    h5: ({ children }) => <span className="markdown-h5">{children}</span>,
+                    h6: ({ children }) => <span className="markdown-h6">{children}</span>,
+                    br: () => <span> </span>,
+                    div: ({ children }) => <span>{children}</span>,
+                    blockquote: ({ children }) => <span>"{children}"</span>,
+                    ul: ({ children }) => <span>{children}</span>,
+                    ol: ({ children }) => <span>{children}</span>,
+                    li: ({ children }) => <span>• {children} </span>,
+                    // リンクをクリックでブラウザで開く
+                    a: ({ href, children }) => (
+                      <a
+                        href={href}
+                        onClick={(e) => handleLinkClick(e, href || '')}
+                        onContextMenu={async (e) => {
+                          // 右クリックでURLをクリップボードにコピー
+                          e.preventDefault();
+                          e.stopPropagation();
+                          if (href) {
+                            try {
+                              // Tauri環境ではTauriクリップボードを使用
+                              if (typeof window !== 'undefined' && (window as any).__TAURI_INTERNALS__) {
+                                const { writeText } = await import('@tauri-apps/plugin-clipboard-manager');
+                                await writeText(href);
+                                logger.debug("URL copied to clipboard via Tauri (right-click):", href);
+                                alert(`📋 URL copied to clipboard:\n${href}`);
+                              } else {
+                                await navigator.clipboard.writeText(href);
+                                logger.debug("URL copied to clipboard via browser (right-click):", href);
+                              }
+                            } catch (error) {
+                              logger.error("Failed to copy URL to clipboard:", error);
+                              alert(`Failed to copy URL. Please copy manually:\n${href}`);
+                            }
+                          }
+                        }}
+                        title={`Click to open: ${href} | Right-click to copy`}
+                      >
+                        {children}
+                      </a>
+                    ),
+                  }}
+                >
+                  {todo.description}
+                </ReactMarkdown>
+              </span>
+            )}
+          </div>
+        ) : (
+          <>
+            {todo.description && (
+              <div className="todo-item__description">
+                <ReactMarkdown 
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    // リンクをクリックでブラウザで開く
+                    a: ({ href, children }) => (
+                      <a
+                        href={href}
+                        onClick={(e) => handleLinkClick(e, href || '')}
+                        onContextMenu={async (e) => {
+                          // 右クリックでURLをクリップボードにコピー
+                          e.preventDefault();
+                          e.stopPropagation();
+                          if (href) {
+                            try {
+                              // Tauri環境ではTauriクリップボードを使用
+                              if (typeof window !== 'undefined' && (window as any).__TAURI_INTERNALS__) {
+                                const { writeText } = await import('@tauri-apps/plugin-clipboard-manager');
+                                await writeText(href);
+                                logger.debug("URL copied to clipboard via Tauri (right-click):", href);
+                                alert(`📋 URL copied to clipboard:\n${href}`);
+                              } else {
+                                await navigator.clipboard.writeText(href);
+                                logger.debug("URL copied to clipboard via browser (right-click):", href);
+                              }
+                            } catch (error) {
+                              logger.error("Failed to copy URL to clipboard:", error);
+                              alert(`Failed to copy URL. Please copy manually:\n${href}`);
+                            }
+                          }
+                        }}
+                        title={`Click to open: ${href} | Right-click to copy`}
+                      >
+                        {children}
+                      </a>
+                    ),
+                  }}
+                >
+                  {todo.description}
+                </ReactMarkdown>
+              </div>
+            )}
+            
+            <div className="todo-item__meta">
+              <span className={`priority-badge ${getPriorityColor(todo.priority)}`}>
+                <AlertCircle size={12} />
+                {getPriorityText(todo.priority)}
+              </span>
+              
+              {todo.scheduledFor && (
+                <span className={`schedule-badge ${isOverdue ? 'schedule-badge--overdue' : ''}`}>
+                  <Clock size={12} />
+                  {new Date(todo.scheduledFor).toLocaleString()}
+                </span>
+              )}
+            </div>
+          </>
+        )}
       </div>
       
       <div className="todo-item__actions">

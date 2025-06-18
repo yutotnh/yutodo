@@ -35,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated all commit messages to use proper conventional format
 - Improved menu bar implementation with comprehensive keyboard navigation
 - Enhanced CHANGELOG maintenance approach to use Claude Code assistance
+- Enhanced slim mode to display priority, date, and description with small text while maintaining compact design
 
 ### Fixed
 - Header positioning to use static layout instead of overlay in detailed mode
