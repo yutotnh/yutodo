@@ -916,7 +916,7 @@ class ScheduleExecutor {
     const todoData = {
       id: todoId,
       title: schedule.title,
-      description: schedule.description || `Generated from schedule: ${schedule.title}`,
+      description: schedule.description || undefined,
       completed: false,
       priority: schedule.priority,
       scheduledFor: schedule.time ? `${executionTime.toISOString().split('T')[0]}T${schedule.time}:00.000Z` : undefined,
