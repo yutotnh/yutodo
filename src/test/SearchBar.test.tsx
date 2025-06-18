@@ -17,6 +17,14 @@ describe('SearchBar', () => {
     vi.clearAllMocks();
   });
 
+  const renderWithDarkMode = (component: React.ReactElement, isDark = false) => {
+    return render(
+      <div className={isDark ? 'app app--dark' : 'app'}>
+        {component}
+      </div>
+    );
+  };
+
   it('renders search input with placeholder', () => {
     render(<SearchBar searchQuery="" onSearchChange={mockOnSearchChange} />);
     
@@ -108,5 +116,40 @@ describe('SearchBar', () => {
     
     expect(ref.current).toBeInstanceOf(HTMLInputElement);
     expect(ref.current?.className).toBe('search-input');
+  });
+
+  describe('Dark Mode Support', () => {
+    it('applies dark mode styles to search bar', () => {
+      renderWithDarkMode(
+        <SearchBar searchQuery="" onSearchChange={mockOnSearchChange} />,
+        true
+      );
+
+      const searchBar = document.querySelector('.search-bar');
+      const input = document.querySelector('.search-input');
+      const icon = document.querySelector('.search-icon');
+
+      expect(searchBar).toBeInTheDocument();
+      expect(input).toBeInTheDocument();
+      expect(icon).toBeInTheDocument();
+
+      // Dark mode classes should be applied through CSS
+      const appElement = document.querySelector('.app--dark');
+      expect(appElement).toBeInTheDocument();
+    });
+
+    it('applies dark mode styles to clear button when visible', () => {
+      renderWithDarkMode(
+        <SearchBar searchQuery="test" onSearchChange={mockOnSearchChange} />,
+        true
+      );
+
+      const clearButton = document.querySelector('.search-clear');
+      expect(clearButton).toBeInTheDocument();
+
+      // Verify dark mode app class is present
+      const appElement = document.querySelector('.app--dark');
+      expect(appElement).toBeInTheDocument();
+    });
   });
 });

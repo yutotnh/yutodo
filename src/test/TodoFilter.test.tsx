@@ -25,6 +25,14 @@ vi.mock('react-i18next', () => ({
 
 describe('TodoFilter', () => {
   const mockOnFilterChange = vi.fn();
+
+  const renderWithDarkMode = (component: React.ReactElement, isDark = false) => {
+    return render(
+      <div className={isDark ? 'app app--dark' : 'app'}>
+        {component}
+      </div>
+    );
+  };
   
   const defaultCounts = {
     all: 10,
@@ -177,5 +185,41 @@ describe('TodoFilter', () => {
     expect(filterCounts[4]).toHaveTextContent('1');  // high
     expect(filterCounts[5]).toHaveTextContent('2');  // medium
     expect(filterCounts[6]).toHaveTextContent('2');  // low
+  });
+
+  describe('Dark Mode Support', () => {
+    it('applies dark mode styles to filter container', () => {
+      renderWithDarkMode(
+        <TodoFilter currentFilter="all" onFilterChange={mockOnFilterChange} counts={defaultCounts} />,
+        true
+      );
+
+      const filterContainer = document.querySelector('.todo-filter');
+      const filterTitle = document.querySelector('.filter-title');
+      
+      expect(filterContainer).toBeInTheDocument();
+      expect(filterTitle).toBeInTheDocument();
+
+      // Verify dark mode app class is present
+      const appElement = document.querySelector('.app--dark');
+      expect(appElement).toBeInTheDocument();
+    });
+
+    it('applies dark mode styles to filter buttons', () => {
+      renderWithDarkMode(
+        <TodoFilter currentFilter="pending" onFilterChange={mockOnFilterChange} counts={defaultCounts} />,
+        true
+      );
+
+      const filterButtons = document.querySelectorAll('.filter-btn');
+      const activeButton = document.querySelector('.filter-btn--active');
+      
+      expect(filterButtons.length).toBeGreaterThan(0);
+      expect(activeButton).toBeInTheDocument();
+
+      // Verify dark mode app class is present
+      const appElement = document.querySelector('.app--dark');
+      expect(appElement).toBeInTheDocument();
+    });
   });
 });

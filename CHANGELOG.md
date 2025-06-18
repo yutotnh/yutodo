@@ -43,6 +43,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CSS class application for proper mode switching
 - Test coverage for header visibility behavior
 - Commit message consistency across the project history
+- Dark mode support for search bar and filter components with proper CSS scoping
 
 ### Security
 - Added automated security scanning with CodeQL

@@ -2309,56 +2309,64 @@ body {
     color: #e2e8f0;
   }
 
-  .search-bar {
+  .app--dark .search-bar {
     background: #1e293b;
     border-bottom-color: #334155;
   }
 
-  .search-input {
+  .app--dark .search-input {
     background: #334155;
     border-color: #475569;
     color: #f1f5f9;
   }
 
-  .search-input:focus {
+  .app--dark .search-input::placeholder {
+    color: #94a3b8;
+  }
+
+  .app--dark .search-input:focus {
     border-color: #3b82f6;
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
   }
 
-  .search-icon,
-  .search-clear {
+  .app--dark .search-icon,
+  .app--dark .search-clear {
     color: #94a3b8;
   }
 
-  .search-clear:hover {
+  .app--dark .search-clear:hover {
     color: #cbd5e1;
   }
 
-  .todo-filter {
+  .app--dark .todo-filter {
     background: #1e293b;
     border-bottom-color: #334155;
   }
 
-  .filter-title {
+  .app--dark .filter-title {
     color: #f1f5f9;
   }
 
-  .filter-btn {
+  .app--dark .filter-btn {
     background: #334155;
     border-color: #475569;
     color: #cbd5e1;
   }
 
-  .filter-btn:hover {
+  .app--dark .filter-btn:hover {
     background: #475569;
     border-color: #64748b;
     color: #e2e8f0;
   }
 
-  .filter-btn--active {
+  .app--dark .filter-btn--active {
     background: #3b82f6;
     border-color: #3b82f6;
     color: white;
+  }
+
+  .app--dark .filter-count {
+    color: #e2e8f0;
   }
 
   .data-manager-title {
