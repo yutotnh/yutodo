@@ -71,14 +71,14 @@ npm test -- --testNamePattern="socket" # Run specific tests
 
 ## Release Management & CHANGELOG
 
-### Automated CHANGELOG Maintenance
+### CHANGELOG Maintenance
 
-The project uses **Release Please** for automated CHANGELOG.md maintenance and version management:
+The project uses a **hybrid approach** for CHANGELOG.md maintenance:
 
-- **CHANGELOG.md is automatically maintained** - DO NOT manually edit it
-- **Conventional commits are required** for proper automation
-- **Version bumping is automatic** based on commit types
-- **GitHub releases are automated** with built binaries
+- **Claude Code assistance**: Claude evaluates each change and updates CHANGELOG.md when significant
+- **Manual review encouraged**: Developers can request CHANGELOG updates for important changes
+- **Conventional commits recommended**: Helps categorize changes but not strictly required
+- **Release Please available**: Can be used for automated releases when needed
 
 ### Conventional Commit Format
 
@@ -113,12 +113,12 @@ git commit -m "deps: update React to v18.3.2"
 3. **Release PR**: Automatically creates PR with CHANGELOG.md updates and version bump
 4. **Release**: Merging the Release Please PR triggers automated release with binaries
 
-### IMPORTANT: Do NOT manually edit CHANGELOG.md
+### CHANGELOG Update Guidelines
 
-- The file is automatically generated and maintained
-- Manual edits will be overwritten
-- Use conventional commits to ensure proper documentation
-- For urgent manual updates, edit the "Unreleased" section only
+- **Significant changes**: Always update CHANGELOG.md for new features, bug fixes, and breaking changes
+- **Minor changes**: Documentation updates, small refactors may not require CHANGELOG updates
+- **Claude assistance**: Claude Code will proactively suggest and make CHANGELOG updates when appropriate
+- **Manual requests**: Developers can explicitly request CHANGELOG updates for any change
 
 ## Testing Architecture
 
@@ -650,10 +650,11 @@ Automated dependency updates via `.github/dependabot.yml`:
 ### Development Integration
 
 #### Required for All Development:
-- **Conventional Commits**: Mandatory for CHANGELOG automation
+- **Conventional Commits**: Recommended for better organization and optional automation
 - **Test Coverage**: All new code must include comprehensive tests
 - **Type Safety**: TypeScript compilation must pass without errors
 - **Security Compliance**: No vulnerabilities in dependencies
+- **CHANGELOG Updates**: Significant changes should include CHANGELOG.md updates
 
 #### PR Requirements:
 - All CI checks must pass (build, test, lint, security)

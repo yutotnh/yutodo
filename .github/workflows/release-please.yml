@@ -1,9 +1,18 @@
-name: Release Please
+# Release Please workflow - can be triggered manually when needed
+name: Release Please (Manual)
 
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Type of release'
+        required: true
+        default: 'minor'
+        type: choice
+        options:
+        - patch
+        - minor
+        - major
 
 permissions:
   contents: write
