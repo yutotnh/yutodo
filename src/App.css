@@ -548,6 +548,15 @@ body {
   opacity: 0.7;
 }
 
+/* 詳細モードでは要素が重ならないように配置 */
+.app:not(.app--slim) .app-header {
+  position: static;
+  opacity: 1;
+  transform: none;
+  background: rgba(255, 255, 255, 0.95);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+}
+
 .app-header--visible {
   transform: translateY(0);
   opacity: 0.9;
@@ -556,6 +565,13 @@ body {
 .app-header--hidden {
   transform: translateY(-100%);
   opacity: 0;
+}
+
+/* 詳細モードでは表示/非表示アニメーションを無効化 */
+.app:not(.app--slim) .app-header--visible,
+.app:not(.app--slim) .app-header--hidden {
+  transform: none;
+  opacity: 1;
 }
 
 .app-header:active {
@@ -1688,6 +1704,12 @@ body {
 .app--dark .app-header {
   background: rgba(30, 41, 59, 0.7);
   border-bottom-color: rgba(51, 65, 85, 0.5);
+}
+
+/* ダークモード詳細モードでのヘッダー */
+.app--dark:not(.app--slim) .app-header {
+  background: rgba(30, 41, 59, 0.95);
+  border-bottom-color: rgba(51, 65, 85, 0.8);
 }
 
 .app--dark .app-header h1 {

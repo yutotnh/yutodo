@@ -973,7 +973,7 @@ function App() {
 
   return (
     <div className={`app ${!settings.detailedMode ? 'app--slim' : ''} ${isDarkMode ? 'app--dark' : ''}`}>
-      <header className={`app-header ${showHeader ? 'app-header--visible' : 'app-header--hidden'}`} onMouseDown={handleHeaderMouseDown}>
+      <header className={`app-header ${(settings.detailedMode || showHeader) ? 'app-header--visible' : 'app-header--hidden'}`} onMouseDown={handleHeaderMouseDown}>
         <div className="header-left">
           <MenuBar
             settings={settings}

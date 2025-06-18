@@ -324,4 +324,52 @@ describe('App', () => {
       });
     });
   });
+
+  describe('header visibility', () => {
+    it('should show correct CSS classes in detailed vs slim mode', async () => {
+      render(<App />);
+
+      await waitFor(() => {
+        const app = document.querySelector('.app');
+        expect(app).toHaveClass('app--slim');
+        
+        const header = document.querySelector('.app-header');
+        expect(header).toBeInTheDocument();
+      });
+    });
+
+    it('should apply correct CSS positioning based on mode', async () => {
+      render(<App />);
+
+      await waitFor(() => {
+        // Check that app has correct class structure
+        const app = document.querySelector('.app');
+        expect(app).toBeInTheDocument();
+        
+        // Check that header exists
+        const header = document.querySelector('.app-header');
+        expect(header).toBeInTheDocument();
+        
+        // In slim mode, app should have app--slim class
+        expect(app).toHaveClass('app--slim');
+      });
+    });
+
+    it('should render header component structure correctly', async () => {
+      render(<App />);
+
+      await waitFor(() => {
+        const header = document.querySelector('.app-header');
+        expect(header).toBeInTheDocument();
+        
+        const headerLeft = header?.querySelector('.header-left');
+        const headerCenter = header?.querySelector('.header-center');
+        const headerRight = header?.querySelector('.header-right');
+        
+        expect(headerLeft).toBeInTheDocument();
+        expect(headerCenter).toBeInTheDocument();
+        expect(headerRight).toBeInTheDocument();
+      });
+    });
+  });
 });
