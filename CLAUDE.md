@@ -115,10 +115,33 @@ git commit -m "deps: update React to v18.3.2"
 
 ### CHANGELOG Update Guidelines
 
-- **Significant changes**: Always update CHANGELOG.md for new features, bug fixes, and breaking changes
-- **Minor changes**: Documentation updates, small refactors may not require CHANGELOG updates
-- **Claude assistance**: Claude Code will proactively suggest and make CHANGELOG updates when appropriate
+Claude Code evaluates each change and makes CHANGELOG.md update decisions at commit time based on the following criteria:
+
+#### ✅ **Always Update Required**
+- **feat**: New features and functionality additions
+- **fix**: Important bug fixes with user impact
+- **perf**: Performance improvements
+- **breaking changes**: Any breaking changes (feat!, fix!)
+- **UI/UX improvements**: Significant user experience enhancements
+
+#### ❓ **Evaluate and Update if Significant**
+- **refactor**: Large-scale code restructuring
+- **style**: Important visual/UI changes
+- **docs**: Major documentation additions
+- **build/ci**: Development workflow changes affecting users
+
+#### ❌ **Usually No Update Required**
+- **test**: Test additions/modifications only
+- **docs**: Minor documentation fixes
+- **style**: Code formatting only
+- **chore**: Configuration file minor changes
+- **fix**: Typo fixes and trivial bug fixes
+
+#### **Implementation Process**
+- **At commit time**: Claude evaluates change importance and updates CHANGELOG.md accordingly
+- **Decision transparency**: Clear reasoning provided for update/no-update decisions
 - **Manual requests**: Developers can explicitly request CHANGELOG updates for any change
+- **Periodic review**: Regular checks to ensure no important changes are missed
 
 ## Testing Architecture
 
