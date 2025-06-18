@@ -159,11 +159,26 @@ db.serialize(() => {
       completed BOOLEAN DEFAULT FALSE,
       priority INTEGER DEFAULT 0,
       scheduledFor DATETIME,
+      startDate DATE,
+      endDate DATE,
       createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
       updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
       order_index INTEGER DEFAULT 0
     )
   `);
+  
+  // Add startDate and endDate columns if they don't exist (migration)
+  db.run(`ALTER TABLE todos ADD COLUMN startDate DATE`, (err) => {
+    if (err && !err.message.includes('duplicate column name')) {
+      console.error('Error adding startDate column:', err);
+    }
+  });
+  
+  db.run(`ALTER TABLE todos ADD COLUMN endDate DATE`, (err) => {
+    if (err && !err.message.includes('duplicate column name')) {
+      console.error('Error adding endDate column:', err);
+    }
+  });
   
   db.run(`
     CREATE TABLE IF NOT EXISTS schedules (

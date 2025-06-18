@@ -502,6 +502,7 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onUpdate, on
               {new Date(todo.scheduledFor).toLocaleString()}
             </span>
           )}
+          
         </div>
       </div>
       

@@ -29,6 +29,14 @@ vi.mock('react-i18next', () => ({
       if (key === 'schedule.noSchedulesDesc') return 'Create your first schedule to get started';
       if (key === 'schedule.edit') return 'Edit';
       if (key === 'schedule.delete') return 'Delete';
+      if (key === 'schedule.startDate') return 'Start Date';
+      if (key === 'schedule.endDate') return 'End Date';
+      if (key === 'schedule.nextDay') return 'Tomorrow';
+      if (key === 'schedule.nextWeek') return 'Next week';
+      if (key === 'schedule.nextMonth') return 'Next month';
+      if (key === 'schedule.asScheduled') return 'As scheduled';
+      if (key === 'schedule.pending') return 'Pending';
+      if (key === 'schedule.inactive') return 'Inactive';
       return key;
     },
   }),
@@ -152,7 +160,7 @@ describe('ScheduleView', () => {
 
   it('displays priority badge for high priority schedules', () => {
     render(<ScheduleView {...defaultProps} schedules={sampleSchedules} />);
-    expect(screen.getByText('High')).toBeInTheDocument();
+    expect(screen.getByText('High Priority')).toBeInTheDocument();
   });
 
   it('shows disabled styling for inactive schedules', () => {
@@ -165,5 +173,139 @@ describe('ScheduleView', () => {
   it('formats weekly schedule description correctly', () => {
     render(<ScheduleView {...defaultProps} schedules={sampleSchedules} />);
     expect(screen.getByText('Weekly - Monday, Wednesday')).toBeInTheDocument();
+  });
+
+  describe('Start and End Date Display', () => {
+    it('displays start date when start date is today or future', () => {
+      const futureDate = new Date();
+      futureDate.setDate(futureDate.getDate() + 1); // Tomorrow
+      const futureSchedule: Schedule = {
+        id: '3',
+        title: 'Future Schedule',
+        type: 'once',
+        startDate: futureDate.toISOString().split('T')[0],
+        priority: 0,
+        isActive: true,
+        createdAt: '2024-01-01T00:00:00.000Z',
+        updatedAt: '2024-01-01T00:00:00.000Z',
+      };
+
+      render(<ScheduleView {...defaultProps} schedules={[futureSchedule]} />);
+      expect(screen.getByText(/Start Date:/)).toBeInTheDocument();
+    });
+
+    it('does not display start date when start date is in the past', () => {
+      const pastDate = new Date();
+      pastDate.setDate(pastDate.getDate() - 1); // Yesterday
+      const pastSchedule: Schedule = {
+        id: '4',
+        title: 'Past Schedule',
+        type: 'once',
+        startDate: pastDate.toISOString().split('T')[0],
+        priority: 0,
+        isActive: true,
+        createdAt: '2024-01-01T00:00:00.000Z',
+        updatedAt: '2024-01-01T00:00:00.000Z',
+      };
+
+      render(<ScheduleView {...defaultProps} schedules={[pastSchedule]} />);
+      expect(screen.queryByText(/Start Date:/)).not.toBeInTheDocument();
+    });
+
+    it('displays start date when start date is today', () => {
+      const today = new Date().toISOString().split('T')[0];
+      const todaySchedule: Schedule = {
+        id: '5',
+        title: 'Today Schedule',
+        type: 'once',
+        startDate: today,
+        priority: 0,
+        isActive: true,
+        createdAt: '2024-01-01T00:00:00.000Z',
+        updatedAt: '2024-01-01T00:00:00.000Z',
+      };
+
+      render(<ScheduleView {...defaultProps} schedules={[todaySchedule]} />);
+      expect(screen.getByText(/Start Date:/)).toBeInTheDocument();
+    });
+
+    it('displays end date when end date is provided', () => {
+      const scheduleWithEndDate: Schedule = {
+        id: '6',
+        title: 'Schedule with End Date',
+        type: 'daily',
+        startDate: '2024-12-01',
+        endDate: '2024-12-31',
+        priority: 0,
+        isActive: true,
+        createdAt: '2024-01-01T00:00:00.000Z',
+        updatedAt: '2024-01-01T00:00:00.000Z',
+      };
+
+      render(<ScheduleView {...defaultProps} schedules={[scheduleWithEndDate]} />);
+      expect(screen.getByText(/End Date:/)).toBeInTheDocument();
+    });
+
+    it('does not display end date when end date is not provided', () => {
+      const scheduleWithoutEndDate: Schedule = {
+        id: '7',
+        title: 'Schedule without End Date',
+        type: 'daily',
+        startDate: '2024-12-01',
+        priority: 0,
+        isActive: true,
+        createdAt: '2024-01-01T00:00:00.000Z',
+        updatedAt: '2024-01-01T00:00:00.000Z',
+      };
+
+      render(<ScheduleView {...defaultProps} schedules={[scheduleWithoutEndDate]} />);
+      expect(screen.queryByText(/End Date:/)).not.toBeInTheDocument();
+    });
+
+    it('displays both start and end dates when both are provided and start date is future', () => {
+      const futureDate = new Date();
+      futureDate.setDate(futureDate.getDate() + 1);
+      const endDate = new Date();
+      endDate.setDate(endDate.getDate() + 30);
+      
+      const scheduleWithBothDates: Schedule = {
+        id: '8',
+        title: 'Schedule with Both Dates',
+        type: 'daily',
+        startDate: futureDate.toISOString().split('T')[0],
+        endDate: endDate.toISOString().split('T')[0],
+        priority: 0,
+        isActive: true,
+        createdAt: '2024-01-01T00:00:00.000Z',
+        updatedAt: '2024-01-01T00:00:00.000Z',
+      };
+
+      render(<ScheduleView {...defaultProps} schedules={[scheduleWithBothDates]} />);
+      expect(screen.getByText(/Start Date:/)).toBeInTheDocument();
+      expect(screen.getByText(/End Date:/)).toBeInTheDocument();
+    });
+
+    it('shows only end date when start date is past but end date exists', () => {
+      const pastDate = new Date();
+      pastDate.setDate(pastDate.getDate() - 1);
+      const futureEndDate = new Date();
+      futureEndDate.setDate(futureEndDate.getDate() + 30);
+      
+      const scheduleWithPastStartFutureEnd: Schedule = {
+        id: '9',
+        title: 'Past Start Future End',
+        type: 'daily',
+        startDate: pastDate.toISOString().split('T')[0],
+        endDate: futureEndDate.toISOString().split('T')[0],
+        priority: 0,
+        isActive: true,
+        createdAt: '2024-01-01T00:00:00.000Z',
+        updatedAt: '2024-01-01T00:00:00.000Z',
+      };
+
+      render(<ScheduleView {...defaultProps} schedules={[scheduleWithPastStartFutureEnd]} />);
+      expect(screen.queryByText(/Start Date:/)).not.toBeInTheDocument();
+      expect(screen.getByText(/End Date:/)).toBeInTheDocument();
+    });
   });
 });

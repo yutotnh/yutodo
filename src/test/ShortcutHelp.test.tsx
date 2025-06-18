@@ -89,11 +89,12 @@ describe('ShortcutHelp', () => {
     expect(mockOnClose).toHaveBeenCalledTimes(1);
   });
 
-  it('calls onClose when clicking outside the modal', () => {
+  it('calls onClose when clicking outside the modal (excluding header area)', () => {
     render(<ShortcutHelp onClose={mockOnClose} />);
     
     const overlay = document.querySelector('.settings-overlay');
-    fireEvent.mouseDown(overlay!);
+    // ヘッダー領域外（Y座標30px以上）でクリック
+    fireEvent.mouseDown(overlay!, { clientY: 100 });
     
     expect(mockOnClose).toHaveBeenCalledTimes(1);
   });
@@ -103,6 +104,16 @@ describe('ShortcutHelp', () => {
     
     const modalContent = document.querySelector('.settings-panel');
     fireEvent.mouseDown(modalContent!);
+    
+    expect(mockOnClose).not.toHaveBeenCalled();
+  });
+
+  it('does not close when clicking in header area', () => {
+    render(<ShortcutHelp onClose={mockOnClose} />);
+    
+    const overlay = document.querySelector('.settings-overlay');
+    // ヘッダー領域内（Y座標30px以下）でクリック
+    fireEvent.mouseDown(overlay!, { clientY: 20 });
     
     expect(mockOnClose).not.toHaveBeenCalled();
   });

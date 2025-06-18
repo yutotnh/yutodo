@@ -78,7 +78,25 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
   };
 
   const formatNextExecution = (schedule: Schedule): string => {
-    if (!schedule.nextExecution) return t('schedule.notScheduled');
+    if (!schedule.nextExecution) {
+      // スケジュールタイプに基づいて次回実行の予測を表示
+      if (!schedule.isActive) return t('schedule.inactive');
+      
+      switch (schedule.type) {
+        case 'once':
+          return schedule.startDate + (schedule.time ? ` ${schedule.time}` : '');
+        case 'daily':
+          return t('schedule.nextDay') + (schedule.time ? ` ${schedule.time}` : '');
+        case 'weekly':
+          return t('schedule.nextWeek') + (schedule.time ? ` ${schedule.time}` : '');
+        case 'monthly':
+          return t('schedule.nextMonth') + (schedule.time ? ` ${schedule.time}` : '');
+        case 'custom':
+          return t('schedule.asScheduled') + (schedule.time ? ` ${schedule.time}` : '');
+        default:
+          return t('schedule.pending');
+      }
+    }
     return new Date(schedule.nextExecution).toLocaleDateString() + ' ' + 
            new Date(schedule.nextExecution).toLocaleTimeString();
   };
@@ -187,17 +205,34 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
                       <span>{schedule.time}</span>
                     </div>
                   )}
+                  {schedule.priority > 0 && (
+                    <div className="schedule-detail">
+                      <Zap size={14} className="schedule-detail-icon" />
+                      <span className={`schedule-priority-inline schedule-priority--${schedule.priority}`}>
+                        {schedule.priority === 2 ? 'High' : 'Medium'} Priority
+                      </span>
+                    </div>
+                  )}
+                  {(() => {
+                    const today = new Date().toISOString().split('T')[0];
+                    return schedule.startDate >= today;
+                  })() && (
+                    <div className="schedule-detail">
+                      <Calendar size={14} className="schedule-detail-icon" />
+                      <span>{t('schedule.startDate')}: {new Date(schedule.startDate).toLocaleDateString()}</span>
+                    </div>
+                  )}
+                  {schedule.endDate && (
+                    <div className="schedule-detail">
+                      <Calendar size={14} className="schedule-detail-icon" />
+                      <span>{t('schedule.endDate')}: {new Date(schedule.endDate).toLocaleDateString()}</span>
+                    </div>
+                  )}
                   <div className="schedule-detail">
                     <Calendar size={14} className="schedule-detail-icon" />
                     <span>{t('schedule.nextExecution')}: {formatNextExecution(schedule)}</span>
                   </div>
                 </div>
-
-                {schedule.priority > 0 && (
-                  <div className={`schedule-priority schedule-priority--${schedule.priority}`}>
-                    {schedule.priority === 2 ? 'High' : 'Medium'}
-                  </div>
-                )}
               </div>
             </div>
           ))

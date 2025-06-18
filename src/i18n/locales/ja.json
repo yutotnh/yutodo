@@ -20,7 +20,9 @@
     "selectDateTime": "日時を選択...",
     "selectedItems": "{{count}}件選択中",
     "clearSelection": "選択解除",
-    "completedTasks": "完了済み ({{count}})"
+    "completedTasks": "完了済み ({{count}})",
+    "createdAt": "作成日",
+    "updatedAt": "更新日"
   },
   "filters": {
     "title": "フィルター",
@@ -203,7 +205,15 @@
       "3": "第3", 
       "4": "第4",
       "-1": "最終"
-    }
+    },
+    "nextExecution": "次回実行",
+    "notScheduled": "未スケジュール",
+    "inactive": "無効",
+    "nextDay": "明日",
+    "nextWeek": "来週",
+    "nextMonth": "来月",
+    "asScheduled": "スケジュール通り",
+    "pending": "待機中"
   },
   "common": {
     "cancel": "キャンセル",

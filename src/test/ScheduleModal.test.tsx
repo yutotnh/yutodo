@@ -48,10 +48,11 @@ describe('ScheduleModal', () => {
     expect(mockOnClose).toHaveBeenCalled();
   });
 
-  it('calls onClose when overlay is clicked', () => {
+  it('calls onClose when overlay is clicked (excluding header area)', () => {
     render(<ScheduleModal {...defaultProps} />);
     const overlay = screen.getByTestId('modal-overlay');
-    fireEvent.click(overlay);
+    // ヘッダー領域外（Y座標30px以上）でクリック
+    fireEvent.click(overlay, { clientY: 100 });
     expect(mockOnClose).toHaveBeenCalled();
   });
 
@@ -59,6 +60,14 @@ describe('ScheduleModal', () => {
     render(<ScheduleModal {...defaultProps} />);
     const modalContent = screen.getByTestId('modal-content');
     fireEvent.click(modalContent);
+    expect(mockOnClose).not.toHaveBeenCalled();
+  });
+
+  it('does not close when clicking in header area', () => {
+    render(<ScheduleModal {...defaultProps} />);
+    const overlay = screen.getByTestId('modal-overlay');
+    // ヘッダー領域内（Y座標30px以下）でクリック
+    fireEvent.click(overlay, { clientY: 20 });
     expect(mockOnClose).not.toHaveBeenCalled();
   });
 

@@ -20,7 +20,9 @@
     "selectDateTime": "Select date and time...",
     "selectedItems": "{{count}} items selected",
     "clearSelection": "Clear selection",
-    "completedTasks": "Completed ({{count}})"
+    "completedTasks": "Completed ({{count}})",
+    "createdAt": "Created",
+    "updatedAt": "Updated"
   },
   "filters": {
     "title": "Filter",
@@ -204,7 +206,15 @@
       "3": "Third",
       "4": "Fourth",
       "-1": "Last"
-    }
+    },
+    "nextExecution": "Next execution",
+    "notScheduled": "Not scheduled",
+    "inactive": "Inactive",
+    "nextDay": "Tomorrow",
+    "nextWeek": "Next week",
+    "nextMonth": "Next month", 
+    "asScheduled": "As scheduled",
+    "pending": "Pending"
   },
   "common": {
     "cancel": "Cancel",
