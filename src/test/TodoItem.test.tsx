@@ -222,14 +222,14 @@ describe('TodoItem', () => {
       expect(screen.getByTestId('trash-icon')).toBeInTheDocument();
     });
 
-    it('should only show delete button in slim mode', () => {
+    it('should show both edit and delete buttons in slim mode', () => {
       render(
         <TodoItemWrapper>
           <TodoItem todo={mockTodo} {...mockHandlers} slimMode={true} />
         </TodoItemWrapper>
       );
 
-      expect(screen.queryByTestId('edit-icon')).not.toBeInTheDocument();
+      expect(screen.getByTestId('edit-icon')).toBeInTheDocument();
       expect(screen.getByTestId('trash-icon')).toBeInTheDocument();
     });
   });
@@ -492,11 +492,33 @@ describe('TodoItem', () => {
       });
     });
 
-    it('should save detailed changes in full mode', async () => {
+    it('should open modal edit form in slim mode', async () => {
       const user = userEvent.setup();
       render(
         <TodoItemWrapper>
-          <TodoItem todo={mockTodo} {...mockHandlers} slimMode={false} />
+          <TodoItem todo={mockTodo} {...mockHandlers} slimMode={true} />
+        </TodoItemWrapper>
+      );
+
+      const editButton = screen.getByTestId('edit-icon').closest('button')!;
+      await user.click(editButton);
+
+      await waitFor(() => {
+        expect(screen.getByPlaceholderText('Task title...')).toBeInTheDocument();
+        expect(screen.getByPlaceholderText('Description (supports Markdown)...')).toBeInTheDocument();
+        expect(screen.getByDisplayValue('Medium Priority')).toBeInTheDocument();
+        expect(screen.getByTestId('date-picker')).toBeInTheDocument();
+        expect(screen.getByText('Save')).toBeInTheDocument();
+        expect(screen.getByText('Cancel')).toBeInTheDocument();
+        expect(screen.getByTestId('modal-overlay')).toBeInTheDocument();
+      });
+    });
+
+    it('should save detailed changes in modal edit', async () => {
+      const user = userEvent.setup();
+      render(
+        <TodoItemWrapper>
+          <TodoItem todo={mockTodo} {...mockHandlers} slimMode={true} />
         </TodoItemWrapper>
       );
 
@@ -526,11 +548,11 @@ describe('TodoItem', () => {
       });
     });
 
-    it('should cancel detailed changes in full mode', async () => {
+    it('should cancel modal edit changes', async () => {
       const user = userEvent.setup();
       render(
         <TodoItemWrapper>
-          <TodoItem todo={mockTodo} {...mockHandlers} slimMode={false} />
+          <TodoItem todo={mockTodo} {...mockHandlers} slimMode={true} />
         </TodoItemWrapper>
       );
 
@@ -546,6 +568,7 @@ describe('TodoItem', () => {
 
       await waitFor(() => {
         expect(screen.getByText('Test Todo')).toBeInTheDocument();
+        expect(screen.queryByTestId('modal-overlay')).not.toBeInTheDocument();
       });
 
       expect(mockHandlers.onUpdate).not.toHaveBeenCalled();
@@ -553,7 +576,7 @@ describe('TodoItem', () => {
   });
 
   describe('global edit event handling', () => {
-    it('should start editing when receiving global startEdit event', async () => {
+    it('should start inline editing when receiving global startEdit event', async () => {
       render(
         <TodoItemWrapper>
           <TodoItem todo={mockTodo} {...mockHandlers} slimMode={true} />
@@ -571,6 +594,8 @@ describe('TodoItem', () => {
 
       await waitFor(() => {
         expect(screen.getByDisplayValue('Test Todo')).toBeInTheDocument();
+        // Should be inline edit, not modal
+        expect(screen.queryByTestId('modal-overlay')).not.toBeInTheDocument();
       });
     });
 

@@ -23,6 +23,7 @@ interface TodoItemProps {
 export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onUpdate, onDelete, isSelected = false, onSelect, slimMode = false }) => {
   const { t } = useTranslation();
   const [isEditing, setIsEditing] = useState(false);
+  const [isInlineEditing, setIsInlineEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(todo.title);
   const [editDescription, setEditDescription] = useState(todo.description || '');
   const [editPriority, setEditPriority] = useState(todo.priority);
@@ -123,7 +124,7 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onUpdate, on
     isDragging,
   } = useSortable({ 
     id: todo.id,
-    disabled: isEditing // 編集中はドラッグを無効化
+    disabled: isEditing || isInlineEditing // 編集中はドラッグを無効化
   });
 
   const style: React.CSSProperties = {
@@ -145,16 +146,14 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onUpdate, on
   React.useEffect(() => {
     const handleStartEdit = (event: CustomEvent) => {
       if (event.detail.todoId === todo.id) {
-        setIsEditing(true);
-        if (slimMode) {
-          setTimeout(() => {
-            if (editInputRef.current) {
-              editInputRef.current.focus();
-              const length = editInputRef.current.value.length;
-              editInputRef.current.setSelectionRange(length, length);
-            }
-          }, 0);
-        }
+        setIsInlineEditing(true);
+        setTimeout(() => {
+          if (editInputRef.current) {
+            editInputRef.current.focus();
+            const length = editInputRef.current.value.length;
+            editInputRef.current.setSelectionRange(length, length);
+          }
+        }, 0);
       }
     };
 
@@ -162,7 +161,7 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onUpdate, on
     return () => {
       document.removeEventListener('startEdit', handleStartEdit as EventListener);
     };
-  }, [todo.id, slimMode]);
+  }, [todo.id]);
 
   const handleSave = () => {
     onUpdate({
@@ -191,12 +190,12 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onUpdate, on
       ...todo,
       title: editTitle
     });
-    setIsEditing(false);
+    setIsInlineEditing(false);
   };
 
-  // ダブルクリックハンドラ（全モード対応）
+  // ダブルクリックハンドラ（スリムモード専用のインライン編集）
   const handleTitleDoubleClick = (e: React.MouseEvent<HTMLElement>) => {
-    if (!isEditing) {
+    if (!isInlineEditing && slimMode) {
       e.preventDefault(); // デフォルト動作を停止
       e.stopPropagation(); // 親のクリックイベントを停止
       
@@ -205,7 +204,7 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onUpdate, on
       const rect = element.getBoundingClientRect();
       const clickX = e.clientX - rect.left;
       
-      setIsEditing(true);
+      setIsInlineEditing(true);
       
       // 選択状態をクリア（編集開始時は選択を解除）
       onSelect?.(todo.id, false, e);
@@ -270,14 +269,14 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onUpdate, on
     if (event.key === 'Escape') {
       event.preventDefault();
       setEditTitle(todo.title); // 元のタイトルに戻す
-      setIsEditing(false);
+      setIsInlineEditing(false);
     }
   };
 
   // フォーカスが外れた時の処理
   const handleEditBlur = () => {
     // ESCキーでのキャンセル以外の場合のみ保存
-    if (isEditing) {
+    if (isInlineEditing) {
       handleSlimSave();
     }
   };
@@ -303,54 +302,91 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onUpdate, on
     }
   };
 
-  // スリムモードでない場合のみ詳細編集画面を表示
-  if (isEditing && !slimMode) {
+  // Escapeキー処理
+  React.useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && isEditing) {
+        event.preventDefault();
+        event.stopPropagation();
+        handleCancel();
+      }
+    };
+
+    if (isEditing) {
+      document.addEventListener('keydown', handleKeyDown);
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isEditing]);
+
+  // モーダル編集画面
+  if (isEditing) {
     return (
-      <div className="todo-item todo-item--editing">
-        <div className="todo-edit-form">
-          <input
-            type="text"
-            value={editTitle}
-            onChange={(e) => setEditTitle(e.target.value)}
-            className="todo-edit-title"
-            placeholder="Task title..."
-          />
-          <textarea
-            value={editDescription}
-            onChange={(e) => setEditDescription(e.target.value)}
-            className="todo-edit-description"
-            placeholder="Description (supports Markdown)..."
-            rows={3}
-          />
-          <div className="todo-edit-meta">
-            <select
-              value={editPriority}
-              onChange={(e) => setEditPriority(Number(e.target.value))}
-              className="todo-edit-priority"
+      <div className="modal-overlay" data-testid="modal-overlay" onClick={(e) => {
+        // ヘッダー領域内（Y座標30px以下）でのクリックの場合は閉じない
+        if (e.clientY <= 30) return;
+        handleCancel();
+      }}>
+        <div className="modal-content todo-edit-modal" data-testid="modal-content" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-header">
+            <h2>{t('tasks.editTask')}</h2>
+            <button
+              className="modal-close"
+              onClick={handleCancel}
+              aria-label={t('buttons.close')}
             >
-              <option value={0}>Low Priority</option>
-              <option value={1}>Medium Priority</option>
-              <option value={2}>High Priority</option>
-            </select>
-            <DatePicker
-              selected={editScheduledFor}
-              onChange={(date: Date | null) => setEditScheduledFor(date)}
-              showTimeSelect
-              timeFormat="HH:mm"
-              timeIntervals={15}
-              dateFormat="yyyy/MM/dd HH:mm"
-              placeholderText={t('tasks.selectDateTime')}
-              className="todo-edit-schedule"
-              isClearable
-              shouldCloseOnSelect={false}
-              closeOnScroll={true}
-              preventOpenOnFocus={false}
-              autoComplete="off"
-            />
+              ×
+            </button>
           </div>
-          <div className="todo-edit-actions">
-            <button onClick={handleSave} className="btn btn--primary">{t('buttons.save')}</button>
-            <button onClick={handleCancel} className="btn btn--secondary">{t('buttons.cancel')}</button>
+          <div className="modal-body">
+            <div className="todo-edit-form">
+              <input
+                type="text"
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                className="todo-edit-title"
+                placeholder="Task title..."
+              />
+              <textarea
+                value={editDescription}
+                onChange={(e) => setEditDescription(e.target.value)}
+                className="todo-edit-description"
+                placeholder="Description (supports Markdown)..."
+                rows={3}
+              />
+              <div className="todo-edit-meta">
+                <select
+                  value={editPriority}
+                  onChange={(e) => setEditPriority(Number(e.target.value))}
+                  className="todo-edit-priority"
+                >
+                  <option value={0}>Low Priority</option>
+                  <option value={1}>Medium Priority</option>
+                  <option value={2}>High Priority</option>
+                </select>
+                <DatePicker
+                  selected={editScheduledFor}
+                  onChange={(date: Date | null) => setEditScheduledFor(date)}
+                  showTimeSelect
+                  timeFormat="HH:mm"
+                  timeIntervals={15}
+                  dateFormat="yyyy/MM/dd HH:mm"
+                  placeholderText={t('tasks.selectDateTime')}
+                  className="todo-edit-schedule"
+                  isClearable
+                  shouldCloseOnSelect={false}
+                  closeOnScroll={true}
+                  preventOpenOnFocus={false}
+                  autoComplete="off"
+                />
+              </div>
+              <div className="todo-edit-actions">
+                <button onClick={handleSave} className="btn btn--primary">{t('buttons.save')}</button>
+                <button onClick={handleCancel} className="btn btn--secondary">{t('buttons.cancel')}</button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -365,7 +401,7 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onUpdate, on
       data-dragging={isDragging}
       onClick={handleClick}
       {...attributes}
-      {...(!isEditing ? listeners : {})} // 編集中でない場合のみドラッグリスナーを適用
+      {...(!isEditing && !isInlineEditing ? listeners : {})} // 編集中でない場合のみドラッグリスナーを適用
     >
       <div className="todo-item__check">
         <button
@@ -377,7 +413,7 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onUpdate, on
       </div>
       
       <div className="todo-item__content">
-        {isEditing && slimMode ? (
+        {isInlineEditing ? (
           <input
             ref={editInputRef}
             type="text"
@@ -392,7 +428,7 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onUpdate, on
           <div 
             className="todo-item__title" 
             onDoubleClick={handleTitleDoubleClick}
-            style={{ cursor: 'pointer' }}
+            style={{ cursor: slimMode ? 'pointer' : 'default' }}
           >
             <ReactMarkdown 
               remarkPlugins={[remarkGfm]}
@@ -507,14 +543,12 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onUpdate, on
       </div>
       
       <div className="todo-item__actions">
-        {!slimMode && (
-          <button
-            onClick={() => setIsEditing(true)}
-            className="action-btn action-btn--edit"
-          >
-            <Edit2 size={16} />
-          </button>
-        )}
+        <button
+          onClick={() => setIsEditing(true)}
+          className="action-btn action-btn--edit"
+        >
+          <Edit2 size={16} />
+        </button>
         <button
           onClick={() => onDelete(todo.id)}
           className="action-btn action-btn--delete"

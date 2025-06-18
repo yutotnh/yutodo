@@ -3077,7 +3077,7 @@ body {
   color: #94a3b8;
 }
 
-/* Schedule Modal Styles */
+/* Modal Styles */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -3096,6 +3096,17 @@ body {
   pointer-events: auto;
 }
 
+.modal-content {
+  width: 90%;
+  max-width: 700px;
+  max-height: 90vh;
+  background: white;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  pointer-events: auto; /* Modal content should be interactive */
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
 .schedule-modal {
   width: 90%;
   max-width: 700px;
@@ -3107,7 +3118,15 @@ body {
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
 }
 
-.app--dark .schedule-modal {
+.todo-edit-modal {
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+}
+
+.app--dark .modal-content,
+.app--dark .schedule-modal,
+.app--dark .todo-edit-modal {
   background: #1f2937;
   color: #f3f4f6;
 }
@@ -3160,6 +3179,12 @@ body {
 .app--dark .modal-close:hover {
   background: #374151;
   color: #f3f4f6;
+}
+
+.modal-body {
+  padding: 1.5rem;
+  max-height: calc(90vh - 120px);
+  overflow-y: auto;
 }
 
 .schedule-form {
