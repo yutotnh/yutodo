@@ -36,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved menu bar implementation with comprehensive keyboard navigation
 - Enhanced CHANGELOG maintenance approach to use Claude Code assistance
 - Enhanced slim mode to display priority, date, and description with small text while maintaining compact design
+- Improved slim mode to display full datetime instead of date-only in task list for better scheduling visibility
 
 ### Fixed
 - Header positioning to use static layout instead of overlay in detailed mode
