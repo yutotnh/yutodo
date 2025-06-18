@@ -1,0 +1,96 @@
+version: 2
+updates:
+  # Frontend dependencies (npm)
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 10
+    assignees:
+      - "yutotnh"
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+    groups:
+      tauri-apps:
+        patterns:
+          - "@tauri-apps/*"
+      testing:
+        patterns:
+          - "@testing-library/*"
+          - "vitest"
+          - "jsdom"
+          - "@types/jest"
+          - "jest"
+      react:
+        patterns:
+          - "react"
+          - "react-*"
+          - "@types/react*"
+      build-tools:
+        patterns:
+          - "vite"
+          - "@vitejs/*"
+          - "typescript"
+          - "esbuild"
+
+  # Backend dependencies (npm)
+  - package-ecosystem: "npm"
+    directory: "/server"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:30"
+    open-pull-requests-limit: 10
+    assignees:
+      - "yutotnh"
+    commit-message:
+      prefix: "deps(server)"
+      include: "scope"
+    groups:
+      express:
+        patterns:
+          - "express"
+          - "@types/express"
+      socket-io:
+        patterns:
+          - "socket.io*"
+      testing:
+        patterns:
+          - "jest"
+          - "@types/jest"
+          - "ts-jest"
+      database:
+        patterns:
+          - "sqlite3"
+          - "@types/sqlite3"
+
+  # Rust dependencies (Cargo)
+  - package-ecosystem: "cargo"
+    directory: "/src-tauri"
+    schedule:
+      interval: "weekly"
+      day: "tuesday"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    assignees:
+      - "yutotnh"
+    commit-message:
+      prefix: "deps(tauri)"
+      include: "scope"
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "wednesday"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    assignees:
+      - "yutotnh"
+    commit-message:
+      prefix: "ci"
+      include: "scope"

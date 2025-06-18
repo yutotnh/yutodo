@@ -69,6 +69,57 @@ npm test -- --testNamePattern="socket" # Run specific tests
 2. Start the Tauri app: `npm run tauri dev`
 3. The app connects to the server at `http://localhost:3001` by default
 
+## Release Management & CHANGELOG
+
+### Automated CHANGELOG Maintenance
+
+The project uses **Release Please** for automated CHANGELOG.md maintenance and version management:
+
+- **CHANGELOG.md is automatically maintained** - DO NOT manually edit it
+- **Conventional commits are required** for proper automation
+- **Version bumping is automatic** based on commit types
+- **GitHub releases are automated** with built binaries
+
+### Conventional Commit Format
+
+All commits must follow conventional commit format:
+
+```bash
+# Features (minor version bump)
+git commit -m "feat: add user authentication system"
+git commit -m "feat(ui): implement dark mode toggle"
+
+# Bug fixes (patch version bump)  
+git commit -m "fix: resolve header positioning in detailed mode"
+git commit -m "fix(server): handle socket disconnection properly"
+
+# Breaking changes (major version bump)
+git commit -m "feat!: redesign API interface"
+git commit -m "fix!: change database schema"
+
+# Other types (no version bump)
+git commit -m "docs: update README installation steps"
+git commit -m "test: add coverage for schedule execution"
+git commit -m "refactor: simplify component structure"
+git commit -m "style: fix linting warnings"
+git commit -m "ci: update GitHub Actions workflow"
+git commit -m "deps: update React to v18.3.2"
+```
+
+### Release Process
+
+1. **Development**: Use conventional commits for all changes
+2. **PR Merge**: When merged to `main`, Release Please analyzes commits
+3. **Release PR**: Automatically creates PR with CHANGELOG.md updates and version bump
+4. **Release**: Merging the Release Please PR triggers automated release with binaries
+
+### IMPORTANT: Do NOT manually edit CHANGELOG.md
+
+- The file is automatically generated and maintained
+- Manual edits will be overwritten
+- Use conventional commits to ensure proper documentation
+- For urgent manual updates, edit the "Unreleased" section only
+
 ## Testing Architecture
 
 ### Frontend Testing (Vitest + React Testing Library)
@@ -549,3 +600,78 @@ logger.debug('Processing todos batch:', todos.length, 'items');
 - **Debug Testing**: Test logs are captured for verification when needed
 
 This logging strategy ensures clean production deployments while maintaining powerful debugging capabilities during development.
+
+## CI/CD & Automation
+
+### GitHub Actions Workflows
+
+The project includes comprehensive CI/CD automation:
+
+#### **ci.yml** - Continuous Integration
+- **Triggers**: Push/PR to `main` and `develop` branches
+- **Jobs**:
+  - **Lint & Type Check**: Frontend and backend TypeScript validation
+  - **Frontend Tests**: Vitest with coverage reporting to Codecov
+  - **Backend Tests**: Jest with coverage reporting to Codecov  
+  - **Tauri Build Test**: Multi-platform build verification (Windows/macOS/Linux)
+
+#### **release-please.yml** - Automated Releases
+- **Triggers**: Push to `main` branch
+- **Process**:
+  1. Analyzes conventional commits since last release
+  2. Creates Release PR with CHANGELOG.md updates and version bump
+  3. When Release PR is merged, builds and publishes GitHub release with binaries
+- **Platforms**: Builds for Windows, macOS, and Linux simultaneously
+
+#### **security.yml** - Security Scanning
+- **Triggers**: Push/PR to `main`, weekly scheduled runs
+- **Scans**:
+  - **NPM Audit**: Frontend and backend dependency vulnerability checks
+  - **Cargo Audit**: Rust dependency security scanning
+  - **CodeQL**: Static code analysis for JavaScript and Rust
+- **Reporting**: Results integrated with GitHub Security tab
+
+#### **validate-commits.yml** - Commit Message Validation
+- **Triggers**: Pull requests to `main`
+- **Purpose**: Ensures conventional commit format for proper CHANGELOG generation
+- **Blocks**: PRs with improperly formatted commit messages
+
+### Dependabot Configuration
+
+Automated dependency updates via `.github/dependabot.yml`:
+
+- **Frontend Dependencies**: Weekly updates (Monday 9:00 AM)
+- **Backend Dependencies**: Weekly updates (Monday 9:30 AM)  
+- **Rust Dependencies**: Weekly updates (Tuesday 9:00 AM)
+- **GitHub Actions**: Weekly updates (Wednesday 9:00 AM)
+- **Grouping**: Related packages updated together (e.g., React ecosystem, Tauri plugins)
+- **Security**: Automatic security patches as they become available
+
+### Development Integration
+
+#### Required for All Development:
+- **Conventional Commits**: Mandatory for CHANGELOG automation
+- **Test Coverage**: All new code must include comprehensive tests
+- **Type Safety**: TypeScript compilation must pass without errors
+- **Security Compliance**: No vulnerabilities in dependencies
+
+#### PR Requirements:
+- All CI checks must pass (build, test, lint, security)
+- Conventional commit format validation
+- Code review approval
+- Up-to-date with target branch
+
+#### Release Process:
+1. **Development** → Use conventional commits
+2. **PR Merge** → Release Please analyzes changes
+3. **Release PR** → Automatic CHANGELOG/version updates  
+4. **Release Merge** → Automated build and publish to GitHub Releases
+
+### Monitoring & Maintenance
+
+- **Security Alerts**: GitHub security advisories with automatic Dependabot fixes
+- **Build Status**: All workflows report to GitHub checks API
+- **Coverage Tracking**: Codecov integration for test coverage trends
+- **Dependency Health**: Automated updates with compatibility testing
+
+This automation ensures consistent code quality, security compliance, and reliable releases without manual intervention.

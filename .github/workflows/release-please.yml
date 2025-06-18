@@ -1,0 +1,97 @@
+name: Release Please
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+    steps:
+      - name: Release Please
+        id: release
+        uses: google-github-actions/release-please-action@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          release-type: node
+          package-name: yutodo
+          changelog-sections: |
+            [
+              {"type":"feat","section":"Features"},
+              {"type":"fix","section":"Bug Fixes"},
+              {"type":"perf","section":"Performance Improvements"},
+              {"type":"deps","section":"Dependencies"},
+              {"type":"revert","section":"Reverts"},
+              {"type":"docs","section":"Documentation"},
+              {"type":"style","section":"Styles"},
+              {"type":"refactor","section":"Code Refactoring"},
+              {"type":"test","section":"Tests"},
+              {"type":"build","section":"Build System"},
+              {"type":"ci","section":"Continuous Integration"}
+            ]
+
+  build-and-release:
+    if: ${{ needs.release-please.outputs.release_created }}
+    needs: release-please
+    runs-on: ${{ matrix.platform }}
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [macos-latest, ubuntu-20.04, windows-latest]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
+
+      - name: Install dependencies (ubuntu only)
+        if: matrix.platform == 'ubuntu-20.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev libappindicator3-dev librsvg2-dev patchelf
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Install backend dependencies
+        run: |
+          cd server
+          npm ci
+
+      - name: Run tests
+        run: |
+          npm test -- --run
+          cd server
+          npm test
+
+      - name: Build Tauri app
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ needs.release-please.outputs.tag_name }}
+          releaseName: 'YuToDo ${{ needs.release-please.outputs.tag_name }}'
+          releaseBody: 'See CHANGELOG.md for details.'
+          releaseDraft: false
+          prerelease: false
