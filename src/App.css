@@ -2309,63 +2309,63 @@ body {
     color: #e2e8f0;
   }
 
-  .app--dark .search-bar {
+  .app.app--dark .search-bar {
     background: #1e293b;
     border-bottom-color: #334155;
   }
 
-  .app--dark .search-input {
+  .app.app--dark .search-input {
     background: #334155;
     border-color: #475569;
     color: #f1f5f9;
   }
 
-  .app--dark .search-input::placeholder {
+  .app.app--dark .search-input::placeholder {
     color: #94a3b8;
   }
 
-  .app--dark .search-input:focus {
+  .app.app--dark .search-input:focus {
     border-color: #3b82f6;
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
   }
 
-  .app--dark .search-icon,
-  .app--dark .search-clear {
+  .app.app--dark .search-icon,
+  .app.app--dark .search-clear {
     color: #94a3b8;
   }
 
-  .app--dark .search-clear:hover {
+  .app.app--dark .search-clear:hover {
     color: #cbd5e1;
   }
 
-  .app--dark .todo-filter {
+  .app.app--dark .todo-filter {
     background: #1e293b;
     border-bottom-color: #334155;
   }
 
-  .app--dark .filter-title {
+  .app.app--dark .filter-title {
     color: #f1f5f9;
   }
 
-  .app--dark .filter-btn {
+  .app.app--dark .filter-btn {
     background: #334155;
     border-color: #475569;
     color: #cbd5e1;
   }
 
-  .app--dark .filter-btn:hover {
+  .app.app--dark .filter-btn:hover {
     background: #475569;
     border-color: #64748b;
     color: #e2e8f0;
   }
 
-  .app--dark .filter-btn--active {
+  .app.app--dark .filter-btn--active {
     background: #3b82f6;
     border-color: #3b82f6;
     color: white;
   }
 
-  .app--dark .filter-count {
+  .app.app--dark .filter-count {
     color: #e2e8f0;
   }
 
