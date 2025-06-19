@@ -913,13 +913,18 @@ class ScheduleExecutor {
     const todoId = uuidv4();
     const now = executionTime.toISOString();
 
+    // Generate local date string without timezone conversion
+    const getLocalDateString = (date: Date): string => {
+      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    };
+
     const todoData = {
       id: todoId,
       title: schedule.title,
-      description: schedule.description || undefined,
+      description: undefined, // Don't copy schedule description to avoid "Generated from schedule" message
       completed: false,
       priority: schedule.priority,
-      scheduledFor: schedule.time ? `${executionTime.toISOString().split('T')[0]}T${schedule.time}:00.000Z` : undefined,
+      scheduledFor: schedule.time ? `${getLocalDateString(executionTime)}T${schedule.time}:00.000Z` : undefined,
       createdAt: now,
       updatedAt: now
     };
