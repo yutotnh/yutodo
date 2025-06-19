@@ -95,6 +95,7 @@ function App() {
   const [showShortcutHelp, setShowShortcutHelp] = useState(false);
   const [selectedTodos, setSelectedTodos] = useState<Set<string>>(new Set());
   const [lastSelectedIndex, setLastSelectedIndex] = useState<number>(-1);
+  const [selectionAnchorIndex, setSelectionAnchorIndex] = useState<number>(-1);
   const [currentFilter, setCurrentFilter] = useState<FilterType>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [showHeader, setShowHeader] = useState(true);
@@ -789,6 +790,7 @@ function App() {
       // 選択状態をクリアしてからフォーカス（Ctrl+Nのみで実行）
       setSelectedTodos(new Set());
       setLastSelectedIndex(-1);
+      setSelectionAnchorIndex(-1);
       addTodoFormRef.current?.focusInput();
     },
     onToggleSettings: () => {
@@ -809,6 +811,7 @@ function App() {
     onClearSelection: () => {
       setSelectedTodos(new Set());
       setLastSelectedIndex(-1);
+      setSelectionAnchorIndex(-1);
     },
     onEditSelected: () => {
       // 最初に選択されたタスクを編集モードにする
@@ -819,6 +822,7 @@ function App() {
           // 選択を解除して編集モードに入る
           setSelectedTodos(new Set());
           setLastSelectedIndex(-1);
+          setSelectionAnchorIndex(-1);
           
           // AddTodoFormのフォーカスを防ぐため、少し遅延してイベントを発火
           setTimeout(() => {
@@ -1017,6 +1021,8 @@ function App() {
         deleteTodo(todoId);
       });
       setSelectedTodos(new Set());
+      setLastSelectedIndex(-1);
+      setSelectionAnchorIndex(-1);
     }
   };
 
@@ -1025,6 +1031,8 @@ function App() {
       deleteTodo(todoId);
     });
     setSelectedTodos(new Set());
+    setLastSelectedIndex(-1);
+    setSelectionAnchorIndex(-1);
   };
 
   // ビュー切り替えハンドラー
@@ -1326,19 +1334,21 @@ function App() {
                         onSelect={(id, selected, event) => {
                           const allTodos = [...pendingTodos, ...completedTodos];
                           const currentIndex = allTodos.findIndex(todo => todo.id === id);
-                          const newSelected = new Set(selectedTodos);
 
-                          if (event?.shiftKey && lastSelectedIndex !== -1) {
-                            // Shift+クリック: 範囲選択
-                            const startIndex = Math.min(lastSelectedIndex, currentIndex);
-                            const endIndex = Math.max(lastSelectedIndex, currentIndex);
+                          if (event?.shiftKey && selectionAnchorIndex !== -1) {
+                            // Shift+クリック: アンカーとの間の範囲選択（置き換え）
+                            const newSelected = new Set<string>();
+                            const startIndex = Math.min(selectionAnchorIndex, currentIndex);
+                            const endIndex = Math.max(selectionAnchorIndex, currentIndex);
                             
                             for (let i = startIndex; i <= endIndex; i++) {
                               newSelected.add(allTodos[i].id);
                             }
                             setSelectedTodos(newSelected);
+                            setLastSelectedIndex(currentIndex);
                           } else if (event?.ctrlKey || event?.metaKey) {
                             // Ctrl+クリック: 個別選択/解除
+                            const newSelected = new Set(selectedTodos);
                             if (selected) {
                               newSelected.add(id);
                             } else {
@@ -1346,6 +1356,7 @@ function App() {
                             }
                             setSelectedTodos(newSelected);
                             setLastSelectedIndex(currentIndex);
+                            setSelectionAnchorIndex(currentIndex); // Ctrl+クリックで新しいアンカーを設定
                           } else {
                             // 通常クリック: 単一選択
                             if (selected) {
@@ -1354,6 +1365,7 @@ function App() {
                               setSelectedTodos(new Set());
                             }
                             setLastSelectedIndex(currentIndex);
+                            setSelectionAnchorIndex(currentIndex); // 通常クリックで新しいアンカーを設定
                           }
                         }}
                       />
@@ -1394,19 +1406,21 @@ function App() {
                               onSelect={(id, selected, event) => {
                                 const allTodos = [...pendingTodos, ...completedTodos];
                                 const currentIndex = allTodos.findIndex(todo => todo.id === id);
-                                const newSelected = new Set(selectedTodos);
 
-                                if (event?.shiftKey && lastSelectedIndex !== -1) {
-                                  // Shift+クリック: 範囲選択
-                                  const startIndex = Math.min(lastSelectedIndex, currentIndex);
-                                  const endIndex = Math.max(lastSelectedIndex, currentIndex);
+                                if (event?.shiftKey && selectionAnchorIndex !== -1) {
+                                  // Shift+クリック: アンカーとの間の範囲選択（置き換え）
+                                  const newSelected = new Set<string>();
+                                  const startIndex = Math.min(selectionAnchorIndex, currentIndex);
+                                  const endIndex = Math.max(selectionAnchorIndex, currentIndex);
                                   
                                   for (let i = startIndex; i <= endIndex; i++) {
                                     newSelected.add(allTodos[i].id);
                                   }
                                   setSelectedTodos(newSelected);
+                                  setLastSelectedIndex(currentIndex);
                                 } else if (event?.ctrlKey || event?.metaKey) {
                                   // Ctrl+クリック: 個別選択/解除
+                                  const newSelected = new Set(selectedTodos);
                                   if (selected) {
                                     newSelected.add(id);
                                   } else {
@@ -1414,6 +1428,7 @@ function App() {
                                   }
                                   setSelectedTodos(newSelected);
                                   setLastSelectedIndex(currentIndex);
+                                  setSelectionAnchorIndex(currentIndex); // Ctrl+クリックで新しいアンカーを設定
                                 } else {
                                   // 通常クリック: 単一選択
                                   if (selected) {
@@ -1422,6 +1437,7 @@ function App() {
                                     setSelectedTodos(new Set());
                                   }
                                   setLastSelectedIndex(currentIndex);
+                                  setSelectionAnchorIndex(currentIndex); // 通常クリックで新しいアンカーを設定
                                 }
                               }}
                             />
