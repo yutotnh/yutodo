@@ -36,6 +36,8 @@ vi.mock('react-i18next', () => ({
       if (key === 'schedule.asScheduled') return 'As scheduled';
       if (key === 'schedule.pending') return 'Pending';
       if (key === 'schedule.inactive') return 'Inactive';
+      if (key === 'schedule.activeSchedules') return 'Active Schedules';
+      if (key === 'schedule.inactiveSchedules') return 'Inactive Schedules';
       return key;
     },
   }),
@@ -113,16 +115,33 @@ describe('ScheduleView', () => {
   it('renders schedule list when schedules exist', () => {
     render(<ScheduleView {...defaultProps} schedules={sampleSchedules} />);
     
+    // Active schedule should be visible
     expect(screen.getByText('Daily Standup')).toBeInTheDocument();
+    
+    // Inactive schedule should be in the inactive section
+    // First, expand the inactive section
+    const inactiveSectionHeader = screen.getByText(/Inactive Schedules/);
+    fireEvent.click(inactiveSectionHeader);
+    
+    // Now the inactive schedule should be visible
     expect(screen.getByText('Weekly Review')).toBeInTheDocument();
   });
 
   it('shows active/inactive status correctly', () => {
     render(<ScheduleView {...defaultProps} schedules={sampleSchedules} />);
     
-    const checkboxes = screen.getAllByRole('checkbox');
-    expect(checkboxes[0]).toBeChecked(); // Daily Standup is active
-    expect(checkboxes[1]).not.toBeChecked(); // Weekly Review is inactive
+    // Get the checkbox for the active schedule (Daily Standup)
+    const activeCheckbox = screen.getAllByRole('checkbox')[0];
+    expect(activeCheckbox).toBeChecked(); // Daily Standup is active
+    
+    // Expand inactive section to access inactive schedule checkbox
+    const inactiveSectionHeader = screen.getByText(/Inactive Schedules/);
+    fireEvent.click(inactiveSectionHeader);
+    
+    // Now get the checkbox for inactive schedule (Weekly Review)
+    const allCheckboxes = screen.getAllByRole('checkbox');
+    const inactiveCheckbox = allCheckboxes[1];
+    expect(inactiveCheckbox).not.toBeChecked(); // Weekly Review is inactive
   });
 
   it('calls onToggleSchedule when checkbox is clicked', () => {
@@ -159,11 +178,20 @@ describe('ScheduleView', () => {
 
   it('displays priority badge for high priority schedules', () => {
     render(<ScheduleView {...defaultProps} schedules={sampleSchedules} />);
+    
+    // Expand inactive section to see the high priority schedule (Weekly Review)
+    const inactiveSectionHeader = screen.getByText(/Inactive Schedules/);
+    fireEvent.click(inactiveSectionHeader);
+    
     expect(screen.getByText('High Priority')).toBeInTheDocument();
   });
 
   it('shows disabled styling for inactive schedules', () => {
     render(<ScheduleView {...defaultProps} schedules={sampleSchedules} />);
+    
+    // Expand inactive section to access the Weekly Review schedule
+    const inactiveSectionHeader = screen.getByText(/Inactive Schedules/);
+    fireEvent.click(inactiveSectionHeader);
     
     const weeklyReviewItem = screen.getByText('Weekly Review').closest('.schedule-item');
     expect(weeklyReviewItem).toHaveClass('schedule-item--disabled');
@@ -171,6 +199,11 @@ describe('ScheduleView', () => {
 
   it('formats weekly schedule description correctly', () => {
     render(<ScheduleView {...defaultProps} schedules={sampleSchedules} />);
+    
+    // Expand inactive section to see the weekly schedule description
+    const inactiveSectionHeader = screen.getByText(/Inactive Schedules/);
+    fireEvent.click(inactiveSectionHeader);
+    
     expect(screen.getByText('Weekly - Monday, Wednesday')).toBeInTheDocument();
   });
 
@@ -229,12 +262,17 @@ describe('ScheduleView', () => {
     });
 
     it('displays end date when end date is provided', () => {
+      const futureStartDate = new Date();
+      futureStartDate.setDate(futureStartDate.getDate() + 1); // Tomorrow
+      const futureEndDate = new Date();
+      futureEndDate.setDate(futureEndDate.getDate() + 30); // 30 days from now
+      
       const scheduleWithEndDate: Schedule = {
         id: '6',
         title: 'Schedule with End Date',
         type: 'daily',
-        startDate: '2024-12-01',
-        endDate: '2024-12-31',
+        startDate: futureStartDate.toISOString().split('T')[0],
+        endDate: futureEndDate.toISOString().split('T')[0],
         priority: 0,
         isActive: true,
         createdAt: '2024-01-01T00:00:00.000Z',
