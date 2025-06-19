@@ -103,7 +103,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
       if (!schedule.isActive) return t('schedule.inactive');
       
       switch (schedule.type) {
-        case 'once':
+        case 'once': {
           // サーバー側のロジックと同じ方法で日付を処理
           const startDateTime = new Date(schedule.startDate + 'T00:00:00');
           if (schedule.time) {
@@ -113,6 +113,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
             startDateTime.setHours(9, 0, 0, 0); // Default to 9:00 AM
           }
           return startDateTime.toLocaleDateString() + (schedule.time ? ` ${schedule.time}` : '');
+        }
         case 'daily':
           return t('schedule.nextDay') + (schedule.time ? ` ${schedule.time}` : '');
         case 'weekly':

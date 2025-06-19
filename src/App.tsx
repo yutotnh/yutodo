@@ -783,69 +783,6 @@ function App() {
     }
   };
 
-  // キーボードショートカットハンドラ（一時的にコメントアウト - 後で定義）
-  const keyboardHandlers_old = {
-    onNewTask: () => {
-      // 選択状態をクリアしてからフォーカス（Ctrl+Nのみで実行）
-      setSelectedTodos(new Set());
-      setSelectionAnchorIndex(-1);
-      addTodoFormRef.current?.focusInput();
-    },
-    onToggleSettings: () => {
-      setShowSettings(prev => !prev);
-    },
-    onFocusSearch: () => {
-      searchInputRef.current?.focus();
-    },
-    onSelectAll: () => {
-      setSelectedTodos(new Set(todos.map(todo => todo.id)));
-    },
-    onDeleteSelected: () => {
-      handleBulkDeleteWithConfirm();
-    },
-    onShowHelp: () => {
-      setShowShortcutHelp(true);
-    },
-    onClearSelection: () => {
-      setSelectedTodos(new Set());
-      setSelectionAnchorIndex(-1);
-    },
-    onEditSelected: () => {
-      // 最初に選択されたタスクを編集モードにする
-      if (selectedTodos.size === 1) {
-        const selectedId = Array.from(selectedTodos)[0];
-        const todo = todos.find(t => t.id === selectedId);
-        if (todo) {
-          // 選択を解除して編集モードに入る
-          setSelectedTodos(new Set());
-          setSelectionAnchorIndex(-1);
-          
-          // AddTodoFormのフォーカスを防ぐため、少し遅延してイベントを発火
-          setTimeout(() => {
-            const editEvent = new CustomEvent('startEdit', { detail: { todoId: selectedId } });
-            document.dispatchEvent(editEvent);
-          }, 10);
-        }
-      }
-    },
-    onToggleSelectedCompletion: () => {
-      // 選択されたタスクの完了状態を一括切り替え
-      if (selectedTodos.size > 0) {
-        const selectedIds = Array.from(selectedTodos);
-        const selectedTodosList = todos.filter(todo => selectedIds.includes(todo.id));
-        
-        // すべて完了している場合は未完了に、それ以外は完了にする
-        const allCompleted = selectedTodosList.every(todo => todo.completed);
-        const newCompletedState = !allCompleted;
-        
-        selectedTodosList.forEach(todo => {
-          if (todo.completed !== newCompletedState) {
-            toggleTodo(todo.id);
-          }
-        });
-      }
-    }
-  };
 
 
   // Altキーの状態を監視してヘッダー表示を制御
