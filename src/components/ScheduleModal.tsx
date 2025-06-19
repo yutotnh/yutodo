@@ -12,6 +12,11 @@ interface ScheduleModalProps {
   onSave: (schedule: Omit<Schedule, 'id' | 'createdAt' | 'updatedAt' | 'lastExecuted' | 'nextExecution'>) => void;
 }
 
+// 日付をYYYY-MM-DD形式の文字列に変換（ローカル時間）
+const formatDateToString = (date: Date): string => {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+};
+
 export const ScheduleModal: React.FC<ScheduleModalProps> = ({
   isOpen,
   schedule,
@@ -159,8 +164,8 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({
           interval: customInterval,
           unit: customUnit,
           time: time,
-          startDate: startDate?.toISOString().split('T')[0] || '',
-          ...(endDate && { endDate: endDate.toISOString().split('T')[0] }),
+          startDate: startDate ? formatDateToString(startDate) : '',
+          ...(endDate && { endDate: formatDateToString(endDate) }),
           ...(customMaxOccurrences && { maxOccurrences: customMaxOccurrences })
         };
         break;
@@ -171,8 +176,8 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({
       description: description.trim() || undefined,
       priority,
       type,
-      startDate: startDate?.toISOString().split('T')[0] || '',
-      endDate: endDate?.toISOString().split('T')[0] || undefined,
+      startDate: startDate ? formatDateToString(startDate) : '',
+      endDate: endDate ? formatDateToString(endDate) : undefined,
       time: (type === 'once' || type === 'daily') ? time : undefined,
       weeklyConfig,
       monthlyConfig,

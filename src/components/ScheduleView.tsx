@@ -44,7 +44,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
   const formatScheduleDescription = (schedule: Schedule): string => {
     switch (schedule.type) {
       case 'once':
-        return `${t('schedule.once')} - ${new Date(schedule.startDate).toLocaleDateString()}`;
+        return `${t('schedule.once')} - ${new Date(schedule.startDate + 'T00:00:00').toLocaleDateString()}`;
       case 'daily':
         return schedule.excludeWeekends 
           ? t('schedule.dailyWeekdays') 
@@ -221,13 +221,13 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
           })() && (
             <div className="schedule-detail">
               <Calendar size={14} className="schedule-detail-icon" />
-              <span>{t('schedule.startDate')}: {new Date(schedule.startDate).toLocaleDateString()}</span>
+              <span>{t('schedule.startDate')}: {new Date(schedule.startDate + 'T00:00:00').toLocaleDateString()}</span>
             </div>
           )}
           {schedule.endDate && (
             <div className="schedule-detail">
               <Calendar size={14} className="schedule-detail-icon" />
-              <span>{t('schedule.endDate')}: {new Date(schedule.endDate).toLocaleDateString()}</span>
+              <span>{t('schedule.endDate')}: {new Date(schedule.endDate + 'T00:00:00').toLocaleDateString()}</span>
             </div>
           )}
           <div className="schedule-detail">
