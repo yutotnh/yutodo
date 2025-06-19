@@ -127,7 +127,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
       }
     }
     return new Date(schedule.nextExecution).toLocaleDateString() + ' ' + 
-           new Date(schedule.nextExecution).toLocaleTimeString();
+           new Date(schedule.nextExecution).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
   };
 
   // スケジュールアイテムをレンダリングする関数
