@@ -620,7 +620,14 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onUpdate, on
               {todo.scheduledFor && (
                 <span className={`schedule-badge ${isOverdue ? 'schedule-badge--overdue' : ''}`}>
                   <Clock size={12} />
-                  {new Date(todo.scheduledFor).toLocaleString()}
+                  {new Date(todo.scheduledFor).toLocaleString(undefined, { 
+                    year: 'numeric',
+                    month: '2-digit', 
+                    day: '2-digit', 
+                    hour: '2-digit', 
+                    minute: '2-digit',
+                    hour12: false 
+                  })}
                 </span>
               )}
             </div>
