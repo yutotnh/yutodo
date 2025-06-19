@@ -1396,7 +1396,16 @@ function App() {
                                 const currentIndex = allTodos.findIndex(todo => todo.id === id);
                                 const newSelected = new Set(selectedTodos);
 
-                                if (event?.ctrlKey || event?.metaKey) {
+                                if (event?.shiftKey && lastSelectedIndex !== -1) {
+                                  // Shift+クリック: 範囲選択
+                                  const startIndex = Math.min(lastSelectedIndex, currentIndex);
+                                  const endIndex = Math.max(lastSelectedIndex, currentIndex);
+                                  
+                                  for (let i = startIndex; i <= endIndex; i++) {
+                                    newSelected.add(allTodos[i].id);
+                                  }
+                                  setSelectedTodos(newSelected);
+                                } else if (event?.ctrlKey || event?.metaKey) {
                                   // Ctrl+クリック: 個別選択/解除
                                   if (selected) {
                                     newSelected.add(id);
