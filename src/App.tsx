@@ -46,9 +46,50 @@ const DEFAULT_SETTINGS: AppSettings = {
   currentView: 'tasks'
 };
 
+// Tauri環境でのフォールバック設定
+const getTauriDefaultSettings = (): AppSettings => {
+  const isTauri = typeof window !== 'undefined' && (window as any).__TAURI_INTERNALS__;
+  
+  // Tauri環境では積極的にダークモードを検出
+  let defaultDarkMode: 'auto' | 'dark' | 'light' = 'auto';
+  
+  if (isTauri) {
+    try {
+      // 複数の方法でダークモードを検出
+      const matchMediaResult = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      
+      // より積極的にダークモードを検出
+      if (matchMediaResult) {
+        defaultDarkMode = 'dark';
+        logger.debug('Tauri default settings: detected dark mode via matchMedia');
+      } else {
+        // OS環境をより詳細にチェック
+        const userAgent = navigator.userAgent.toLowerCase();
+        const isLinux = userAgent.includes('linux');
+        
+        // WSL環境では通常ダークモードが好まれる
+        if (isLinux && userAgent.includes('wsl')) {
+          defaultDarkMode = 'dark';
+          logger.debug('Tauri default settings: WSL environment detected, defaulting to dark');
+        } else {
+          defaultDarkMode = 'auto';
+        }
+      }
+    } catch (error) {
+      logger.warn('Error in Tauri default settings detection:', error);
+      defaultDarkMode = 'auto';
+    }
+  }
+  
+  return {
+    ...DEFAULT_SETTINGS,
+    darkMode: defaultDarkMode
+  };
+};
+
 function App() {
   const { t, i18n } = useTranslation();
-  const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
+  const [settings, setSettings] = useState<AppSettings>(getTauriDefaultSettings());
   const [isInitialized, setIsInitialized] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showShortcutHelp, setShowShortcutHelp] = useState(false);
@@ -237,9 +278,123 @@ function App() {
 
   // システムのダークモード設定を監視
   useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const detectSystemDarkMode = async () => {
+      let prefersDark = false;
+      
+      try {
+        // Tauri環境での検出を試行
+        if (typeof window !== 'undefined' && (window as any).__TAURI_INTERNALS__) {
+          logger.debug('Tauri environment detected, checking system theme');
+          
+          // より確実な複数の検出方法を順次試行
+          const detectionMethods = [
+            // Method 1: Standard matchMedia
+            () => {
+              const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+              const result = mediaQuery.matches;
+              logger.debug('Method 1 - matchMedia result:', result);
+              return result;
+            },
+            
+            // Method 2: CSS computed style test
+            () => {
+              const testElement = document.createElement('div');
+              testElement.style.cssText = 'position:absolute;top:-9999px;left:-9999px;';
+              testElement.className = 'tauri-dark-test';
+              document.body.appendChild(testElement);
+              
+              const style = document.createElement('style');
+              style.textContent = `
+                .tauri-dark-test { 
+                  color: rgb(255, 255, 255); 
+                }
+                @media (prefers-color-scheme: dark) {
+                  .tauri-dark-test { 
+                    color: rgb(1, 1, 1); 
+                  }
+                }
+              `;
+              document.head.appendChild(style);
+              
+              // Force style computation
+              window.getComputedStyle(testElement).getPropertyValue('color');
+              
+              const computedStyle = window.getComputedStyle(testElement);
+              const color = computedStyle.color;
+              const isDark = color === 'rgb(1, 1, 1)';
+              
+              logger.debug('Method 2 - CSS test result:', isDark, 'color:', color);
+              
+              // Cleanup
+              document.body.removeChild(testElement);
+              document.head.removeChild(style);
+              
+              return isDark;
+            },
+            
+            // Method 3: Window theme detection (Windows/Linux specific)
+            () => {
+              // Check for common dark theme indicators
+              const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+              logger.debug('Method 3 - fallback matchMedia:', isDark);
+              return isDark;
+            }
+          ];
+          
+          // Try each detection method until one gives a positive result
+          for (const [index, method] of detectionMethods.entries()) {
+            try {
+              const result = method();
+              if (result) {
+                prefersDark = true;
+                logger.debug(`Dark mode detected using method ${index + 1}`);
+                break;
+              }
+            } catch (error) {
+              logger.warn(`Detection method ${index + 1} failed:`, error);
+              continue;
+            }
+          }
+          
+          // If still no dark mode detected, force check if user has dark appearance
+          if (!prefersDark) {
+            // Additional check for OS-level dark mode indicators
+            const bodyBg = window.getComputedStyle(document.body).backgroundColor;
+            const hasDocumentDarkClass = document.documentElement.classList.contains('dark');
+            const hasBodyDarkClass = document.body.classList.contains('dark');
+            
+            logger.debug('Additional checks:', { bodyBg, hasDocumentDarkClass, hasBodyDarkClass });
+            
+            // If any strong indicators of dark mode, assume dark
+            if (hasDocumentDarkClass || hasBodyDarkClass) {
+              prefersDark = true;
+              logger.debug('Dark mode detected from document/body classes');
+            }
+          }
+          
+        } else {
+          // Web環境では通常のmatchMediaを使用
+          const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+          prefersDark = mediaQuery.matches;
+          logger.debug('Web environment matchMedia result:', prefersDark);
+        }
+      } catch (error) {
+        logger.warn('Error detecting system dark mode:', error);
+        // フォールバック: 通常のmatchMediaを使用
+        const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        prefersDark = mediaQuery.matches;
+      }
+      
+      setSystemPrefersDark(prefersDark);
+      logger.debug('Final systemPrefersDark value:', prefersDark);
+    };
 
+    detectSystemDarkMode();
+
+    // 通常のmediaQueryリスナーも設定
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     const handleChange = (e: MediaQueryListEvent) => {
+      logger.debug('Media query changed:', e.matches);
       setSystemPrefersDark(e.matches);
     };
 
@@ -729,8 +884,73 @@ function App() {
 
 
   // 実際のダークモード状態を計算
-  const isDarkMode = settings.darkMode === 'dark' ||
-    (settings.darkMode === 'auto' && systemPrefersDark);
+  const isDarkMode = (() => {
+    switch (settings.darkMode) {
+      case 'dark':
+        return true;
+      case 'light':
+        return false;
+      case 'auto':
+        return systemPrefersDark;
+      default:
+        return systemPrefersDark;
+    }
+  })();
+
+  // ダークモード状態をデバッグログで確認
+  useEffect(() => {
+    const debugInfo = {
+      'settings.darkMode': settings.darkMode,
+      'systemPrefersDark': systemPrefersDark,
+      'isDarkMode': isDarkMode,
+      'isTauri': typeof window !== 'undefined' && (window as any).__TAURI_INTERNALS__,
+      'matchMedia.matches': window.matchMedia('(prefers-color-scheme: dark)').matches,
+      'document.body.className': document.body.className,
+      'app.className': document.querySelector('.app')?.className
+    };
+    
+    logger.debug('Dark mode debug:', debugInfo);
+    
+    // ブラウザコンソールにも出力（ユーザーが確認できるように）
+    console.log('🌙 Dark Mode Debug:', debugInfo);
+    
+    // CSS適用のデバッグ - 実際の要素のスタイルを確認
+    setTimeout(() => {
+      const appElement = document.querySelector('.app');
+      const searchBar = document.querySelector('.search-bar');
+      const todoFilter = document.querySelector('.todo-filter');
+      
+      const cssDebugInfo = {
+        'appElement.classList': appElement?.classList.toString(),
+        'searchBar exists': !!searchBar,
+        'todoFilter exists': !!todoFilter,
+        'searchBar computed bg': searchBar ? window.getComputedStyle(searchBar).backgroundColor : 'not found',
+        'todoFilter computed bg': todoFilter ? window.getComputedStyle(todoFilter).backgroundColor : 'not found'
+      };
+      
+      logger.debug('CSS Debug:', cssDebugInfo);
+      console.log('🎨 CSS Debug:', cssDebugInfo);
+    }, 100);
+    
+    // Tauri環境でautoモードの場合、強制的に再検出を試行
+    if (typeof window !== 'undefined' && (window as any).__TAURI_INTERNALS__) {
+      if (settings.darkMode === 'auto' && !systemPrefersDark) {
+        logger.debug('Tauri environment with auto mode but no dark detected, forcing re-detection');
+        
+        // 短い遅延後に再検出を実行
+        setTimeout(() => {
+          const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+          const currentResult = mediaQuery.matches;
+          logger.debug('Force re-detection result:', currentResult);
+          
+          if (currentResult !== systemPrefersDark) {
+            logger.debug('Re-detection found different result, updating');
+            setSystemPrefersDark(currentResult);
+          }
+        }, 100);
+      }
+    }
+  }, [settings.darkMode, systemPrefersDark, isDarkMode]);
 
   const getConnectionStatusText = () => {
     switch (connectionStatus) {
@@ -971,8 +1191,22 @@ function App() {
   });
 
 
+  // テーマクラスの決定
+  const getThemeClass = () => {
+    switch (settings.darkMode) {
+      case 'dark':
+        return 'app--dark';
+      case 'light':
+        return 'app--light';
+      case 'auto':
+        return isDarkMode ? 'app--dark' : '';
+      default:
+        return '';
+    }
+  };
+
   return (
-    <div className={`app ${!settings.detailedMode ? 'app--slim' : ''} ${isDarkMode ? 'app--dark' : ''}`}>
+    <div className={`app ${!settings.detailedMode ? 'app--slim' : ''} ${getThemeClass()}`}>
       <header className={`app-header ${(settings.detailedMode || showHeader) ? 'app-header--visible' : 'app-header--hidden'}`} onMouseDown={handleHeaderMouseDown}>
         <div className="header-left">
           <MenuBar
@@ -1022,7 +1256,7 @@ function App() {
       <main className="app-main">
         {settings.currentView === 'tasks' ? (
           <>
-            {isWindowFocused && settings.detailedMode && (
+            {settings.detailedMode && (
               <>
                 <SearchBar
                   ref={searchInputRef}

@@ -2309,65 +2309,6 @@ body {
     color: #e2e8f0;
   }
 
-  .app.app--dark .search-bar {
-    background: #1e293b;
-    border-bottom-color: #334155;
-  }
-
-  .app.app--dark .search-input {
-    background: #334155;
-    border-color: #475569;
-    color: #f1f5f9;
-  }
-
-  .app.app--dark .search-input::placeholder {
-    color: #94a3b8;
-  }
-
-  .app.app--dark .search-input:focus {
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-  }
-
-  .app.app--dark .search-icon,
-  .app.app--dark .search-clear {
-    color: #94a3b8;
-  }
-
-  .app.app--dark .search-clear:hover {
-    color: #cbd5e1;
-  }
-
-  .app.app--dark .todo-filter {
-    background: #1e293b;
-    border-bottom-color: #334155;
-  }
-
-  .app.app--dark .filter-title {
-    color: #f1f5f9;
-  }
-
-  .app.app--dark .filter-btn {
-    background: #334155;
-    border-color: #475569;
-    color: #cbd5e1;
-  }
-
-  .app.app--dark .filter-btn:hover {
-    background: #475569;
-    border-color: #64748b;
-    color: #e2e8f0;
-  }
-
-  .app.app--dark .filter-btn--active {
-    background: #3b82f6;
-    border-color: #3b82f6;
-    color: white;
-  }
-
-  .app.app--dark .filter-count {
-    color: #e2e8f0;
-  }
 
   .data-manager-title {
     color: #f1f5f9;
@@ -2380,6 +2321,128 @@ body {
   .data-description {
     color: #94a3b8;
   }
+}
+
+/* アプリ設定専用のダークモードスタイル（OSテーマより優先） */
+.app.app--dark .search-bar {
+  background: #1e293b !important;
+  border-bottom-color: #334155 !important;
+}
+
+.app.app--dark .search-input {
+  background: #334155 !important;
+  border-color: #475569 !important;
+  color: #f1f5f9 !important;
+}
+
+.app.app--dark .search-input::placeholder {
+  color: #94a3b8 !important;
+}
+
+.app.app--dark .search-input:focus {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+}
+
+.app.app--dark .search-icon,
+.app.app--dark .search-clear {
+  color: #94a3b8 !important;
+}
+
+.app.app--dark .search-clear:hover {
+  color: #cbd5e1 !important;
+}
+
+.app.app--dark .todo-filter {
+  background: #1e293b !important;
+  border-bottom-color: #334155 !important;
+}
+
+.app.app--dark .filter-title {
+  color: #f1f5f9 !important;
+}
+
+.app.app--dark .filter-btn {
+  background: #334155 !important;
+  border-color: #475569 !important;
+  color: #cbd5e1 !important;
+}
+
+.app.app--dark .filter-btn:hover {
+  background: #475569 !important;
+  border-color: #64748b !important;
+  color: #e2e8f0 !important;
+}
+
+.app.app--dark .filter-btn--active {
+  background: #3b82f6 !important;
+  border-color: #3b82f6 !important;
+  color: white !important;
+}
+
+.app.app--dark .filter-count {
+  color: #e2e8f0 !important;
+}
+
+/* アプリ設定専用のライトモードスタイル（OSテーマより優先） */
+.app.app--light .search-bar {
+  background: #ffffff !important;
+  border-bottom-color: #e2e8f0 !important;
+}
+
+.app.app--light .search-input {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  color: #0f0f0f !important;
+}
+
+.app.app--light .search-input::placeholder {
+  color: #9ca3af !important;
+}
+
+.app.app--light .search-input:focus {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+}
+
+.app.app--light .search-icon,
+.app.app--light .search-clear {
+  color: #9ca3af !important;
+}
+
+.app.app--light .search-clear:hover {
+  color: #6b7280 !important;
+}
+
+.app.app--light .todo-filter {
+  background: #ffffff !important;
+  border-bottom-color: #e2e8f0 !important;
+}
+
+.app.app--light .filter-title {
+  color: #374151 !important;
+}
+
+.app.app--light .filter-btn {
+  background: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+  color: #374151 !important;
+}
+
+.app.app--light .filter-btn:hover {
+  background: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+  color: #1f2937 !important;
+}
+
+.app.app--light .filter-btn--active {
+  background: #3b82f6 !important;
+  border-color: #3b82f6 !important;
+  color: white !important;
+}
+
+.app.app--light .filter-count {
+  color: #6b7280 !important;
 }
 
 /* 底部固定のAddTodoForm オーバーレイ */

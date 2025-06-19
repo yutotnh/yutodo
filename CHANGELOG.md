@@ -44,6 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Test coverage for header visibility behavior
 - Commit message consistency across the project history
 - Dark mode support for search bar and filter components with proper CSS scoping
+- Dark mode theme selection logic to properly respect user settings instead of always following OS preferences
 
 ### Security
 - Added automated security scanning with CodeQL
