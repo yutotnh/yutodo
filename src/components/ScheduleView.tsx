@@ -1,5 +1,5 @@
-import React from 'react';
-import { Plus, Calendar, Clock, Repeat, Edit, Trash2, Zap, RefreshCw } from 'lucide-react';
+import React, { useState } from 'react';
+import { Plus, Calendar, Clock, Repeat, Edit, Trash2, Zap, RefreshCw, ChevronDown, ChevronRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Schedule } from '../types/todo';
 
@@ -19,6 +19,26 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
   onToggleSchedule
 }) => {
   const { t } = useTranslation();
+  const [showInactive, setShowInactive] = useState(false);
+
+  // スケジュールが実行予定がないかどうかを判定
+  const isScheduleInactive = (schedule: Schedule): boolean => {
+    if (!schedule.isActive) return true;
+    
+    const today = new Date().toISOString().split('T')[0];
+    
+    // 終了日が過去の場合
+    if (schedule.endDate && schedule.endDate < today) return true;
+    
+    // 一回限りのスケジュールで開始日が過去の場合
+    if (schedule.type === 'once' && schedule.startDate < today) return true;
+    
+    return false;
+  };
+
+  // アクティブと非アクティブなスケジュールに分ける
+  const activeSchedules = schedules.filter(schedule => !isScheduleInactive(schedule));
+  const inactiveSchedules = schedules.filter(schedule => isScheduleInactive(schedule));
 
 
   const formatScheduleDescription = (schedule: Schedule): string => {
@@ -101,6 +121,115 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
            new Date(schedule.nextExecution).toLocaleTimeString();
   };
 
+  // スケジュールアイテムをレンダリングする関数
+  const renderScheduleItem = (schedule: Schedule) => (
+    <div 
+      key={schedule.id} 
+      className={`schedule-item ${!schedule.isActive ? 'schedule-item--disabled' : ''}`}
+      style={{
+        borderLeftColor: getScheduleTypeColor(schedule.type),
+        borderLeftWidth: '4px'
+      }}
+    >
+      <div className="schedule-item-main">
+        <div className="schedule-item-header">
+          <div className="schedule-item-title-section">
+            <div className="schedule-item-content">
+              <div className="schedule-title-with-toggle">
+                <h3 className="schedule-item-title">{schedule.title}</h3>
+                <div className="schedule-item-toggle">
+                  <input
+                    type="checkbox"
+                    checked={schedule.isActive}
+                    onChange={() => onToggleSchedule(schedule.id)}
+                    className="schedule-toggle"
+                  />
+                </div>
+              </div>
+              {schedule.description && (
+                <p className="schedule-item-description">{schedule.description}</p>
+              )}
+            </div>
+          </div>
+          <div className="schedule-item-actions">
+            <button
+              className="btn btn--ghost btn--small"
+              onClick={() => onEditSchedule(schedule)}
+              title={t('schedule.edit')}
+              style={{
+                background: 'rgba(59, 130, 246, 0.1)',
+                color: '#3b82f6',
+                border: '1px solid rgba(59, 130, 246, 0.2)',
+                borderRadius: '0.5rem',
+                padding: '0.375rem',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <Edit size={14} />
+            </button>
+            <button
+              className="btn btn--ghost btn--small btn--danger"
+              onClick={() => onDeleteSchedule(schedule.id)}
+              title={t('schedule.delete')}
+              style={{
+                background: 'rgba(239, 68, 68, 0.1)',
+                color: '#ef4444',
+                border: '1px solid rgba(239, 68, 68, 0.2)',
+                borderRadius: '0.5rem',
+                padding: '0.375rem',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <Trash2 size={14} />
+            </button>
+          </div>
+        </div>
+
+        <div className="schedule-item-details">
+          <div className="schedule-detail">
+            <span style={{ color: getScheduleTypeColor(schedule.type) }}>
+              {getScheduleTypeIcon(schedule.type)}
+            </span>
+            <span>{formatScheduleDescription(schedule)}</span>
+          </div>
+          {schedule.time && (
+            <div className="schedule-detail">
+              <Clock size={14} className="schedule-detail-icon" />
+              <span>{schedule.time}</span>
+            </div>
+          )}
+          {schedule.priority > 0 && (
+            <div className="schedule-detail">
+              <Zap size={14} className="schedule-detail-icon" />
+              <span className={`schedule-priority-inline schedule-priority--${schedule.priority}`}>
+                {schedule.priority === 2 ? 'High' : 'Medium'} Priority
+              </span>
+            </div>
+          )}
+          {(() => {
+            const today = new Date().toISOString().split('T')[0];
+            return schedule.startDate >= today;
+          })() && (
+            <div className="schedule-detail">
+              <Calendar size={14} className="schedule-detail-icon" />
+              <span>{t('schedule.startDate')}: {new Date(schedule.startDate).toLocaleDateString()}</span>
+            </div>
+          )}
+          {schedule.endDate && (
+            <div className="schedule-detail">
+              <Calendar size={14} className="schedule-detail-icon" />
+              <span>{t('schedule.endDate')}: {new Date(schedule.endDate).toLocaleDateString()}</span>
+            </div>
+          )}
+          <div className="schedule-detail">
+            <Calendar size={14} className="schedule-detail-icon" />
+            <span>{t('schedule.nextExecution')}: {formatNextExecution(schedule)}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="schedule-view">
       {/* ヘッダー */}
@@ -129,113 +258,39 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
             <p>{t('schedule.noSchedulesDesc')}</p>
           </div>
         ) : (
-          schedules.map(schedule => (
-            <div 
-              key={schedule.id} 
-              className={`schedule-item ${!schedule.isActive ? 'schedule-item--disabled' : ''}`}
-              style={{
-                borderLeftColor: getScheduleTypeColor(schedule.type),
-                borderLeftWidth: '4px'
-              }}
-            >
-              <div className="schedule-item-main">
-                <div className="schedule-item-header">
-                  <div className="schedule-item-title-section">
-                    <div className="schedule-item-content">
-                      <div className="schedule-title-with-toggle">
-                        <h3 className="schedule-item-title">{schedule.title}</h3>
-                        <div className="schedule-item-toggle">
-                          <input
-                            type="checkbox"
-                            checked={schedule.isActive}
-                            onChange={() => onToggleSchedule(schedule.id)}
-                            className="schedule-toggle"
-                          />
-                        </div>
-                      </div>
-                      {schedule.description && (
-                        <p className="schedule-item-description">{schedule.description}</p>
-                      )}
-                    </div>
-                  </div>
-                  <div className="schedule-item-actions">
-                    <button
-                      className="btn btn--ghost btn--small"
-                      onClick={() => onEditSchedule(schedule)}
-                      title={t('schedule.edit')}
-                      style={{
-                        background: 'rgba(59, 130, 246, 0.1)',
-                        color: '#3b82f6',
-                        border: '1px solid rgba(59, 130, 246, 0.2)',
-                        borderRadius: '0.5rem',
-                        padding: '0.375rem',
-                        transition: 'all 0.2s ease'
-                      }}
-                    >
-                      <Edit size={14} />
-                    </button>
-                    <button
-                      className="btn btn--ghost btn--small btn--danger"
-                      onClick={() => onDeleteSchedule(schedule.id)}
-                      title={t('schedule.delete')}
-                      style={{
-                        background: 'rgba(239, 68, 68, 0.1)',
-                        color: '#ef4444',
-                        border: '1px solid rgba(239, 68, 68, 0.2)',
-                        borderRadius: '0.5rem',
-                        padding: '0.375rem',
-                        transition: 'all 0.2s ease'
-                      }}
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                </div>
-
-                <div className="schedule-item-details">
-                  <div className="schedule-detail">
-                    <span style={{ color: getScheduleTypeColor(schedule.type) }}>
-                      {getScheduleTypeIcon(schedule.type)}
-                    </span>
-                    <span>{formatScheduleDescription(schedule)}</span>
-                  </div>
-                  {schedule.time && (
-                    <div className="schedule-detail">
-                      <Clock size={14} className="schedule-detail-icon" />
-                      <span>{schedule.time}</span>
-                    </div>
-                  )}
-                  {schedule.priority > 0 && (
-                    <div className="schedule-detail">
-                      <Zap size={14} className="schedule-detail-icon" />
-                      <span className={`schedule-priority-inline schedule-priority--${schedule.priority}`}>
-                        {schedule.priority === 2 ? 'High' : 'Medium'} Priority
-                      </span>
-                    </div>
-                  )}
-                  {(() => {
-                    const today = new Date().toISOString().split('T')[0];
-                    return schedule.startDate >= today;
-                  })() && (
-                    <div className="schedule-detail">
-                      <Calendar size={14} className="schedule-detail-icon" />
-                      <span>{t('schedule.startDate')}: {new Date(schedule.startDate).toLocaleDateString()}</span>
-                    </div>
-                  )}
-                  {schedule.endDate && (
-                    <div className="schedule-detail">
-                      <Calendar size={14} className="schedule-detail-icon" />
-                      <span>{t('schedule.endDate')}: {new Date(schedule.endDate).toLocaleDateString()}</span>
-                    </div>
-                  )}
-                  <div className="schedule-detail">
-                    <Calendar size={14} className="schedule-detail-icon" />
-                    <span>{t('schedule.nextExecution')}: {formatNextExecution(schedule)}</span>
-                  </div>
-                </div>
+          <>
+            {/* アクティブなスケジュール */}
+            {activeSchedules.length > 0 && (
+              <div className="schedule-section">
+                <h2 className="schedule-section-title">
+                  {t('schedule.activeSchedules')} ({activeSchedules.length})
+                </h2>
+                {activeSchedules.map(renderScheduleItem)}
               </div>
-            </div>
-          ))
+            )}
+
+            {/* 非アクティブなスケジュール */}
+            {inactiveSchedules.length > 0 && (
+              <div className="schedule-section">
+                <button 
+                  className="schedule-section-header"
+                  onClick={() => setShowInactive(!showInactive)}
+                >
+                  <div className="schedule-section-header-content">
+                    {showInactive ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                    <h2 className="schedule-section-title">
+                      {t('schedule.inactiveSchedules')} ({inactiveSchedules.length})
+                    </h2>
+                  </div>
+                </button>
+                {showInactive && (
+                  <div className="schedule-section-content">
+                    {inactiveSchedules.map(renderScheduleItem)}
+                  </div>
+                )}
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

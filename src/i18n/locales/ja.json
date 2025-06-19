@@ -213,7 +213,9 @@
     "nextWeek": "来週",
     "nextMonth": "来月",
     "asScheduled": "スケジュール通り",
-    "pending": "待機中"
+    "pending": "待機中",
+    "activeSchedules": "アクティブなスケジュール",
+    "inactiveSchedules": "非アクティブなスケジュール"
   },
   "common": {
     "cancel": "キャンセル",
