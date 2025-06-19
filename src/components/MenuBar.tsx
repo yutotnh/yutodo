@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { ChevronDown, Menu } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { AppSettings } from '../types/todo';
@@ -62,7 +62,7 @@ export const MenuBar: React.FC<MenuBarProps> = ({
   }, [isAltKeyActive]);
 
   // メニュー定義
-  const menus = {
+  const menus = useMemo(() => ({
     file: {
       label: t('menu.file'),
       accessKey: 'F',
@@ -105,7 +105,7 @@ export const MenuBar: React.FC<MenuBarProps> = ({
         { id: 'about', label: t('menu.about'), action: onShowAbout }
       ] as MenuItemData[]
     }
-  };
+  }), [t, onNewTask, onImportTasks, onExportTasks, onShowSettings, onQuit, onSelectAll, onDeleteSelected, onShowShortcuts, onShowAbout, onToggleAlwaysOnTop, onToggleSlim, onViewChange, settings.alwaysOnTop, settings.currentView, settings.detailedMode]);
 
 
   // 外部クリックでメニューを閉じる

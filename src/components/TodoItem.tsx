@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import DatePicker from 'react-datepicker';
@@ -174,7 +174,7 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onUpdate, on
     setIsEditing(false);
   };
 
-  const handleCancel = () => {
+  const handleCancel = useCallback(() => {
     setEditTitle(todo.title);
     setEditDescription(todo.description || '');
     setEditPriority(todo.priority);
@@ -182,7 +182,7 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onUpdate, on
       todo.scheduledFor ? new Date(todo.scheduledFor) : null
     );
     setIsEditing(false);
-  };
+  }, [todo.title, todo.description, todo.priority, todo.scheduledFor]);
 
   // スリムモード用の簡単な保存（タイトルのみ）
   const handleSlimSave = () => {
@@ -319,7 +319,7 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onUpdate, on
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isEditing]);
+  }, [isEditing, handleCancel]);
 
   // モーダル編集画面
   if (isEditing) {

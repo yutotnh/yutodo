@@ -202,7 +202,7 @@ function App() {
     };
 
     initializeConfig();
-  }, []);
+  }, [i18n]);
 
   // 言語設定の変更を適用
   useEffect(() => {
