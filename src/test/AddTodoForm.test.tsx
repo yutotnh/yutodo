@@ -1,4 +1,3 @@
-import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { AddTodoForm } from '../components/AddTodoForm';
@@ -236,7 +235,6 @@ describe('AddTodoForm', () => {
   it('prevents submission with empty title', () => {
     render(<AddTodoForm onAdd={mockOnAdd} />);
     
-    const titleInput = screen.getByPlaceholderText('Add a new task (supports Markdown)...');
     const submitButton = screen.getByRole('button');
     
     // Try to submit empty form

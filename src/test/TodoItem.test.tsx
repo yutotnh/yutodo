@@ -1,7 +1,6 @@
-import React from 'react';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, it, expect, beforeEach, afterEach, vi, Mock } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { DndContext } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { TodoItem } from '../components/TodoItem';
@@ -386,7 +385,6 @@ describe('TodoItem', () => {
     });
 
     it('should handle Ctrl+click for multi-selection', async () => {
-      const user = userEvent.setup();
       render(
         <TodoItemWrapper>
           <TodoItem todo={mockTodo} {...mockHandlers} />

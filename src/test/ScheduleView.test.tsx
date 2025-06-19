@@ -1,4 +1,3 @@
-import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { ScheduleView } from '../components/ScheduleView';
@@ -7,7 +6,7 @@ import { Schedule } from '../types/todo';
 // i18nをモック
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (key: string, options?: any) => {
+    t: (key: string) => {
       if (key === 'schedule.nextExecution') return 'Next Execution';
       if (key === 'schedule.notScheduled') return 'Not Scheduled';
       if (key === 'schedule.dayOfWeek.0') return 'Sunday';

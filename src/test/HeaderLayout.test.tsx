@@ -1,6 +1,5 @@
-import React from 'react';
-import { render, screen } from '@testing-library/react';
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { render } from '@testing-library/react';
+import { describe, it, expect, beforeEach } from 'vitest';
 
 // Test component to verify CSS behavior
 const TestHeaderLayout: React.FC<{ detailedMode: boolean }> = ({ detailedMode }) => {

@@ -1,4 +1,4 @@
-import { renderHook, act, waitFor } from '@testing-library/react';
+import { renderHook, act } from '@testing-library/react';
 import { describe, it, expect, beforeEach, afterEach, vi, Mock } from 'vitest';
 import { useSocket } from '../hooks/useSocket';
 import { Todo } from '../types/todo';
@@ -108,7 +108,7 @@ describe('useSocket', () => {
       // Get the connect callback
       const connectCallback = (mockSocket.on as Mock).mock.calls.find(
         call => call[0] === 'connect'
-      )[1];
+      )![1];
 
       act(() => {
         connectCallback();
@@ -126,7 +126,7 @@ describe('useSocket', () => {
       // Get the disconnect callback
       const disconnectCallback = (mockSocket.on as Mock).mock.calls.find(
         call => call[0] === 'disconnect'
-      )[1];
+      )![1];
 
       act(() => {
         disconnectCallback('server disconnect');
@@ -145,7 +145,7 @@ describe('useSocket', () => {
       // Get the connect_error callback
       const errorCallback = (mockSocket.on as Mock).mock.calls.find(
         call => call[0] === 'connect_error'
-      )[1];
+      )![1];
 
       act(() => {
         errorCallback(new Error('Connection failed'));
@@ -164,7 +164,7 @@ describe('useSocket', () => {
       // Get the reconnect_attempt callback
       const reconnectAttemptCallback = (mockSocket.on as Mock).mock.calls.find(
         call => call[0] === 'reconnect_attempt'
-      )[1];
+      )![1];
 
       act(() => {
         reconnectAttemptCallback(3);
@@ -180,7 +180,7 @@ describe('useSocket', () => {
       // Set up initial state
       const reconnectAttemptCallback = (mockSocket.on as Mock).mock.calls.find(
         call => call[0] === 'reconnect_attempt'
-      )[1];
+      )![1];
       act(() => {
         reconnectAttemptCallback(2);
       });
@@ -188,7 +188,7 @@ describe('useSocket', () => {
       // Now handle successful reconnection
       const reconnectCallback = (mockSocket.on as Mock).mock.calls.find(
         call => call[0] === 'reconnect'
-      )[1];
+      )![1];
 
       act(() => {
         reconnectCallback(2);
@@ -203,7 +203,7 @@ describe('useSocket', () => {
       // Get the reconnect_failed callback
       const reconnectFailedCallback = (mockSocket.on as Mock).mock.calls.find(
         call => call[0] === 'reconnect_failed'
-      )[1];
+      )![1];
 
       act(() => {
         reconnectFailedCallback();
@@ -220,7 +220,7 @@ describe('useSocket', () => {
       const todoList = [mockTodo];
       const todosCallback = (mockSocket.on as Mock).mock.calls.find(
         call => call[0] === 'todos'
-      )[1];
+      )![1];
 
       act(() => {
         todosCallback(todoList);
@@ -234,13 +234,13 @@ describe('useSocket', () => {
 
       const todoAddedCallback = (mockSocket.on as Mock).mock.calls.find(
         call => call[0] === 'todo-added'
-      )[1];
+      )![1];
 
       // Set initial state
       act(() => {
         const todosCallback = (mockSocket.on as Mock).mock.calls.find(
           call => call[0] === 'todos'
-        )[1];
+        )![1];
         todosCallback([]);
       });
 
@@ -259,7 +259,7 @@ describe('useSocket', () => {
       act(() => {
         const todosCallback = (mockSocket.on as Mock).mock.calls.find(
           call => call[0] === 'todos'
-        )[1];
+        )![1];
         todosCallback([mockTodo]);
       });
 
@@ -267,7 +267,7 @@ describe('useSocket', () => {
       const updatedTodo = { ...mockTodo, title: 'Updated Title', completed: true };
       const todoUpdatedCallback = (mockSocket.on as Mock).mock.calls.find(
         call => call[0] === 'todo-updated'
-      )[1];
+      )![1];
 
       act(() => {
         todoUpdatedCallback(updatedTodo);
@@ -283,14 +283,14 @@ describe('useSocket', () => {
       act(() => {
         const todosCallback = (mockSocket.on as Mock).mock.calls.find(
           call => call[0] === 'todos'
-        )[1];
+        )![1];
         todosCallback([mockTodo]);
       });
 
       // Delete the todo
       const todoDeletedCallback = (mockSocket.on as Mock).mock.calls.find(
         call => call[0] === 'todo-deleted'
-      )[1];
+      )![1];
 
       act(() => {
         todoDeletedCallback(mockTodo.id);
@@ -305,7 +305,7 @@ describe('useSocket', () => {
 
       const errorCallback = (mockSocket.on as Mock).mock.calls.find(
         call => call[0] === 'error'
-      )[1];
+      )![1];
 
       act(() => {
         errorCallback('Test error message');
@@ -390,7 +390,7 @@ describe('useSocket', () => {
       act(() => {
         const todosCallback = (mockSocket.on as Mock).mock.calls.find(
           call => call[0] === 'todos'
-        )[1];
+        )![1];
         todosCallback(initialTodos);
       });
 
@@ -462,10 +462,10 @@ describe('useSocket', () => {
 
       const connectCallback = (mockSocket.on as Mock).mock.calls.find(
         call => call[0] === 'connect'
-      )[1];
+      )![1];
       const disconnectCallback = (mockSocket.on as Mock).mock.calls.find(
         call => call[0] === 'disconnect'
-      )[1];
+      )![1];
 
       // Rapid connect/disconnect
       act(() => {
@@ -485,13 +485,13 @@ describe('useSocket', () => {
       act(() => {
         const todosCallback = (mockSocket.on as Mock).mock.calls.find(
           call => call[0] === 'todos'
-        )[1];
+        )![1];
         todosCallback([mockTodo]);
       });
 
       const todoUpdatedCallback = (mockSocket.on as Mock).mock.calls.find(
         call => call[0] === 'todo-updated'
-      )[1];
+      )![1];
 
       // Multiple rapid updates
       act(() => {
@@ -511,13 +511,13 @@ describe('useSocket', () => {
       act(() => {
         const todosCallback = (mockSocket.on as Mock).mock.calls.find(
           call => call[0] === 'todos'
-        )[1];
+        )![1];
         todosCallback([]);
       });
 
       const todoUpdatedCallback = (mockSocket.on as Mock).mock.calls.find(
         call => call[0] === 'todo-updated'
-      )[1];
+      )![1];
 
       // Try to update non-existent todo
       act(() => {
@@ -535,13 +535,13 @@ describe('useSocket', () => {
       act(() => {
         const todosCallback = (mockSocket.on as Mock).mock.calls.find(
           call => call[0] === 'todos'
-        )[1];
+        )![1];
         todosCallback([mockTodo]);
       });
 
       const todoDeletedCallback = (mockSocket.on as Mock).mock.calls.find(
         call => call[0] === 'todo-deleted'
-      )[1];
+      )![1];
 
       // Try to delete non-existent todo
       act(() => {

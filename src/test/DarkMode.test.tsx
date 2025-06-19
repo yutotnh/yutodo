@@ -1,4 +1,3 @@
-import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { AddTodoForm } from '../components/AddTodoForm';
@@ -39,7 +38,7 @@ describe('Dark Mode Support', () => {
 
   describe('AddTodoForm select elements', () => {
     it('applies dark mode styles to priority select', () => {
-      const { container } = render(
+      render(
         <div className="app app--dark">
           <AddTodoForm onAdd={vi.fn()} />
         </div>
@@ -128,7 +127,7 @@ describe('Dark Mode Support', () => {
 
   describe('DatePicker dark mode support', () => {
     it('applies dark mode styles to DatePicker in AddTodoForm', () => {
-      const { container } = render(
+      render(
         <div className="app app--dark">
           <AddTodoForm onAdd={vi.fn()} />
         </div>

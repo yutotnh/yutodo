@@ -1,8 +1,6 @@
-import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
-import { TodoFilter } from '../components/TodoFilter';
-import { FilterType } from '../types/todo';
+import { TodoFilter, FilterType } from '../components/TodoFilter';
 
 // i18nをモック
 vi.mock('react-i18next', () => ({

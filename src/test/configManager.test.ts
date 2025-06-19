@@ -92,7 +92,8 @@ describe('ConfigManager', () => {
         confirmDelete: false,
         customCss: '.app { color: red; }',
         serverUrl: 'http://localhost:3002',
-        language: 'ja' as const
+        language: 'ja' as const,
+        currentView: 'tasks' as const
       };
       
       await configManager.updateFromAppSettings(appSettings);
@@ -115,7 +116,8 @@ describe('ConfigManager', () => {
         confirmDelete: true,
         customCss: '.app { background: blue; }',
         serverUrl: 'http://test-server:4000',
-        language: 'en'
+        language: 'en',
+        currentView: 'tasks'
       };
       
       await configManager.updateFromAppSettings(appSettings);
@@ -133,7 +135,8 @@ describe('ConfigManager', () => {
         confirmDelete: false,
         customCss: 'custom',
         serverUrl: 'http://custom:3000',
-        language: 'ja'
+        language: 'ja',
+        currentView: 'tasks'
       };
       
       await configManager.updateFromAppSettings(customSettings);
@@ -166,7 +169,7 @@ describe('ConfigManager', () => {
           ui: {
             ...DEFAULT_CONFIG.app.ui,
             theme: 'dark' as const,
-            language: 'ja'
+            language: 'ja' as const
           }
         },
         server: {
@@ -276,7 +279,8 @@ custom_css = ".imported { background: green; }"
         confirmDelete: false,
         customCss: '.test { color: blue; }',
         serverUrl: 'http://test:3000',
-        language: 'ja'
+        language: 'ja',
+        currentView: 'tasks'
       };
       
       const config = appSettingsToConfig(appSettings, DEFAULT_CONFIG);
@@ -293,7 +297,8 @@ custom_css = ".imported { background: green; }"
         confirmDelete: true,
         customCss: '',
         serverUrl: 'http://localhost:3001',
-        language: 'auto'
+        language: 'auto',
+        currentView: 'tasks'
       };
       
       const config = appSettingsToConfig(minimalSettings, DEFAULT_CONFIG);
@@ -312,7 +317,8 @@ custom_css = ".imported { background: green; }"
         confirmDelete: false,
         customCss: '.persistent { color: purple; }',
         serverUrl: 'http://persistent:3000',
-        language: 'ja'
+        language: 'ja',
+        currentView: 'tasks'
       };
       
       await configManager.updateFromAppSettings(settings);
@@ -339,7 +345,8 @@ custom_css = ".imported { background: green; }"
         confirmDelete: false,
         customCss: '.large-css { /* very large css content */ }',
         serverUrl: 'http://localhost:3001',
-        language: 'auto'
+        language: 'auto',
+        currentView: 'tasks'
       };
       
       // Should not throw, but handle gracefully
@@ -357,7 +364,7 @@ custom_css = ".imported { background: green; }"
         appearance: {
           ...DEFAULT_CONFIG.appearance,
           custom_css: undefined,
-          font_family: null
+          font_family: undefined
         }
       };
       
@@ -377,7 +384,8 @@ custom_css = ".imported { background: green; }"
         confirmDelete: true,
         customCss: '.test { content: "quotes \\"escaped\\""; }',
         serverUrl: 'http://localhost:3001',
-        language: 'auto'
+        language: 'auto',
+        currentView: 'tasks'
       };
       
       await configManager.updateFromAppSettings(settingsWithSpecialChars);
