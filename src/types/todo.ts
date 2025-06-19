@@ -1,9 +1,12 @@
+// Priority type definition - supports both legacy numbers and new strings
+export type Priority = 'low' | 'medium' | 'high' | number;
+
 export interface Todo {
   id: string;
   title: string;
   description?: string;
   completed: boolean;
-  priority: number;
+  priority: Priority; // Changed from number to Priority (with backward compatibility)
   scheduledFor?: string;
   createdAt: string;
   updatedAt: string;
@@ -52,7 +55,7 @@ export interface Schedule {
   id: string;
   title: string;
   description?: string;
-  priority: number;
+  priority: Priority; // Changed from number to Priority
   type: ScheduleType;
   
   // スケジュール設定

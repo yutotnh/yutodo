@@ -7,7 +7,8 @@ import { Check, Edit2, Trash2, Clock, AlertCircle } from 'lucide-react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useTranslation } from 'react-i18next';
-import { Todo } from '../types/todo';
+import { Todo, Priority } from '../types/todo';
+import { getPriorityText, getPriorityClassSuffix } from '../utils/priorityUtils';
 import logger from '../utils/logger';
 
 interface TodoItemProps {
@@ -26,7 +27,7 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onUpdate, on
   const [isInlineEditing, setIsInlineEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(todo.title);
   const [editDescription, setEditDescription] = useState(todo.description || '');
-  const [editPriority, setEditPriority] = useState(todo.priority);
+  const [editPriority, setEditPriority] = useState<Priority>(todo.priority);
   const [editScheduledFor, setEditScheduledFor] = useState<Date | null>(
     todo.scheduledFor ? new Date(todo.scheduledFor) : null
   );
@@ -244,16 +245,8 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onUpdate, on
     }
   };
 
-  const getPriorityClass = (priority: number) => {
-    return `schedule-priority-inline schedule-priority--${priority}`;
-  };
-
-  const getPriorityText = (priority: number) => {
-    switch (priority) {
-      case 2: return 'High';
-      case 1: return 'Medium';
-      default: return 'Low';
-    }
+  const getPriorityClass = (priority: Priority) => {
+    return `schedule-priority-inline schedule-priority--${getPriorityClassSuffix(priority)}`;
   };
 
   const isOverdue = todo.scheduledFor && new Date(todo.scheduledFor) < new Date() && !todo.completed;
@@ -355,12 +348,12 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onUpdate, on
               <div className="todo-edit-meta">
                 <select
                   value={editPriority}
-                  onChange={(e) => setEditPriority(Number(e.target.value))}
+                  onChange={(e) => setEditPriority(e.target.value as Priority)}
                   className="todo-edit-priority"
                 >
-                  <option value={0}>Low Priority</option>
-                  <option value={1}>Medium Priority</option>
-                  <option value={2}>High Priority</option>
+                  <option value="low">Low Priority</option>
+                  <option value="medium">Medium Priority</option>
+                  <option value="high">High Priority</option>
                 </select>
                 <DatePicker
                   selected={editScheduledFor}

@@ -3,7 +3,7 @@ import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { Plus } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Todo } from '../types/todo';
+import { Todo, Priority } from '../types/todo';
 
 interface AddTodoFormProps {
   onAdd: (todoData: Omit<Todo, 'id' | 'createdAt' | 'updatedAt'>) => void;
@@ -18,7 +18,7 @@ export const AddTodoForm = forwardRef<AddTodoFormRef, AddTodoFormProps>(({ onAdd
   const { t } = useTranslation();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [priority, setPriority] = useState(0);
+  const [priority, setPriority] = useState<Priority>('low');
   const [scheduledFor, setScheduledFor] = useState<Date | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -43,7 +43,7 @@ export const AddTodoForm = forwardRef<AddTodoFormRef, AddTodoFormProps>(({ onAdd
 
     setTitle('');
     setDescription('');
-    setPriority(0);
+    setPriority('low');
     setScheduledFor(null);
     setIsExpanded(false);
     
@@ -87,12 +87,12 @@ export const AddTodoForm = forwardRef<AddTodoFormRef, AddTodoFormProps>(({ onAdd
           <div className="add-todo-options">
             <select
               value={priority}
-              onChange={(e) => setPriority(Number(e.target.value))}
+              onChange={(e) => setPriority(e.target.value as Priority)}
               className="add-todo-priority"
             >
-              <option value={0}>Low Priority</option>
-              <option value={1}>Medium Priority</option>
-              <option value={2}>High Priority</option>
+              <option value="low">Low Priority</option>
+              <option value="medium">Medium Priority</option>
+              <option value="high">High Priority</option>
             </select>
             
             <DatePicker
