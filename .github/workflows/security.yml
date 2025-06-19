@@ -27,7 +27,7 @@ jobs:
         run: npm ci
 
       - name: Run frontend audit
-        run: npm audit --audit-level=moderate
+        run: npm audit --audit-level=high
 
       - name: Install backend dependencies
         run: |
@@ -37,7 +37,7 @@ jobs:
       - name: Run backend audit
         run: |
           cd server
-          npm audit --audit-level=moderate
+          npm audit --audit-level=high
 
   cargo-audit:
     name: Cargo Security Audit
@@ -64,6 +64,8 @@ jobs:
       actions: read
       contents: read
       security-events: write
+    env:
+      CODEQL_ENABLE_EXPERIMENTAL_FEATURES: true
 
     strategy:
       fail-fast: false
