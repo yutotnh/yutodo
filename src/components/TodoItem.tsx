@@ -244,12 +244,8 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onUpdate, on
     }
   };
 
-  const getPriorityColor = (priority: number) => {
-    switch (priority) {
-      case 2: return 'text-red-500';
-      case 1: return 'text-yellow-500';
-      default: return 'text-gray-500';
-    }
+  const getPriorityClass = (priority: number) => {
+    return `schedule-priority-inline schedule-priority--${priority}`;
   };
 
   const getPriorityText = (priority: number) => {
@@ -487,8 +483,8 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onUpdate, on
         {slimMode ? (
           <div className="todo-item__slim-meta">
             {/* 優先度表示 */}
-            <span className={`priority-badge priority-badge--slim ${getPriorityColor(todo.priority)}`}>
-              <AlertCircle size={10} />
+            <span className={getPriorityClass(todo.priority)} style={{ fontSize: '10px' }}>
+              <AlertCircle size={10} style={{ marginRight: '2px' }} />
               {getPriorityText(todo.priority)}
             </span>
             
@@ -612,8 +608,8 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onUpdate, on
             )}
             
             <div className="todo-item__meta">
-              <span className={`priority-badge ${getPriorityColor(todo.priority)}`}>
-                <AlertCircle size={12} />
+              <span className={getPriorityClass(todo.priority)}>
+                <AlertCircle size={12} style={{ marginRight: '4px' }} />
                 {getPriorityText(todo.priority)}
               </span>
               

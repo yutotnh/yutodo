@@ -211,7 +211,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
             <div className="schedule-detail">
               <Zap size={14} className="schedule-detail-icon" />
               <span className={`schedule-priority-inline schedule-priority--${schedule.priority}`}>
-                {schedule.priority === 2 ? 'High' : 'Medium'} Priority
+                {schedule.priority === 2 ? 'High' : 'Medium'}
               </span>
             </div>
           )}
