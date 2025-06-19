@@ -31,3 +31,6 @@ server/test.db
 # Test files
 server/test-data/
 test-data/
+
+# Coverage reports
+coverage/
