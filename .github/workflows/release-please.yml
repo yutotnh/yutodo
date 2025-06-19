@@ -1,9 +1,7 @@
-# Release Please workflow - automated based on conventional commits
+# Release Please workflow - manual trigger only
 name: Release Please
 
 on:
-  push:
-    branches: [ main ]
   workflow_dispatch:
     inputs:
       release_type:
