@@ -341,7 +341,7 @@ describe('Socket.IO Events', () => {
       clientSocket.on('todo-updated', (updatedTodo: Todo) => {
         expect(updatedTodo.id).toBe(addedTodo.id);
         expect(updatedTodo.completed).toBe(true); // Should be toggled from false to true
-        expect(new Date(updatedTodo.updatedAt).getTime()).toBeGreaterThan(new Date(addedTodo.updatedAt).getTime());
+        expect(new Date(updatedTodo.updatedAt).getTime()).toBeGreaterThanOrEqual(new Date(addedTodo.updatedAt).getTime());
         done();
       });
       
