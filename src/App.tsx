@@ -783,8 +783,8 @@ function App() {
     }
   };
 
-  // キーボードショートカットハンドラ
-  const keyboardHandlers = {
+  // キーボードショートカットハンドラ（一時的にコメントアウト - 後で定義）
+  const keyboardHandlers_old = {
     onNewTask: () => {
       // 選択状態をクリアしてからフォーカス（Ctrl+Nのみで実行）
       setSelectedTodos(new Set());
@@ -847,7 +847,6 @@ function App() {
     }
   };
 
-  useKeyboardShortcuts(keyboardHandlers, { isModalOpen: showSettings || showShortcutHelp || deleteConfirm.isOpen || showScheduleModal });
 
   // Altキーの状態を監視してヘッダー表示を制御
   useEffect(() => {
@@ -1160,6 +1159,80 @@ function App() {
     medium: todos.filter(todo => todo.priority === 1).length,
     low: todos.filter(todo => todo.priority === 0).length
   };
+
+  // キーボードショートカットハンドラ（filteredTodosを使用）
+  const keyboardHandlers = {
+    onNewTask: () => {
+      // 選択状態をクリアしてからフォーカス（Ctrl+Nのみで実行）
+      setSelectedTodos(new Set());
+      setSelectionAnchorIndex(-1);
+      addTodoFormRef.current?.focusInput();
+    },
+    onToggleSettings: () => {
+      setShowSettings(prev => !prev);
+    },
+    onFocusSearch: () => {
+      searchInputRef.current?.focus();
+    },
+    onSelectAll: () => {
+      // フィルター結果のみを選択
+      setSelectedTodos(new Set(filteredTodos.map(todo => todo.id)));
+      // アンカーを全体リスト内での最後のフィルター結果アイテムのインデックスに設定
+      if (filteredTodos.length > 0) {
+        // 注意: この時点ではpendingTodos/completedTodosはまだ定義されていないため、
+        // アンカー設定は範囲選択時に動的に計算される
+        setSelectionAnchorIndex(0); // 仮の値、実際の選択時に正しく計算される
+      }
+    },
+    onDeleteSelected: () => {
+      handleBulkDeleteWithConfirm();
+    },
+    onShowHelp: () => {
+      setShowShortcutHelp(true);
+    },
+    onClearSelection: () => {
+      setSelectedTodos(new Set());
+      setSelectionAnchorIndex(-1);
+    },
+    onEditSelected: () => {
+      // 最初に選択されたタスクを編集モードにする
+      if (selectedTodos.size === 1) {
+        const selectedId = Array.from(selectedTodos)[0];
+        const todo = todos.find(t => t.id === selectedId);
+        if (todo) {
+          // 選択を解除して編集モードに入る
+          setSelectedTodos(new Set());
+          setSelectionAnchorIndex(-1);
+          
+          // AddTodoFormのフォーカスを防ぐため、少し遅延してイベントを発火
+          setTimeout(() => {
+            const editEvent = new CustomEvent('startEdit', { detail: { todoId: selectedId } });
+            window.dispatchEvent(editEvent);
+          }, 10);
+        }
+      }
+    },
+    onToggleSelectedCompletion: () => {
+      // 選択されたタスクの完了状態を一括切り替え
+      if (selectedTodos.size > 0) {
+        const selectedIds = Array.from(selectedTodos);
+        const selectedTodosList = todos.filter(todo => selectedIds.includes(todo.id));
+        
+        // すべて完了している場合は未完了に、それ以外は完了にする
+        const allCompleted = selectedTodosList.every(todo => todo.completed);
+        const newCompletedState = !allCompleted;
+
+        selectedTodosList.forEach(todo => {
+          if (todo.completed !== newCompletedState) {
+            toggleTodo(todo.id);
+          }
+        });
+      }
+    }
+  };
+
+  // キーボードショートカットを有効化
+  useKeyboardShortcuts(keyboardHandlers, { isModalOpen: showSettings || showShortcutHelp || deleteConfirm.isOpen || showScheduleModal });
 
   // 未完了と完了済みタスクを分離
   const pendingTodos = filteredTodos.filter(todo => !todo.completed).sort((a, b) => {
