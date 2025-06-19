@@ -924,7 +924,7 @@ class ScheduleExecutor {
       description: undefined, // Don't copy schedule description to avoid "Generated from schedule" message
       completed: false,
       priority: schedule.priority,
-      scheduledFor: schedule.time ? `${getLocalDateString(executionTime)}T${schedule.time}:00.000Z` : undefined,
+      scheduledFor: undefined, // Don't set due date for schedule-generated tasks
       createdAt: now,
       updatedAt: now
     };

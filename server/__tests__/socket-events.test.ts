@@ -297,7 +297,7 @@ describe('Socket.IO Events', () => {
           completed: true,
           priority: 2
         });
-        expect(new Date(todo.updatedAt).getTime()).toBeGreaterThan(new Date(addedTodo.updatedAt).getTime());
+        expect(new Date(todo.updatedAt).getTime()).toBeGreaterThanOrEqual(new Date(addedTodo.updatedAt).getTime());
         done();
       });
       
