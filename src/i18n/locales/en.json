@@ -57,7 +57,18 @@
     "toggleTaskCompletion": "Toggle task completion",
     "editTask": "Edit task (double-click in slim mode)",
     "multipleSelection": "Multiple selection",
-    "rangeSelection": "Range selection"
+    "rangeSelection": "Range selection",
+    "new-task": "Add new task",
+    "command-palette": "Open command palette",
+    "open-settings": "Open settings",
+    "focus-search": "Search",
+    "select-all": "Select all",
+    "delete-selected": "Delete selected tasks",
+    "toggle-completion": "Toggle task completion",
+    "edit-task-e": "Edit task",
+    "edit-task-f2": "Edit task",
+    "clear-selection": "Remove focus",
+    "show-help": "Show shortcut help"
   },
   "connection": {
     "connected": "Connected to server",

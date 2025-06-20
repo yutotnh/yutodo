@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Search, Command, ArrowUp, ArrowDown, CornerDownLeft } from 'lucide-react';
+import { Search, ArrowUp, ArrowDown, CornerDownLeft } from 'lucide-react';
 import { CommandAction, CommandContext } from '../types/commands';
 import { commandRegistry } from '../utils/commandRegistry';
+import { getModifierKey, getShortcutKey } from '../utils/keyboardShortcuts';
 import logger from '../utils/logger';
 
 interface CommandPaletteProps {
@@ -180,6 +181,14 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     return categoryLabels[category] || category;
   };
 
+  // Get dynamic shortcut for command palette from centralized definition
+  const commandPaletteShortcut = getShortcutKey('onOpenCommandPalette');
+  const modifierKey = getModifierKey();
+  const isMac = modifierKey === 'Cmd';
+  
+  
+  
+
   if (!isOpen) return null;
 
   return (
@@ -206,8 +215,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
               spellCheck="false"
             />
             <div className="command-palette__hint">
-              <Command size={12} />
-              <span>+Shift+P</span>
+              <span>{commandPaletteShortcut || (isMac ? '⌘Shift+P' : 'Ctrl+Shift+P')}</span>
             </div>
           </div>
         </div>

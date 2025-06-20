@@ -1,6 +1,7 @@
 import { CommandAction, CommandContext } from '../types/commands';
 import { commandRegistry } from '../utils/commandRegistry';
 import { TFunction } from 'i18next';
+import { getShortcutKey } from '../utils/keyboardShortcuts';
 import logger from '../utils/logger';
 
 // File Operations Commands
@@ -11,7 +12,6 @@ const createFileCommands = (t: TFunction): CommandAction[] => [
     description: t('commandPalette.commands.file.exportTasks.description', 'Export all tasks to TOML file'),
     category: 'file',
     keywords: ['export', 'save', 'toml', 'backup'],
-    keybinding: 'Ctrl+Shift+E',
     icon: 'download',
     execute: (context: CommandContext) => {
       context.onExportTasks();
@@ -23,7 +23,6 @@ const createFileCommands = (t: TFunction): CommandAction[] => [
     description: t('commandPalette.commands.file.importTasks.description', 'Import tasks from TOML file'),
     category: 'file',
     keywords: ['import', 'load', 'toml', 'restore'],
-    keybinding: 'Ctrl+Shift+I',
     icon: 'upload',
     execute: (context: CommandContext) => {
       context.onImportTasks();
@@ -39,7 +38,6 @@ const createViewCommands = (t: TFunction): CommandAction[] => [
     description: t('commandPalette.commands.view.switchToTasks.description', 'Switch to tasks management view'),
     category: 'view',
     keywords: ['tasks', 'todo', 'switch'],
-    keybinding: 'Ctrl+1',
     icon: 'list',
     execute: (context: CommandContext) => {
       context.onViewChange('tasks');
@@ -53,7 +51,6 @@ const createViewCommands = (t: TFunction): CommandAction[] => [
     description: t('commandPalette.commands.view.switchToSchedules.description', 'Switch to schedules management view'),
     category: 'view',
     keywords: ['schedules', 'calendar', 'switch'],
-    keybinding: 'Ctrl+2',
     icon: 'calendar',
     execute: (context: CommandContext) => {
       context.onViewChange('schedules');
@@ -67,7 +64,6 @@ const createViewCommands = (t: TFunction): CommandAction[] => [
     description: t('commandPalette.commands.view.toggleDarkMode.description', 'Switch between light and dark themes'),
     category: 'view',
     keywords: ['dark', 'light', 'theme', 'mode'],
-    keybinding: 'Ctrl+Shift+D',
     icon: 'moon',
     execute: (context: CommandContext) => {
       context.onToggleDarkMode();
@@ -105,7 +101,7 @@ const createTaskCommands = (t: TFunction): CommandAction[] => [
     description: t('commandPalette.commands.task.newTask.description', 'Create a new task'),
     category: 'task',
     keywords: ['new', 'create', 'add', 'task'],
-    keybinding: 'Ctrl+N',
+    keybinding: getShortcutKey('onNewTask'),
     icon: 'plus',
     execute: (context: CommandContext) => {
       context.onNewTask();
@@ -117,7 +113,7 @@ const createTaskCommands = (t: TFunction): CommandAction[] => [
     description: t('commandPalette.commands.task.selectAll.description', 'Select all visible tasks'),
     category: 'task',
     keywords: ['select', 'all', 'tasks'],
-    keybinding: 'Ctrl+A',
+    keybinding: getShortcutKey('onSelectAll'),
     icon: 'check-square',
     execute: (context: CommandContext) => {
       context.onSelectAll();
@@ -130,7 +126,7 @@ const createTaskCommands = (t: TFunction): CommandAction[] => [
     description: t('commandPalette.commands.task.clearSelection.description', 'Clear all selected tasks'),
     category: 'task',
     keywords: ['clear', 'deselect', 'selection'],
-    keybinding: 'Escape',
+    keybinding: getShortcutKey('onClearSelection'),
     icon: 'x',
     execute: (context: CommandContext) => {
       context.onClearSelection();
@@ -144,7 +140,7 @@ const createTaskCommands = (t: TFunction): CommandAction[] => [
     description: t('commandPalette.commands.task.deleteSelected.description', 'Delete all selected tasks'),
     category: 'task',
     keywords: ['delete', 'remove', 'selected'],
-    keybinding: 'Delete',
+    keybinding: getShortcutKey('onDeleteSelected'),
     icon: 'trash',
     execute: (context: CommandContext) => {
       context.onDeleteSelected();
@@ -158,7 +154,7 @@ const createTaskCommands = (t: TFunction): CommandAction[] => [
     description: t('commandPalette.commands.task.editSelected.description', 'Edit the selected task'),
     category: 'task',
     keywords: ['edit', 'modify', 'selected'],
-    keybinding: 'E',
+    keybinding: getShortcutKey('onEditSelected'),
     icon: 'edit',
     execute: (context: CommandContext) => {
       context.onEditSelected();
@@ -172,7 +168,7 @@ const createTaskCommands = (t: TFunction): CommandAction[] => [
     description: t('commandPalette.commands.task.toggleCompletion.description', 'Mark selected tasks as complete/incomplete'),
     category: 'task',
     keywords: ['complete', 'done', 'finish', 'toggle'],
-    keybinding: 'Ctrl+D',
+    keybinding: getShortcutKey('onToggleSelectedCompletion'),
     icon: 'check',
     execute: (context: CommandContext) => {
       context.onToggleSelectedCompletion();
@@ -190,7 +186,7 @@ const createSearchCommands = (t: TFunction): CommandAction[] => [
     description: t('commandPalette.commands.search.focusSearch.description', 'Focus on the search input field'),
     category: 'search',
     keywords: ['search', 'find', 'filter', 'focus'],
-    keybinding: 'Ctrl+F',
+    keybinding: getShortcutKey('onFocusSearch'),
     icon: 'search',
     execute: (context: CommandContext) => {
       context.onFocusSearch();
@@ -206,7 +202,7 @@ const createSettingsCommands = (t: TFunction): CommandAction[] => [
     description: t('commandPalette.commands.settings.openSettings.description', 'Open application settings'),
     category: 'settings',
     keywords: ['settings', 'preferences', 'config'],
-    keybinding: 'Ctrl+,',
+    keybinding: getShortcutKey('onToggleSettings'),
     icon: 'settings',
     execute: (context: CommandContext) => {
       context.onToggleSettings();
@@ -218,7 +214,7 @@ const createSettingsCommands = (t: TFunction): CommandAction[] => [
     description: t('commandPalette.commands.settings.showShortcuts.description', 'Display all keyboard shortcuts'),
     category: 'settings',
     keywords: ['help', 'shortcuts', 'keys', 'hotkeys'],
-    keybinding: 'Ctrl+K Ctrl+S',
+    keybinding: getShortcutKey('onShowHelp'),
     icon: 'keyboard',
     execute: (context: CommandContext) => {
       context.onShowHelp();

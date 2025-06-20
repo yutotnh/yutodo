@@ -1,6 +1,7 @@
 import { useEffect, useCallback, useState, useRef } from 'react';
+import { getAllShortcutsForDisplay, getModifierKey } from '../utils/keyboardShortcuts';
 
-interface KeyboardShortcutHandlers {
+export interface KeyboardShortcutHandlers {
   onNewTask: () => void;
   onToggleSettings: () => void;
   onFocusSearch: () => void;
@@ -16,31 +17,6 @@ interface KeyboardShortcutHandlers {
 interface KeyboardShortcutOptions {
   isModalOpen?: boolean;
 }
-
-// OS検知を外部に移動
-const detectOS = () => {
-  if (typeof navigator !== 'undefined') {
-    const platform = navigator.platform.toUpperCase();
-    if (platform.indexOf('MAC') >= 0 || platform.indexOf('IPHONE') >= 0 || platform.indexOf('IPAD') >= 0) {
-      return 'mac';
-    }
-    if (platform.indexOf('WIN') >= 0) {
-      return 'windows';
-    }
-    if (platform.indexOf('LINUX') >= 0) {
-      return 'linux';
-    }
-  }
-  // Tauri環境での追加チェック
-  if (typeof window !== 'undefined' && (window as any).__TAURI_INTERNALS__) {
-    // Tauriの場合、さらに詳細な検知が可能
-    const userAgent = navigator.userAgent.toLowerCase();
-    if (userAgent.includes('mac')) return 'mac';
-    if (userAgent.includes('win')) return 'windows';
-    if (userAgent.includes('linux')) return 'linux';
-  }
-  return 'unknown';
-};
 
 export const useKeyboardShortcuts = (handlers: KeyboardShortcutHandlers, options: KeyboardShortcutOptions = {}) => {
   // 連続キーシーケンス状態管理
@@ -194,25 +170,24 @@ export const useKeyboardShortcuts = (handlers: KeyboardShortcutHandlers, options
     };
   }, [handleKeyDown]);
 
-  // ショートカットヘルプ情報を返す（OS対応）
-  const os = detectOS();
-  const modifierKey = os === 'mac' ? 'Cmd' : 'Ctrl';
+  // 中央集権的なショートカット定義から動的に取得
+  const displayShortcuts = getAllShortcutsForDisplay();
+  const modifierKey = getModifierKey();
   
-  const shortcuts = [
-    { key: `${modifierKey} + N`, description: '新しいタスクを追加' },
-    { key: `${modifierKey} + Shift + P`, description: 'コマンドパレットを開く' },
-    { key: `${modifierKey} + ,`, description: '設定を開く' },
-    { key: `${modifierKey} + F`, description: '検索' },
-    { key: `${modifierKey} + A`, description: '全選択' },
-    { key: 'Delete', description: '選択されたタスクを削除' },
-    { key: 'Escape', description: '選択解除・フォーカスを外す' },
-    { key: `${modifierKey} + K, ${modifierKey} + S`, description: 'ヘルプを表示' },
-    { key: `${modifierKey} + D`, description: 'タスクを完了/未完了に切り替え' },
-    { key: 'E', description: 'タスクを編集' },
-    { key: 'F2', description: 'タスクを編集' },
+  // 追加の非キーボードショートカット（マウス操作など）
+  const additionalShortcuts = [
     { key: `${modifierKey} + Click`, description: '個別選択/解除' },
     { key: 'Shift + Click', description: '範囲選択' },
     { key: 'Double Click', description: 'タスクを編集' }
+  ];
+  
+  // ショートカット情報をマージ（useKeyboardShortcutsでは英語の説明を使用）
+  const shortcuts = [
+    ...displayShortcuts.map(shortcut => ({
+      key: shortcut.displayKey,
+      description: shortcut.description
+    })),
+    ...additionalShortcuts
   ];
 
   return { shortcuts };

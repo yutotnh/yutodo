@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { X, Keyboard } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { getAllShortcutsForDisplay, getModifierKey } from '../utils/keyboardShortcuts';
 
 interface ShortcutHelpProps {
   onClose: () => void;
@@ -44,47 +45,23 @@ export const ShortcutHelp: React.FC<ShortcutHelpProps> = ({ onClose }) => {
     };
   }, [onClose]);
   
-  // OS検知
-  const detectOS = () => {
-    if (typeof navigator !== 'undefined') {
-      const platform = navigator.platform.toUpperCase();
-      if (platform.indexOf('MAC') >= 0 || platform.indexOf('IPHONE') >= 0 || platform.indexOf('IPAD') >= 0) {
-        return 'mac';
-      }
-      if (platform.indexOf('WIN') >= 0) {
-        return 'windows';
-      }
-      if (platform.indexOf('LINUX') >= 0) {
-        return 'linux';
-      }
-    }
-    // Tauri環境での追加チェック
-    if (typeof window !== 'undefined' && (window as any).__TAURI_INTERNALS__) {
-      const userAgent = navigator.userAgent.toLowerCase();
-      if (userAgent.includes('mac')) return 'mac';
-      if (userAgent.includes('win')) return 'windows';
-      if (userAgent.includes('linux')) return 'linux';
-    }
-    return 'unknown';
-  };
+  // 中央集権的なショートカット定義から動的に取得
+  const displayShortcuts = getAllShortcutsForDisplay();
+  const modifierKey = getModifierKey();
   
-  const os = detectOS();
-  const modifierKey = os === 'mac' ? 'Cmd' : 'Ctrl';
-  
-  const shortcuts = [
-    { key: `${modifierKey} + N`, description: t('shortcuts.addNewTask') },
-    { key: `${modifierKey} + Shift + P`, description: t('shortcuts.commandPalette') },
-    { key: `${modifierKey} + ,`, description: t('shortcuts.openSettings') },
-    { key: `${modifierKey} + F`, description: t('shortcuts.search') },
-    { key: `${modifierKey} + A`, description: t('shortcuts.selectAll') },
-    { key: `${modifierKey} + K, ${modifierKey} + S`, description: t('shortcuts.showShortcutHelp') },
-    { key: 'Delete', description: t('shortcuts.deleteSelectedTasks') },
-    { key: 'Escape', description: t('shortcuts.removeFocus') },
-    { key: `${modifierKey} + D`, description: t('shortcuts.toggleTaskCompletion') },
-    { key: 'E', description: t('shortcuts.editTask') },
-    { key: 'F2', description: t('shortcuts.editTask') },
+  // 追加の非キーボードショートカット（マウス操作など）
+  const additionalShortcuts = [
     { key: `${modifierKey} + Click`, description: t('shortcuts.multipleSelection') },
     { key: 'Shift + Click', description: t('shortcuts.rangeSelection') }
+  ];
+  
+  // ショートカット情報をマージ
+  const shortcuts = [
+    ...displayShortcuts.map(shortcut => ({
+      key: shortcut.displayKey,
+      description: t(`shortcuts.${shortcut.id}`, { defaultValue: shortcut.description })
+    })),
+    ...additionalShortcuts
   ];
   return (
     <div className="settings-overlay">

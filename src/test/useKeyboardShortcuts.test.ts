@@ -2,6 +2,31 @@ import { renderHook, act } from '@testing-library/react';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 
+// Mock centralized keyboard shortcuts
+vi.mock('../utils/keyboardShortcuts', () => ({
+  getAllShortcutsForDisplay: () => {
+    const platform = typeof navigator !== 'undefined' ? navigator.platform.toUpperCase() : 'LINUX';
+    const modifier = platform.indexOf('MAC') >= 0 ? 'Cmd' : 'Ctrl';
+    return [
+      { id: 'new-task', displayKey: `${modifier}+N`, description: 'Add new task' },
+      { id: 'command-palette', displayKey: `${modifier}+Shift+P`, description: 'Open command palette' },
+      { id: 'open-settings', displayKey: `${modifier}+,`, description: 'Open settings' },
+      { id: 'focus-search', displayKey: `${modifier}+F`, description: 'Search' },
+      { id: 'select-all', displayKey: `${modifier}+A`, description: 'Select all' },
+      { id: 'delete-selected', displayKey: 'Delete', description: 'Delete selected tasks' },
+      { id: 'toggle-completion', displayKey: `${modifier}+D`, description: 'Toggle task completion' },
+      { id: 'edit-task-e', displayKey: 'E', description: 'Edit task' },
+      { id: 'edit-task-f2', displayKey: 'F2', description: 'Edit task' },
+      { id: 'clear-selection', displayKey: 'Escape', description: 'Remove focus' },
+      { id: 'show-help', displayKey: `${modifier}+K ${modifier}+S`, description: 'Show shortcut help' }
+    ];
+  },
+  getModifierKey: () => {
+    const platform = typeof navigator !== 'undefined' ? navigator.platform.toUpperCase() : 'LINUX';
+    return platform.indexOf('MAC') >= 0 ? 'Cmd' : 'Ctrl';
+  }
+}));
+
 // Mock handlers
 const mockHandlers = {
   onNewTask: vi.fn(),
@@ -110,8 +135,8 @@ describe('useKeyboardShortcuts', () => {
     it('should detect Linux OS and use Ctrl modifier', () => {
       const { result } = renderHook(() => useKeyboardShortcuts(mockHandlers));
 
-      const newTaskShortcut = result.current.shortcuts.find(s => s.description === '新しいタスクを追加');
-      expect(newTaskShortcut?.key).toBe('Ctrl + N');
+      const newTaskShortcut = result.current.shortcuts.find(s => s.description === 'Add new task');
+      expect(newTaskShortcut?.key).toBe('Ctrl+N');
     });
 
     it('should detect Mac OS and use Cmd modifier', () => {
@@ -123,8 +148,8 @@ describe('useKeyboardShortcuts', () => {
 
       const { result } = renderHook(() => useKeyboardShortcuts(mockHandlers));
 
-      const newTaskShortcut = result.current.shortcuts.find(s => s.description === '新しいタスクを追加');
-      expect(newTaskShortcut?.key).toBe('Cmd + N');
+      const newTaskShortcut = result.current.shortcuts.find(s => s.description === 'Add new task');
+      expect(newTaskShortcut?.key).toBe('Cmd+N');
 
       // Restore Linux platform
       Object.defineProperty(global.navigator, 'platform', {
@@ -142,8 +167,8 @@ describe('useKeyboardShortcuts', () => {
 
       const { result } = renderHook(() => useKeyboardShortcuts(mockHandlers));
 
-      const newTaskShortcut = result.current.shortcuts.find(s => s.description === '新しいタスクを追加');
-      expect(newTaskShortcut?.key).toBe('Ctrl + N');
+      const newTaskShortcut = result.current.shortcuts.find(s => s.description === 'Add new task');
+      expect(newTaskShortcut?.key).toBe('Ctrl+N');
 
       // Restore Linux platform
       Object.defineProperty(global.navigator, 'platform', {
@@ -530,18 +555,18 @@ describe('useKeyboardShortcuts', () => {
       const { result } = renderHook(() => useKeyboardShortcuts(mockHandlers));
 
       expect(result.current.shortcuts).toContainEqual({
-        key: 'Ctrl + N',
-        description: '新しいタスクを追加'
+        key: 'Ctrl+N',
+        description: 'Add new task'
       });
 
       expect(result.current.shortcuts).toContainEqual({
-        key: 'Ctrl + K, Ctrl + S',
-        description: 'ヘルプを表示'
+        key: 'Ctrl+K Ctrl+S',
+        description: 'Show shortcut help'
       });
 
       expect(result.current.shortcuts).toContainEqual({
         key: 'Delete',
-        description: '選択されたタスクを削除'
+        description: 'Delete selected tasks'
       });
     });
 
@@ -555,13 +580,13 @@ describe('useKeyboardShortcuts', () => {
       const { result } = renderHook(() => useKeyboardShortcuts(mockHandlers));
 
       expect(result.current.shortcuts).toContainEqual({
-        key: 'Cmd + N',
-        description: '新しいタスクを追加'
+        key: 'Cmd+N',
+        description: 'Add new task'
       });
 
       expect(result.current.shortcuts).toContainEqual({
-        key: 'Cmd + K, Cmd + S',
-        description: 'ヘルプを表示'
+        key: 'Cmd+K Cmd+S',
+        description: 'Show shortcut help'
       });
 
       // Restore Linux platform
@@ -575,17 +600,19 @@ describe('useKeyboardShortcuts', () => {
       const { result } = renderHook(() => useKeyboardShortcuts(mockHandlers));
 
       const expectedDescriptions = [
-        '新しいタスクを追加',
-        '設定を開く',
-        '検索',
-        '全選択',
-        '選択されたタスクを削除',
-        '選択解除・フォーカスを外す',
-        'ヘルプを表示',
-        'タスクを完了/未完了に切り替え',
-        'タスクを編集',
-        '個別選択/解除',
-        '範囲選択'
+        'Add new task',
+        'Open command palette',
+        'Open settings',
+        'Search',
+        'Select all',
+        'Delete selected tasks',
+        'Toggle task completion',
+        'Edit task',
+        'Remove focus',
+        'Show shortcut help',
+        '個別選択/解除', // Additional shortcut (not in centralized list)
+        '範囲選択', // Additional shortcut (not in centralized list)
+        'タスクを編集' // Additional shortcut (not in centralized list)
       ];
 
       expectedDescriptions.forEach(description => {
@@ -682,8 +709,8 @@ describe('useKeyboardShortcuts', () => {
       const { result } = renderHook(() => useKeyboardShortcuts(mockHandlers));
 
       // Should default to Ctrl for unknown OS
-      const newTaskShortcut = result.current.shortcuts.find(s => s.description === '新しいタスクを追加');
-      expect(newTaskShortcut?.key).toBe('Ctrl + N');
+      const newTaskShortcut = result.current.shortcuts.find(s => s.description === 'Add new task');
+      expect(newTaskShortcut?.key).toBe('Ctrl+N');
 
       // Restore Linux platform
       Object.defineProperty(global.navigator, 'platform', {
