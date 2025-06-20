@@ -50,8 +50,8 @@ npm run test:parallel # Run tests in parallel (faster)
 ### Testing Commands
 ```bash
 # Frontend testing (from root directory)
-npm test                    # Run all frontend tests (257 total)
-npm test src/test/App.test.tsx  # Run specific test file
+npm test                    # Run all frontend tests (291 total)
+npm test src/test/TodoItem.test.tsx  # Run specific test file
 npm test -- --run          # Run tests once (no watch mode)
 npm run test:ui            # Launch Vitest UI for interactive testing
 
@@ -150,7 +150,7 @@ Claude Code evaluates each change and makes CHANGELOG.md update decisions at com
 - **Testing Library**: @testing-library/react for component interaction testing
 - **Mock Strategy**: Comprehensive mocking of external dependencies (Tauri plugins, DnD Kit, ReactMarkdown)
 - **Setup**: Global test setup in `src/test/setup.ts` with jest-dom matchers and window mocks
-- **Coverage**: 257 tests across 16 test files covering all major components and hooks
+- **Coverage**: 291 tests across 16 test files covering all major components and hooks
 
 ### Backend Testing (Jest + Socket.IO Testing)
 - **Framework**: Jest with ts-jest preset for TypeScript support
@@ -194,13 +194,17 @@ server/__tests__/
 - **Async Testing**: Proper handling of Socket.IO events and async operations with waitFor
 - **Type Safety**: Full TypeScript support in all test files with proper typing
 - **Cross-platform**: OS detection and platform-specific behavior testing
+- **React Testing**: Proper `act()` wrapping for state updates and filtered DatePicker prop mocking
+- **Priority Testing**: Comprehensive testing of priority type migration and conversion utilities
+- **Backward Compatibility**: Tests ensure both legacy numeric and new string priority formats work
 
 ### Running Tests
-- **Frontend**: All 257 tests pass with clean output (some non-critical stderr warnings from DatePicker)
+- **Frontend**: All 291 tests pass with clean output, no warnings
 - **Backend**: Comprehensive coverage of database operations and WebSocket events  
 - **CI/CD Ready**: Tests designed for automated testing environments
 - **Fast Execution**: Optimized test performance with proper mocking and cleanup
 - **100% Pass Rate**: Complete test coverage achieved with comprehensive component testing
+- **Warning-Free**: All React DatePicker DOM prop warnings and act() issues resolved
 
 ## Architecture Patterns
 
@@ -435,7 +439,7 @@ To add a new language (e.g., French):
 1. **Update Existing Tests**: Modify test cases to match changes
 2. **Add New Test Cases**: Test newly added behavior
 3. **Edge Case Testing**: Add tests to prevent regression, especially for bug fixes
-4. **Maintain 100% Pass Rate**: Ensure all 257 tests continue to pass
+4. **Maintain 100% Pass Rate**: Ensure all 291 tests continue to pass
 
 ### Test File Naming and Structure
 - Component tests: `ComponentName.test.tsx`
