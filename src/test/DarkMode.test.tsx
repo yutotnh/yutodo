@@ -22,6 +22,16 @@ vi.mock('react-datepicker', () => ({
       ...domProps
     } = props;
     
+    // Acknowledge filtered props to avoid unused variable warnings
+    void showTimeSelect;
+    void timeFormat;
+    void timeIntervals;
+    void dateFormat;
+    void isClearable;
+    void shouldCloseOnSelect;
+    void closeOnScroll;
+    void preventOpenOnFocus;
+    
     return (
       <input 
         data-testid="datepicker" 
