@@ -6,6 +6,7 @@ import { AppSettings, Todo } from '../types/todo';
 import { DataManager } from './DataManager';
 import { configManager } from '../utils/configManager';
 import { supportedLanguages } from '../i18n';
+import { useWindowDrag } from '../hooks/useWindowDrag';
 import logger from '../utils/logger';
 
 interface SettingsProps {
@@ -22,6 +23,9 @@ export const Settings: React.FC<SettingsProps> = ({ settings, onSettingsChange, 
   const { t } = useTranslation();
   const [localSettings, setLocalSettings] = useState<AppSettings>(settings);
   const settingsPanelRef = useRef<HTMLDivElement>(null);
+  
+  // Window drag functionality
+  const { handleMouseDown: handleHeaderDrag } = useWindowDrag();
 
   useEffect(() => {
     setLocalSettings(settings);
@@ -31,8 +35,8 @@ export const Settings: React.FC<SettingsProps> = ({ settings, onSettingsChange, 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (settingsPanelRef.current && !settingsPanelRef.current.contains(event.target as Node)) {
-        // タイトルバー領域（上部30px）をクリックした場合はモーダルを閉じない
-        if (event.clientY <= 30) {
+        // アプリヘッダー領域（28px + padding = 44px）をクリックした場合はモーダルを閉じない
+        if (event.clientY <= 44) {
           return;
         }
         onClose();
@@ -263,7 +267,7 @@ export const Settings: React.FC<SettingsProps> = ({ settings, onSettingsChange, 
   return (
     <div className="settings-overlay">
       <div className="settings-panel" ref={settingsPanelRef}>
-        <div className="settings-header">
+        <div className="settings-header" onMouseDown={handleHeaderDrag}>
           <h2>
             <SettingsIcon size={20} />
             {t('settings.title')}

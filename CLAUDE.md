@@ -248,6 +248,30 @@ server/__tests__/
 - Overlay-based UI components (header auto-hide, bottom Add Todo form) that don't displace content
 - **Menu System**: Custom header-integrated MenuBar component with dropdown menus that prevent header auto-hide during interaction
 
+### Window Drag Pattern
+- **Reusable Hook**: `useWindowDrag` hook provides consistent window dragging functionality across all modal components
+- **Automatic Element Filtering**: Automatically ignores interactive elements (buttons, inputs, textareas, selects, links) to prevent drag conflicts
+- **Tauri Environment Detection**: Only enables dragging in Tauri desktop environment, gracefully handles browser fallback
+- **Implementation Pattern**: Apply `onMouseDown={handleHeaderDrag}` to modal headers for consistent drag behavior
+- **Usage Example**:
+  ```tsx
+  import { useWindowDrag } from '../hooks/useWindowDrag';
+  
+  const { handleMouseDown: handleHeaderDrag } = useWindowDrag();
+  
+  return (
+    <div className="modal-header" onMouseDown={handleHeaderDrag}>
+      <h2>Modal Title</h2>
+      <button>Close</button>  {/* Automatically ignored */}
+    </div>
+  );
+  ```
+- **Applied Components**: CommandPalette, Settings, ScheduleModal, ShortcutHelp, DeleteConfirmDialog
+- **Configuration Options**: 
+  - `ignoreElements`: Array of CSS selectors to ignore (default: button, input, textarea, select, a)
+  - `logErrors`: Whether to log errors (default: true)
+- **Error Handling**: Graceful fallback when Tauri APIs are unavailable with optional error logging
+
 ### Tauri v2 Integration
 - **Plugins Used**: opener, dialog, fs, clipboard-manager
 - **Permissions**: Configured in `src-tauri/capabilities/default.json`
@@ -410,6 +434,9 @@ To add a new language (e.g., French):
 - **Overlay positioning**: Use `position: fixed` with high z-index for non-displacing overlays
 - **Keyboard shortcuts**: Add `isModalOpen` parameter to prevent conflicts with modal interactions
 - **OS detection**: Use platform detection for keyboard shortcut display (Ctrl vs Cmd)
+- **App header height**: Use `event.clientY <= 44` for app header detection (28px height + 16px padding)
+- **Header z-index**: Set to `z-index: 10000` to ensure header is always accessible for window dragging even when modals are open
+- **Modal overlay pointer-events**: Use `pointer-events: none` on overlay and `pointer-events: auto` on modal content to allow window dragging
 
 ### State Management
 - **Settings migration**: Check for localStorage key changes (`todoAppSettings` → `yutodoAppSettings`)
@@ -543,6 +570,10 @@ npm test -- --coverage
 - **Completed Tasks UI**: Added collapsible section for completed tasks with expand/collapse functionality
 - **File Operations**: Direct export/import from menu bar bypasses settings screen for streamlined workflow
 - **Git Repository Hygiene**: Database files now excluded from version control following best practices
+- **App Header Click Detection**: Adjusted header height detection to 44px (28px header + 16px padding) for custom app header
+- **Header Accessibility**: Increased header z-index to 10000 to ensure window dragging works even with modals open
+- **Modal Window Dragging**: Fixed pointer-events on command palette overlay to enable window dragging with modal open
+- **Header Window Dragging**: Fixed event propagation in MenuBar to allow window dragging through header/menu bar
 
 ## Logging Best Practices
 

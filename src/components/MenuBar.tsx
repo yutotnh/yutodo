@@ -280,7 +280,8 @@ export const MenuBar: React.FC<MenuBarProps> = ({
   const handleMenuClick = (menuKey: string, event?: React.MouseEvent) => {
     if (event) {
       event.preventDefault();
-      event.stopPropagation();
+      // Don't stop propagation to allow window dragging through menu bar
+      // event.stopPropagation();
     }
     const newActiveMenu = activeMenu === menuKey ? null : menuKey;
     setActiveMenu(newActiveMenu);

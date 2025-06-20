@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { X, Calendar, Clock, Repeat } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Schedule, ScheduleType, WeeklyConfig, MonthlyConfig, CustomConfig, Priority } from '../types/todo';
+import { useWindowDrag } from '../hooks/useWindowDrag';
 
 interface ScheduleModalProps {
   isOpen: boolean;
@@ -24,6 +25,9 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({
   onSave
 }) => {
   const { t } = useTranslation();
+  
+  // Window drag functionality
+  const { handleMouseDown: handleHeaderDrag } = useWindowDrag();
   
   // フォームの状態
   const [title, setTitle] = useState('');
@@ -201,19 +205,25 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({
 
   // オーバーレイクリック処理（タイトルバー除く）
   const handleOverlayClick = (e: React.MouseEvent) => {
-    // タイトルバー領域（上部30px）をクリックした場合はモーダルを閉じない
-    if (e.clientY <= 30) {
+    // アプリヘッダー領域（28px + padding = 44px）をクリックした場合はモーダルを閉じない
+    if (e.clientY <= 44) {
       return;
     }
     onClose();
   };
+
+  // Enhanced header drag handler that prevents modal closing
+  const handleHeaderMouseDown = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent overlay click handler from firing
+    handleHeaderDrag(e);
+  }, [handleHeaderDrag]);
 
   if (!isOpen) return null;
 
   return (
     <div className="modal-overlay" onClick={handleOverlayClick} data-testid="modal-overlay">
       <div className="modal schedule-modal" onClick={e => e.stopPropagation()} data-testid="modal-content">
-        <div className="modal-header">
+        <div className="modal-header" onMouseDown={handleHeaderMouseDown}>
           <h2>
             <Calendar size={20} />
             {schedule ? t('schedule.editSchedule') : t('schedule.createSchedule')}

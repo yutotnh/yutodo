@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { X, Keyboard } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { getAllShortcutsForDisplay, getModifierKey } from '../utils/keyboardShortcuts';
+import { useWindowDrag } from '../hooks/useWindowDrag';
 
 interface ShortcutHelpProps {
   onClose: () => void;
@@ -10,6 +11,9 @@ interface ShortcutHelpProps {
 export const ShortcutHelp: React.FC<ShortcutHelpProps> = ({ onClose }) => {
   const { t } = useTranslation();
   const shortcutPanelRef = useRef<HTMLDivElement>(null);
+  
+  // Window drag functionality
+  const { handleMouseDown: handleHeaderDrag } = useWindowDrag();
   
   // Escキーでヘルプを閉じる
   useEffect(() => {
@@ -31,8 +35,8 @@ export const ShortcutHelp: React.FC<ShortcutHelpProps> = ({ onClose }) => {
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (shortcutPanelRef.current && !shortcutPanelRef.current.contains(event.target as Node)) {
-        // タイトルバー領域（上部30px）をクリックした場合はモーダルを閉じない
-        if (event.clientY <= 30) {
+        // アプリヘッダー領域（28px + padding = 44px）をクリックした場合はモーダルを閉じない
+        if (event.clientY <= 44) {
           return;
         }
         onClose();
@@ -66,7 +70,7 @@ export const ShortcutHelp: React.FC<ShortcutHelpProps> = ({ onClose }) => {
   return (
     <div className="settings-overlay">
       <div className="settings-panel" ref={shortcutPanelRef}>
-        <div className="settings-header">
+        <div className="settings-header" onMouseDown={handleHeaderDrag}>
           <h2>
             <Keyboard size={20} />
             {t('shortcuts.title')}

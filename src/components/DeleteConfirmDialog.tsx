@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { AlertTriangle, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { useWindowDrag } from '../hooks/useWindowDrag';
 
 interface DeleteConfirmDialogProps {
   isOpen: boolean;
@@ -22,14 +23,17 @@ export const DeleteConfirmDialog: React.FC<DeleteConfirmDialogProps> = ({
   const { t } = useTranslation();
   const dialogRef = useRef<HTMLDivElement>(null);
   
+  // Window drag functionality
+  const { handleMouseDown: handleHeaderDrag } = useWindowDrag();
+  
   // 外側クリック検知（タイトルバー除く）
   useEffect(() => {
     if (!isOpen) return;
 
     const handleClickOutside = (event: MouseEvent) => {
       if (dialogRef.current && !dialogRef.current.contains(event.target as Node)) {
-        // タイトルバー領域（上部30px）をクリックした場合はモーダルを閉じない
-        if (event.clientY <= 30) {
+        // アプリヘッダー領域（28px + padding = 44px）をクリックした場合はモーダルを閉じない
+        if (event.clientY <= 44) {
           return;
         }
         onClose();
@@ -60,7 +64,7 @@ export const DeleteConfirmDialog: React.FC<DeleteConfirmDialogProps> = ({
   return (
     <div className="delete-confirm-overlay" onKeyDown={handleKeyDown}>
       <div className="delete-confirm-dialog" ref={dialogRef}>
-        <div className="delete-confirm-header">
+        <div className="delete-confirm-header" onMouseDown={handleHeaderDrag}>
           <div className="delete-confirm-icon">
             <AlertTriangle size={24} />
           </div>

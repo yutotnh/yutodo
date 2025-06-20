@@ -314,8 +314,8 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onUpdate, on
   if (isEditing) {
     return (
       <div className="modal-overlay" data-testid="modal-overlay" onClick={(e) => {
-        // ヘッダー領域内（Y座標30px以下）でのクリックの場合は閉じない
-        if (e.clientY <= 30) return;
+        // アプリヘッダー領域（28px + padding = 44px）でのクリックの場合は閉じない
+        if (e.clientY <= 44) return;
         handleCancel();
       }}>
         <div className="modal-content todo-edit-modal" data-testid="modal-content" onClick={(e) => e.stopPropagation()}>

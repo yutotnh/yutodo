@@ -13,6 +13,7 @@
   padding-top: 10vh;
   z-index: 9999;
   animation: command-palette-overlay-appear 0.15s ease-out;
+  pointer-events: none; /* Allow window dragging through overlay */
 }
 
 .command-palette {
@@ -29,6 +30,7 @@
   animation: command-palette-appear 0.2s ease-out;
   /* Add subtle background overlay for better contrast */
   position: relative;
+  pointer-events: auto; /* Modal content should be interactive */
 }
 
 .command-palette::before {
@@ -60,6 +62,8 @@
   border-bottom: 1px solid var(--border-color);
   background: rgba(248, 250, 252, 0.8);
   backdrop-filter: blur(8px);
+  cursor: default;
+  user-select: none; /* テキスト選択を防ぐ */
 }
 
 .app--dark .command-palette__header {
@@ -87,6 +91,7 @@
   color: var(--text-primary);
   outline: none;
   padding: 0;
+  cursor: text; /* 入力フィールドは通常のテキストカーソル */
 }
 
 .command-palette__input::placeholder {

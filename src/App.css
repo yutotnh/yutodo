@@ -593,7 +593,7 @@ body {
   top: 0;
   left: 0;
   right: 0;
-  z-index: 1000;
+  z-index: 10000; /* Always on top to allow window dragging even with modals open */
   transition: transform 0.2s ease, opacity 0.2s ease;
   opacity: 0.7;
 }

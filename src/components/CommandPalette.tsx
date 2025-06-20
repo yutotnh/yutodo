@@ -23,6 +23,8 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   const [filteredCommands, setFilteredCommands] = useState<CommandAction[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  const paletteRef = useRef<HTMLDivElement>(null);
+  
 
   // Reset state when opening/closing
   useEffect(() => {
@@ -152,12 +154,27 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     }
   }, [selectedIndex]);
 
-  // Handle click outside to close
-  const handleOverlayClick = useCallback((e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) {
-      onClose();
-    }
-  }, [onClose]);
+  // Command palette outside click detection (excluding title bar)
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (paletteRef.current && !paletteRef.current.contains(event.target as Node)) {
+        // Don't close modal if clicking in the app header area (28px + padding)
+        if (event.clientY <= 44) {
+          return;
+        }
+        onClose();
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen, onClose]);
+
+
 
   // Group commands by category
   const groupedCommands = filteredCommands.reduce((groups, command) => {
@@ -194,12 +211,11 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   return (
     <div 
       className="command-palette-overlay"
-      onClick={handleOverlayClick}
       role="dialog"
       aria-modal="true"
       aria-label={t('commandPalette.title', 'Command Palette')}
     >
-      <div className="command-palette" onKeyDown={handleKeyDown}>
+      <div className="command-palette" ref={paletteRef} onKeyDown={handleKeyDown}>
         {/* Header with search input */}
         <div className="command-palette__header">
           <div className="command-palette__search">
