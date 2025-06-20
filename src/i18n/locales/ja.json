@@ -46,6 +46,7 @@
   "shortcuts": {
     "title": "キーボードショートカット",
     "addNewTask": "新しいタスクを追加",
+    "commandPalette": "コマンドパレットを開く",
     "openSettings": "設定を開く",
     "search": "検索",
     "selectAll": "全選択",
@@ -223,5 +224,98 @@
     "create": "作成",
     "edit": "編集",
     "delete": "削除"
+  },
+  "commandPalette": {
+    "title": "コマンドパレット",
+    "searchPlaceholder": "コマンドを検索...",
+    "noResults": "コマンドが見つかりません",
+    "noCommands": "利用可能なコマンドがありません",
+    "navigate": "でナビゲート",
+    "execute": "で実行",
+    "close": "で閉じる",
+    "categories": {
+      "file": "ファイル",
+      "view": "表示",
+      "task": "タスク",
+      "search": "検索",
+      "settings": "設定",
+      "navigation": "ナビゲーション"
+    },
+    "commands": {
+      "file": {
+        "exportTasks": {
+          "title": "タスクをエクスポート",
+          "description": "全てのタスクをTOMLファイルにエクスポート"
+        },
+        "importTasks": {
+          "title": "タスクをインポート", 
+          "description": "TOMLファイルからタスクをインポート"
+        }
+      },
+      "view": {
+        "switchToTasks": {
+          "title": "タスクビューに切り替え",
+          "description": "タスク管理ビューに切り替え"
+        },
+        "switchToSchedules": {
+          "title": "スケジュールビューに切り替え",
+          "description": "スケジュール管理ビューに切り替え"
+        },
+        "toggleDarkMode": {
+          "title": "ダークモード切り替え",
+          "description": "ライトテーマとダークテーマを切り替え"
+        },
+        "toggleSlimMode": {
+          "title": "スリムモード切り替え",
+          "description": "詳細表示とコンパクト表示を切り替え"
+        },
+        "toggleAlwaysOnTop": {
+          "title": "常に最前面表示を切り替え",
+          "description": "ウィンドウを他のウィンドウの最前面に固定"
+        }
+      },
+      "task": {
+        "newTask": {
+          "title": "新しいタスク",
+          "description": "新しいタスクを作成"
+        },
+        "selectAll": {
+          "title": "全てのタスクを選択",
+          "description": "表示中の全てのタスクを選択"
+        },
+        "clearSelection": {
+          "title": "選択をクリア",
+          "description": "選択したタスクを全てクリア"
+        },
+        "deleteSelected": {
+          "title": "選択したタスクを削除",
+          "description": "選択した全てのタスクを削除"
+        },
+        "editSelected": {
+          "title": "選択したタスクを編集",
+          "description": "選択したタスクを編集"
+        },
+        "toggleCompletion": {
+          "title": "タスク完了状態を切り替え",
+          "description": "選択したタスクの完了/未完了を切り替え"
+        }
+      },
+      "search": {
+        "focusSearch": {
+          "title": "検索にフォーカス",
+          "description": "検索入力フィールドにフォーカス"
+        }
+      },
+      "settings": {
+        "openSettings": {
+          "title": "設定を開く",
+          "description": "アプリケーション設定を開く"
+        },
+        "showShortcuts": {
+          "title": "キーボードショートカットを表示",
+          "description": "全てのキーボードショートカットを表示"
+        }
+      }
+    }
   }
 }

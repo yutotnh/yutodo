@@ -10,6 +10,7 @@ interface KeyboardShortcutHandlers {
   onClearSelection: () => void;
   onEditSelected: () => void;
   onToggleSelectedCompletion: () => void;
+  onOpenCommandPalette: () => void;
 }
 
 interface KeyboardShortcutOptions {
@@ -118,6 +119,12 @@ export const useKeyboardShortcuts = (handlers: KeyboardShortcutHandlers, options
       handlers.onFocusSearch();
     }
     
+    // Ctrl/Cmd + Shift + P: コマンドパレットを開く
+    if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key === 'P') {
+      event.preventDefault();
+      handlers.onOpenCommandPalette();
+    }
+    
     
     // Ctrl/Cmd + A: 全選択（入力フィールド以外での不要な選択を防ぐ）
     if ((event.ctrlKey || event.metaKey) && event.key === 'a') {
@@ -193,6 +200,7 @@ export const useKeyboardShortcuts = (handlers: KeyboardShortcutHandlers, options
   
   const shortcuts = [
     { key: `${modifierKey} + N`, description: '新しいタスクを追加' },
+    { key: `${modifierKey} + Shift + P`, description: 'コマンドパレットを開く' },
     { key: `${modifierKey} + ,`, description: '設定を開く' },
     { key: `${modifierKey} + F`, description: '検索' },
     { key: `${modifierKey} + A`, description: '全選択' },

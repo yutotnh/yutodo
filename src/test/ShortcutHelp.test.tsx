@@ -9,6 +9,7 @@ vi.mock('react-i18next', () => ({
       const translations: { [key: string]: string } = {
         'shortcuts.title': 'Keyboard Shortcuts',
         'shortcuts.addNewTask': 'Add new task',
+        'shortcuts.commandPalette': 'Open command palette',
         'shortcuts.openSettings': 'Open settings',
         'shortcuts.search': 'Search',
         'shortcuts.selectAll': 'Select all',
@@ -127,7 +128,7 @@ describe('ShortcutHelp', () => {
     expect(screen.getByText('Delete selected tasks')).toBeInTheDocument();
     expect(screen.getByText('Remove focus')).toBeInTheDocument();
     expect(screen.getByText('Toggle task completion')).toBeInTheDocument();
-    expect(screen.getByText('Edit task')).toBeInTheDocument();
+    expect(screen.getAllByText('Edit task')).toHaveLength(2); // E and F2 both have "Edit task"
   });
 
   it('renders keyboard sequence shortcuts', () => {
@@ -169,10 +170,10 @@ describe('ShortcutHelp', () => {
     const { container } = render(<ShortcutHelp onClose={mockOnClose} />);
     
     const shortcutItems = container.querySelectorAll('.shortcut-item');
-    expect(shortcutItems.length).toBe(11); // Should have 11 shortcuts based on component
+    expect(shortcutItems.length).toBe(13); // Should have 13 shortcuts based on component
     
     const shortcutKeys = container.querySelectorAll('.shortcut-key');
-    expect(shortcutKeys.length).toBe(11); // Each shortcut should have a key combination
+    expect(shortcutKeys.length).toBe(13); // Each shortcut should have a key combination
   });
 
   it('shows complex key combinations correctly', () => {

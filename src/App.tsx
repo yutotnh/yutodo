@@ -28,13 +28,17 @@ import { ConnectionStatus } from './components/ConnectionStatus';
 import { MenuBar } from './components/MenuBar';
 import { ScheduleView } from './components/ScheduleView';
 import { ScheduleModal } from './components/ScheduleModal';
+import { CommandPalette } from './components/CommandPalette';
 import { useSocket } from './hooks/useSocket';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { AppSettings, Todo, Schedule } from './types/todo';
+import { CommandContext } from './types/commands';
 import { configManager } from './utils/configManager';
 import { numberToPriority } from './utils/priorityUtils';
+import { registerDefaultCommands } from './commands/defaultCommands';
 import logger from './utils/logger';
 import './App.css';
+import './components/CommandPalette.css';
 
 const DEFAULT_SETTINGS: AppSettings = {
   alwaysOnTop: false,
@@ -94,6 +98,7 @@ function App() {
   const [isInitialized, setIsInitialized] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showShortcutHelp, setShowShortcutHelp] = useState(false);
+  const [showCommandPalette, setShowCommandPalette] = useState(false);
   const [selectedTodos, setSelectedTodos] = useState<Set<string>>(new Set());
   const [selectionAnchorIndex, setSelectionAnchorIndex] = useState<number>(-1);
   const [currentFilter, setCurrentFilter] = useState<FilterType>('all');
@@ -171,6 +176,8 @@ function App() {
           i18n.changeLanguage(finalSettings.language);
         }
         
+        // デフォルトコマンドの登録は別のuseEffectで処理
+        
         setIsInitialized(true);
       } catch (error) {
         logger.error('Failed to initialize config:', error);
@@ -203,7 +210,7 @@ function App() {
     };
 
     initializeConfig();
-  }, [i18n]);
+  }, [i18n]); // tは削除、registerDefaultCommandsは別のuseEffectで処理
 
   // 言語設定の変更を適用
   useEffect(() => {
@@ -217,6 +224,24 @@ function App() {
       i18n.changeLanguage(settings.language);
     }
   }, [settings.language, i18n, isInitialized]);
+
+  // 初期化完了時にコマンドを登録
+  useEffect(() => {
+    if (!isInitialized) return;
+    
+    logger.debug('Registering default commands on initialization');
+    registerDefaultCommands(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isInitialized]); // 初期化完了時に必ず実行
+
+  // 言語変更時にコマンドを再登録  
+  useEffect(() => {
+    if (!isInitialized) return;
+    
+    logger.debug('Re-registering commands due to language change');
+    registerDefaultCommands(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [settings.language]); // 言語変更時のみ
 
   useEffect(() => {
     // 初期化完了後にのみ保存処理を実行
@@ -1166,11 +1191,14 @@ function App() {
           }
         });
       }
+    },
+    onOpenCommandPalette: () => {
+      setShowCommandPalette(true);
     }
   };
 
   // キーボードショートカットを有効化
-  useKeyboardShortcuts(keyboardHandlers, { isModalOpen: showSettings || showShortcutHelp || deleteConfirm.isOpen || showScheduleModal });
+  useKeyboardShortcuts(keyboardHandlers, { isModalOpen: showSettings || showShortcutHelp || deleteConfirm.isOpen || showScheduleModal || showCommandPalette });
 
   // 未完了と完了済みタスクを分離
   const pendingTodos = filteredTodos.filter(todo => !todo.completed).sort((a, b) => {
@@ -1221,6 +1249,32 @@ function App() {
       default:
         return '';
     }
+  };
+
+  // CommandContext for command palette
+  const commandContext: CommandContext = {
+    currentView: settings.currentView,
+    selectedTasks: selectedTodos,
+    searchQuery,
+    settings,
+    onNewTask: keyboardHandlers.onNewTask,
+    onToggleSettings: keyboardHandlers.onToggleSettings,
+    onFocusSearch: keyboardHandlers.onFocusSearch,
+    onSelectAll: keyboardHandlers.onSelectAll,
+    onDeleteSelected: keyboardHandlers.onDeleteSelected,
+    onClearSelection: keyboardHandlers.onClearSelection,
+    onEditSelected: keyboardHandlers.onEditSelected,
+    onToggleSelectedCompletion: keyboardHandlers.onToggleSelectedCompletion,
+    onExportTasks: handleExportTasksFromMenu,
+    onImportTasks: handleImportTasksFromMenu,
+    onViewChange: (view) => setSettings(prev => ({ ...prev, currentView: view })),
+    onToggleDarkMode: () => {
+      const newMode = settings.darkMode === 'dark' ? 'light' : settings.darkMode === 'light' ? 'auto' : 'dark';
+      setSettings(prev => ({ ...prev, darkMode: newMode }));
+    },
+    onToggleSlimMode: () => setSettings(prev => ({ ...prev, detailedMode: !settings.detailedMode })),
+    onToggleAlwaysOnTop: () => setSettings(prev => ({ ...prev, alwaysOnTop: !settings.alwaysOnTop })),
+    onShowHelp: () => setShowShortcutHelp(true)
   };
 
   return (
@@ -1485,6 +1539,12 @@ function App() {
           onClose={() => setShowShortcutHelp(false)}
         />
       )}
+
+      <CommandPalette
+        isOpen={showCommandPalette}
+        onClose={() => setShowCommandPalette(false)}
+        context={commandContext}
+      />
 
       <DeleteConfirmDialog
         isOpen={deleteConfirm.isOpen}

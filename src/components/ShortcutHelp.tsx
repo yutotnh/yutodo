@@ -73,14 +73,16 @@ export const ShortcutHelp: React.FC<ShortcutHelpProps> = ({ onClose }) => {
   
   const shortcuts = [
     { key: `${modifierKey} + N`, description: t('shortcuts.addNewTask') },
+    { key: `${modifierKey} + Shift + P`, description: t('shortcuts.commandPalette') },
     { key: `${modifierKey} + ,`, description: t('shortcuts.openSettings') },
     { key: `${modifierKey} + F`, description: t('shortcuts.search') },
     { key: `${modifierKey} + A`, description: t('shortcuts.selectAll') },
     { key: `${modifierKey} + K, ${modifierKey} + S`, description: t('shortcuts.showShortcutHelp') },
     { key: 'Delete', description: t('shortcuts.deleteSelectedTasks') },
     { key: 'Escape', description: t('shortcuts.removeFocus') },
-    { key: 'Space', description: t('shortcuts.toggleTaskCompletion') },
-    { key: 'e', description: t('shortcuts.editTask') },
+    { key: `${modifierKey} + D`, description: t('shortcuts.toggleTaskCompletion') },
+    { key: 'E', description: t('shortcuts.editTask') },
+    { key: 'F2', description: t('shortcuts.editTask') },
     { key: `${modifierKey} + Click`, description: t('shortcuts.multipleSelection') },
     { key: 'Shift + Click', description: t('shortcuts.rangeSelection') }
   ];

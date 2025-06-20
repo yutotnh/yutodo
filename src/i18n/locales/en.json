@@ -46,6 +46,7 @@
   "shortcuts": {
     "title": "Keyboard Shortcuts",
     "addNewTask": "Add new task",
+    "commandPalette": "Open command palette",
     "openSettings": "Open settings",
     "search": "Search",
     "selectAll": "Select all",
@@ -224,5 +225,98 @@
     "create": "Create",
     "edit": "Edit",
     "delete": "Delete"
+  },
+  "commandPalette": {
+    "title": "Command Palette",
+    "searchPlaceholder": "Search commands...",
+    "noResults": "No commands found",
+    "noCommands": "No commands available",
+    "navigate": "to navigate",
+    "execute": "to execute",
+    "close": "to close",
+    "categories": {
+      "file": "File",
+      "view": "View",
+      "task": "Task",
+      "search": "Search",
+      "settings": "Settings",
+      "navigation": "Navigation"
+    },
+    "commands": {
+      "file": {
+        "exportTasks": {
+          "title": "Export Tasks",
+          "description": "Export all tasks to TOML file"
+        },
+        "importTasks": {
+          "title": "Import Tasks", 
+          "description": "Import tasks from TOML file"
+        }
+      },
+      "view": {
+        "switchToTasks": {
+          "title": "Switch to Tasks View",
+          "description": "Switch to tasks management view"
+        },
+        "switchToSchedules": {
+          "title": "Switch to Schedules View",
+          "description": "Switch to schedules management view"
+        },
+        "toggleDarkMode": {
+          "title": "Toggle Dark Mode",
+          "description": "Switch between light and dark themes"
+        },
+        "toggleSlimMode": {
+          "title": "Toggle Slim Mode",
+          "description": "Switch between detailed and compact view"
+        },
+        "toggleAlwaysOnTop": {
+          "title": "Toggle Always on Top",
+          "description": "Keep window always on top of other windows"
+        }
+      },
+      "task": {
+        "newTask": {
+          "title": "New Task",
+          "description": "Create a new task"
+        },
+        "selectAll": {
+          "title": "Select All Tasks",
+          "description": "Select all visible tasks"
+        },
+        "clearSelection": {
+          "title": "Clear Selection",
+          "description": "Clear all selected tasks"
+        },
+        "deleteSelected": {
+          "title": "Delete Selected Tasks",
+          "description": "Delete all selected tasks"
+        },
+        "editSelected": {
+          "title": "Edit Selected Task",
+          "description": "Edit the selected task"
+        },
+        "toggleCompletion": {
+          "title": "Toggle Task Completion",
+          "description": "Mark selected tasks as complete/incomplete"
+        }
+      },
+      "search": {
+        "focusSearch": {
+          "title": "Focus Search",
+          "description": "Focus on the search input field"
+        }
+      },
+      "settings": {
+        "openSettings": {
+          "title": "Open Settings",
+          "description": "Open application settings"
+        },
+        "showShortcuts": {
+          "title": "Show Keyboard Shortcuts",
+          "description": "Display all keyboard shortcuts"
+        }
+      }
+    }
   }
 }

@@ -13,6 +13,7 @@ const mockHandlers = {
   onClearSelection: vi.fn(),
   onEditSelected: vi.fn(),
   onToggleSelectedCompletion: vi.fn(),
+  onOpenCommandPalette: vi.fn(),
 };
 
 describe('useKeyboardShortcuts', () => {
