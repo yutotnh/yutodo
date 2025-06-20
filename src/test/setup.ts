@@ -100,3 +100,9 @@ vi.mock('../utils/logger', () => ({
     ui: vi.fn(),
   },
 }));
+
+// Mock react-datepicker to prevent DOM prop warnings  
+vi.mock('react-datepicker', () => ({
+  __esModule: true,
+  default: vi.fn(() => null)
+}));

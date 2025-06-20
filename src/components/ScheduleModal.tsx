@@ -3,7 +3,7 @@ import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { X, Calendar, Clock, Repeat } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Schedule, ScheduleType, WeeklyConfig, MonthlyConfig, CustomConfig } from '../types/todo';
+import { Schedule, ScheduleType, WeeklyConfig, MonthlyConfig, CustomConfig, Priority } from '../types/todo';
 
 interface ScheduleModalProps {
   isOpen: boolean;
@@ -28,7 +28,7 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({
   // フォームの状態
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [priority, setPriority] = useState(0);
+  const [priority, setPriority] = useState<Priority>('low');
   const [type, setType] = useState<ScheduleType>('once');
   const [startDate, setStartDate] = useState<Date | null>(new Date());
   const [endDate, setEndDate] = useState<Date | null>(null);
@@ -103,7 +103,7 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({
       // 新規作成時のリセット
       setTitle('');
       setDescription('');
-      setPriority(0);
+      setPriority('low');
       setType('once');
       setStartDate(new Date());
       setEndDate(null);
@@ -257,11 +257,11 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({
                 <select
                   id="schedule-priority"
                   value={priority}
-                  onChange={(e) => setPriority(Number(e.target.value))}
+                  onChange={(e) => setPriority(e.target.value as Priority)}
                 >
-                  <option value={0}>Low</option>
-                  <option value={1}>Medium</option>
-                  <option value={2}>High</option>
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
                 </select>
               </div>
 

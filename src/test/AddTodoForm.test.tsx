@@ -1,19 +1,36 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { AddTodoForm } from '../components/AddTodoForm';
 
 // react-datepickerをモック
 vi.mock('react-datepicker', () => ({
-  default: ({ className, onChange, value, ...props }: any) => (
-    <input 
-      data-testid="datepicker" 
-      className={className}
-      onChange={(e) => onChange && onChange(e.target.value ? new Date(e.target.value) : null)}
-      value={value ? value.toISOString().split('T')[0] : ''}
-      type="date"
-      {...props}
-    />
-  ),
+  default: ({ className, onChange, value, ...props }: any) => {
+    // Filter out DatePicker-specific props that shouldn't be passed to DOM
+    const {
+      showTimeSelect,
+      timeFormat,
+      timeIntervals,
+      dateFormat,
+      placeholderText,
+      isClearable,
+      shouldCloseOnSelect,
+      closeOnScroll,
+      preventOpenOnFocus,
+      ...domProps
+    } = props;
+    
+    return (
+      <input 
+        data-testid="datepicker" 
+        className={className}
+        onChange={(e) => onChange && onChange(e.target.value ? new Date(e.target.value) : null)}
+        value={value ? value.toISOString().split('T')[0] : ''}
+        type="date"
+        placeholder={placeholderText}
+        {...domProps}
+      />
+    );
+  },
 }));
 
 // i18nをモック
@@ -87,7 +104,7 @@ describe('AddTodoForm', () => {
     const prioritySelect = screen.getByDisplayValue('Low Priority');
     
     fireEvent.change(descriptionInput, { target: { value: 'Test description' } });
-    fireEvent.change(prioritySelect, { target: { value: '1' } });
+    fireEvent.change(prioritySelect, { target: { value: 'medium' } });
     
     const submitButton = screen.getByText('tasks.addTask');
     fireEvent.click(submitButton);
@@ -96,7 +113,7 @@ describe('AddTodoForm', () => {
       title: 'Test Task',
       description: 'Test description',
       completed: false,
-      priority: 1,
+      priority: 'medium',
       scheduledFor: undefined
     });
   });
@@ -173,7 +190,7 @@ describe('AddTodoForm', () => {
       title: 'Test Task',
       description: undefined,
       completed: false,
-      priority: 0,
+      priority: 'low',
       scheduledFor: undefined
     });
   });
@@ -195,7 +212,7 @@ describe('AddTodoForm', () => {
       title: 'Test Task',
       description: 'Test description',
       completed: false,
-      priority: 0,
+      priority: 'low',
       scheduledFor: undefined
     });
   });
@@ -213,7 +230,7 @@ describe('AddTodoForm', () => {
       title: 'Test Task',
       description: undefined,
       completed: false,
-      priority: 0,
+      priority: 'low',
       scheduledFor: undefined
     });
   });
@@ -248,10 +265,15 @@ describe('AddTodoForm', () => {
     render(<AddTodoForm onAdd={mockOnAdd} />);
     
     const titleInput = screen.getByPlaceholderText('Add a new task (supports Markdown)...');
-    titleInput.focus();
+    
+    act(() => {
+      titleInput.focus();
+    });
     expect(titleInput).toHaveFocus();
     
-    fireEvent.focus(titleInput);
+    act(() => {
+      fireEvent.focus(titleInput);
+    });
     
     // After expansion, focus should still be maintained
     expect(titleInput).toHaveFocus();

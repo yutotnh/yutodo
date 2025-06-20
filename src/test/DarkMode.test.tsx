@@ -7,9 +7,33 @@ import { Todo } from '../types/todo';
 
 // react-datepickerをモック
 vi.mock('react-datepicker', () => ({
-  default: ({ className, ...props }: any) => (
-    <input data-testid="datepicker" className={className} {...props} />
-  ),
+  default: ({ className, onChange, value, ...props }: any) => {
+    // Filter out DatePicker-specific props that shouldn't be passed to DOM
+    const {
+      showTimeSelect,
+      timeFormat,
+      timeIntervals,
+      dateFormat,
+      placeholderText,
+      isClearable,
+      shouldCloseOnSelect,
+      closeOnScroll,
+      preventOpenOnFocus,
+      ...domProps
+    } = props;
+    
+    return (
+      <input 
+        data-testid="datepicker" 
+        className={className}
+        onChange={(e) => onChange && onChange(e.target.value ? new Date(e.target.value) : null)}
+        value={value ? value.toISOString().split('T')[0] : ''}
+        type="date"
+        placeholder={placeholderText}
+        {...domProps}
+      />
+    );
+  },
 }));
 
 // i18nをモック
@@ -71,7 +95,7 @@ describe('Dark Mode Support', () => {
       title: 'Test Todo',
       description: 'Test Description',
       completed: false,
-      priority: 1,
+      priority: 'medium',
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
       order: 0,
@@ -147,7 +171,7 @@ describe('Dark Mode Support', () => {
         title: 'Test Todo',
         description: 'Test Description',
         completed: false,
-        priority: 1,
+        priority: 'medium',
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-01-01T00:00:00.000Z',
         order: 0,
