@@ -106,7 +106,7 @@ describe('ScheduleModal', () => {
           title: 'Test Schedule',
           type: 'daily',
           isActive: true,
-          priority: 0,
+          priority: 'low',
           time: '09:00',
           excludeWeekends: false,
         })
@@ -120,7 +120,7 @@ describe('ScheduleModal', () => {
       title: 'Existing Schedule',
       type: 'weekly',
       startDate: '2024-01-01',
-      priority: 1,
+      priority: 'medium',
       isActive: true,
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',

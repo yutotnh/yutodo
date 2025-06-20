@@ -122,7 +122,7 @@ describe('TodoItem', () => {
     title: 'Test Todo',
     description: 'Test Description',
     completed: false,
-    priority: 1,
+    priority: 'medium',
     createdAt: '2023-01-01T00:00:00.000Z',
     updatedAt: '2023-01-01T00:00:00.000Z'
   };
@@ -235,7 +235,7 @@ describe('TodoItem', () => {
     it('should display priority and date in slim mode with small text', () => {
       const todoWithDetails = {
         ...mockTodo,
-        priority: 2,
+        priority: 'high',
         scheduledFor: '2023-12-25T10:00:00.000Z',
         description: 'This is a test description'
       };
@@ -263,7 +263,7 @@ describe('TodoItem', () => {
     it('should not show slim mode details when not in slim mode', () => {
       const todoWithDetails = {
         ...mockTodo,
-        priority: 2,
+        priority: 'high',
         scheduledFor: '2023-12-25T10:00:00.000Z',
         description: 'This is a test description'
       };
@@ -303,7 +303,7 @@ describe('TodoItem', () => {
 
   describe('priority handling', () => {
     it('should display high priority correctly', () => {
-      const highPriorityTodo = { ...mockTodo, priority: 2 };
+      const highPriorityTodo = { ...mockTodo, priority: 'high' };
       render(
         <TodoItemWrapper>
           <TodoItem todo={highPriorityTodo} {...mockHandlers} />
@@ -314,7 +314,7 @@ describe('TodoItem', () => {
     });
 
     it('should display low priority correctly', () => {
-      const lowPriorityTodo = { ...mockTodo, priority: 0 };
+      const lowPriorityTodo = { ...mockTodo, priority: 'low' };
       render(
         <TodoItemWrapper>
           <TodoItem todo={lowPriorityTodo} {...mockHandlers} />
@@ -600,7 +600,7 @@ describe('TodoItem', () => {
       await user.type(titleInput, 'Updated Todo');
       await user.clear(descriptionInput);
       await user.type(descriptionInput, 'Updated Description');
-      await user.selectOptions(prioritySelect, '2');
+      await user.selectOptions(prioritySelect, 'high');
 
       const saveButton = screen.getByText('Save');
       await user.click(saveButton);
@@ -609,7 +609,7 @@ describe('TodoItem', () => {
         ...mockTodo,
         title: 'Updated Todo',
         description: 'Updated Description',
-        priority: 2,
+        priority: 'high',
         scheduledFor: undefined
       });
     });

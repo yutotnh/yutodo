@@ -63,7 +63,7 @@ describe('ScheduleView', () => {
       title: 'Daily Standup',
       type: 'daily',
       startDate: '2024-01-01',
-      priority: 1,
+      priority: 'medium',
       isActive: true,
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
@@ -74,7 +74,7 @@ describe('ScheduleView', () => {
       title: 'Weekly Review',
       type: 'weekly',
       startDate: '2024-01-01',
-      priority: 2,
+      priority: 'high',
       isActive: false,
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
@@ -183,7 +183,7 @@ describe('ScheduleView', () => {
     const inactiveSectionHeader = screen.getByText(/Inactive Schedules/);
     fireEvent.click(inactiveSectionHeader);
     
-    expect(screen.getByText('High Priority')).toBeInTheDocument();
+    expect(screen.getByText('High')).toBeInTheDocument();
   });
 
   it('shows disabled styling for inactive schedules', () => {
@@ -216,7 +216,7 @@ describe('ScheduleView', () => {
         title: 'Future Schedule',
         type: 'once',
         startDate: futureDate.toISOString().split('T')[0],
-        priority: 0,
+        priority: 'low',
         isActive: true,
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-01-01T00:00:00.000Z',
@@ -234,7 +234,7 @@ describe('ScheduleView', () => {
         title: 'Past Schedule',
         type: 'once',
         startDate: pastDate.toISOString().split('T')[0],
-        priority: 0,
+        priority: 'low',
         isActive: true,
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-01-01T00:00:00.000Z',
@@ -251,7 +251,7 @@ describe('ScheduleView', () => {
         title: 'Today Schedule',
         type: 'once',
         startDate: today,
-        priority: 0,
+        priority: 'low',
         isActive: true,
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-01-01T00:00:00.000Z',
@@ -273,7 +273,7 @@ describe('ScheduleView', () => {
         type: 'daily',
         startDate: futureStartDate.toISOString().split('T')[0],
         endDate: futureEndDate.toISOString().split('T')[0],
-        priority: 0,
+        priority: 'low',
         isActive: true,
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-01-01T00:00:00.000Z',
@@ -289,7 +289,7 @@ describe('ScheduleView', () => {
         title: 'Schedule without End Date',
         type: 'daily',
         startDate: '2024-12-01',
-        priority: 0,
+        priority: 'low',
         isActive: true,
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-01-01T00:00:00.000Z',
@@ -311,7 +311,7 @@ describe('ScheduleView', () => {
         type: 'daily',
         startDate: futureDate.toISOString().split('T')[0],
         endDate: endDate.toISOString().split('T')[0],
-        priority: 0,
+        priority: 'low',
         isActive: true,
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-01-01T00:00:00.000Z',
@@ -334,7 +334,7 @@ describe('ScheduleView', () => {
         type: 'daily',
         startDate: pastDate.toISOString().split('T')[0],
         endDate: futureEndDate.toISOString().split('T')[0],
-        priority: 0,
+        priority: 'low',
         isActive: true,
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-01-01T00:00:00.000Z',

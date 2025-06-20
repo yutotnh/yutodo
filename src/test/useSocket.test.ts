@@ -52,7 +52,7 @@ describe('useSocket', () => {
     title: 'Test Todo',
     description: 'Test Description',
     completed: false,
-    priority: 1,
+    priority: 'medium',
     createdAt: '2023-01-01T00:00:00.000Z',
     updatedAt: '2023-01-01T00:00:00.000Z'
   };
@@ -323,7 +323,7 @@ describe('useSocket', () => {
         title: 'New Todo',
         description: 'New Description',
         completed: false,
-        priority: 1
+        priority: 'medium'
       };
 
       act(() => {
@@ -367,8 +367,8 @@ describe('useSocket', () => {
       const { result } = renderHook(() => useSocket('http://localhost:3001'));
 
       const importData = [
-        { title: 'Import 1', completed: false, priority: 0 },
-        { title: 'Import 2', completed: true, priority: 1 }
+        { title: 'Import 1', completed: false, priority: 'low' },
+        { title: 'Import 2', completed: true, priority: 'medium' }
       ];
 
       act(() => {
@@ -416,7 +416,7 @@ describe('useSocket', () => {
       const { result } = renderHook(() => useSocket(''));
 
       act(() => {
-        result.current.addTodo({ title: 'Test', completed: false, priority: 0 });
+        result.current.addTodo({ title: 'Test', completed: false, priority: 'low' });
         result.current.updateTodo(mockTodo);
         result.current.deleteTodo('1');
         result.current.toggleTodo('1');
