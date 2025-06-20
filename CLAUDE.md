@@ -208,6 +208,20 @@ server/__tests__/
 
 ## Architecture Patterns
 
+### Command Palette System
+- VSCode-style command palette with `Ctrl+Shift+P` (or `Cmd+Shift+P` on macOS)
+- Centralized command registry with type-safe command definitions (`src/types/commands.ts`)
+- Dynamic command filtering with fuzzy search and scoring algorithm
+- Context-aware command visibility and enablement based on application state
+- Internationalization support for all command titles and descriptions
+
+### Centralized Keyboard Shortcut Management
+- Single source of truth in `src/utils/keyboardShortcuts.ts` for all keyboard shortcuts
+- OS-aware shortcut display with automatic Ctrl/Cmd detection (`src/utils/osDetection.ts`)
+- Dynamic shortcut reference system eliminates inconsistencies between displayed and actual shortcuts
+- Type-safe shortcut definitions with handler name mapping for automatic synchronization
+- Unified shortcut display across command palette, help system, and UI components
+
 ### Real-time State Management
 - `useSocket.ts` manages WebSocket connection and synchronizes todos across all clients
 - Socket.IO events: `todo:add`, `todo:update`, `todo:delete`, `todo:toggle`, `todos:reorder`
@@ -257,8 +271,10 @@ server/__tests__/
 
 ## Key Features
 
+- **VSCode-style command palette**: Quick access to all application commands with Ctrl+Shift+P (Cmd+Shift+P on macOS)
+- **Centralized keyboard shortcut management**: Single source of truth for all shortcuts with automatic synchronization between display and functionality
 - **Real-time sync**: Multiple clients stay synchronized via Socket.IO
-- **Keyboard shortcuts**: Extensive keyboard navigation with OS-aware labels (Ctrl/Cmd), VS Code-style sequences (Ctrl+K, Ctrl+S for help), Microsoft To Do-style Ctrl+D for completion toggle
+- **Comprehensive keyboard navigation**: Extensive shortcuts with OS-aware labels (Ctrl/Cmd), VS Code-style sequences (Ctrl+K, Ctrl+S for help), Microsoft To Do-style Ctrl+D for completion toggle
 - **Filtering**: Filter todos by status, priority, and overdue items
 - **Import/Export**: Native file dialogs for TOML export/import, unified format with standard `[[tasks]]` table syntax
 - **Custom styling**: Support for custom CSS injection

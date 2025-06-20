@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **VSCode-style command palette** - Quick access to all application commands with Ctrl+Shift+P
+- **Centralized keyboard shortcut management** - Single source of truth for all shortcuts with automatic synchronization
 - Complete YuToDo application with Tauri desktop framework
 - React frontend with TypeScript and modern UI components
 - Node.js backend server with Socket.IO real-time communication
@@ -18,6 +20,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Comprehensive configuration system with TOML files
 - Schedule management system with execution engine
 - Multi-selection support with Excel-like interaction
+
+### Enhanced
+- **Command palette integration** - All commands now dynamically reference actual keyboard shortcuts
+- **OS-aware shortcut display** - Command palette and help automatically show Ctrl/Cmd based on platform
+- **Unified shortcut system** - Eliminated inconsistencies between displayed and actual shortcuts
 - Completed tasks collapsible section
 - Header menu system with keyboard navigation (Alt+F/E/V/H shortcuts)
 - Export/import functionality with native file dialogs

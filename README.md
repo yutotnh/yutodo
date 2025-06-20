@@ -20,7 +20,9 @@ A modern, feature-rich todo list application built with Tauri, React, and TypeSc
 - 🌐 **Internationalization** - Full English/Japanese language support with auto-detection
 - 📱 **Slim mode** - Compact view for minimal desktop footprint
 - 🎯 **Auto-hiding header** - Clean interface that appears on mouse hover
-- ⌨️ **Keyboard shortcuts** - Full keyboard navigation support (Ctrl+N, Ctrl+F, etc.)
+- ⌨️ **VSCode-style command palette** - Quick access to all commands with Ctrl+Shift+P (Cmd+Shift+P on macOS)
+- ⌨️ **Centralized keyboard shortcuts** - Unified shortcut system with OS-aware display (Ctrl/Cmd)
+- ⌨️ **Comprehensive keyboard navigation** - Full support for keyboard-only operation
 - 🎨 **Custom CSS injection** - Personalize the appearance with custom styles
 - 🔗 **Interactive links** - Click Markdown links to open in default browser
 - 📋 **Right-click context** - Right-click links to copy URLs to clipboard
