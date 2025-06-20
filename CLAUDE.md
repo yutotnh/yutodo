@@ -425,6 +425,28 @@ To add a new language (e.g., French):
 ### Mandatory Testing Policy
 **IMPORTANT**: Always write or update tests when adding features or making modifications. This is a strict requirement for this codebase.
 
+### CI/CD Validation Requirements
+**CRITICAL**: Before committing any changes, always run the complete CI/CD validation suite to prevent GitHub Actions failures:
+
+```bash
+# Frontend validation (run from root directory)
+npm run lint          # ESLint check - must pass with no errors
+npm run build         # TypeScript compilation and Vite build - must succeed
+npm test -- --run     # All frontend tests - must pass (291 tests)
+
+# Backend validation (run from server directory)  
+cd server
+npm run build         # TypeScript compilation - must succeed
+npm test              # All backend tests - must pass (34 tests)
+```
+
+**Required checks before every commit:**
+1. **Lint Check**: `npm run lint` must pass without errors
+2. **Type Check**: `npm run build` must complete successfully
+3. **Frontend Tests**: All 291 tests must pass
+4. **Backend Tests**: All 34 tests must pass  
+5. **Build Verification**: Vite build must succeed
+
 ### When Adding New Features
 1. **Component Tests**: Create comprehensive tests for new UI components in `src/test/ComponentName.test.tsx`
 2. **Hook Tests**: Create tests for custom hooks in `src/test/useHookName.test.ts`
