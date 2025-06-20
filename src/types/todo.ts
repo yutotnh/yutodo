@@ -1,5 +1,5 @@
 // Priority type definition - supports both legacy numbers and new strings
-export type Priority = 'low' | 'medium' | 'high' | number;
+export type Priority = 'low' | 'medium' | 'high' | number | string;
 
 export interface Todo {
   id: string;

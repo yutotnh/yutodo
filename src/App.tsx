@@ -32,6 +32,7 @@ import { useSocket } from './hooks/useSocket';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { AppSettings, Todo, Schedule } from './types/todo';
 import { configManager } from './utils/configManager';
+import { numberToPriority } from './utils/priorityUtils';
 import logger from './utils/logger';
 import './App.css';
 
@@ -598,7 +599,7 @@ function App() {
                 typeof todo.id === 'string' &&
                 typeof todo.title === 'string' &&
                 typeof todo.completed === 'boolean' &&
-                typeof todo.priority === 'number'
+                (typeof todo.priority === 'number' || typeof todo.priority === 'string')
               ).map((todo: any) => ({
                 ...todo,
                 // TOML形式でのデータマッピング（空文字列をundefinedに変換）
@@ -645,7 +646,7 @@ function App() {
                     typeof todo.id === 'string' &&
                     typeof todo.title === 'string' &&
                     typeof todo.completed === 'boolean' &&
-                    typeof todo.priority === 'number'
+                    (typeof todo.priority === 'number' || typeof todo.priority === 'string')
                   ).map((todo: any) => ({
                     ...todo,
                     // TOML形式でのデータマッピング（空文字列をundefinedに変換）
@@ -708,7 +709,7 @@ function App() {
         tasksToml += `title = "${todo.title.replace(/"/g, '\\"')}"\n`;  // エスケープ処理
         tasksToml += `description = "${(todo.description || "").replace(/"/g, '\\"')}"\n`;
         tasksToml += `completed = ${todo.completed}\n`;
-        tasksToml += `priority = ${todo.priority}\n`;
+        tasksToml += `priority = "${typeof todo.priority === 'number' ? numberToPriority(todo.priority) : todo.priority}"\n`;
         tasksToml += `scheduled_for = "${todo.scheduledFor || ""}"\n`;
         tasksToml += `created_at = "${todo.createdAt}"\n`;
         tasksToml += `updated_at = "${todo.updatedAt}"\n`;
@@ -1073,11 +1074,11 @@ function App() {
       case 'overdue':
         return isOverdue;
       case 'high':
-        return todo.priority === 2;
+        return (typeof todo.priority === 'number' ? numberToPriority(todo.priority) : todo.priority) === 'high';
       case 'medium':
-        return todo.priority === 1;
+        return (typeof todo.priority === 'number' ? numberToPriority(todo.priority) : todo.priority) === 'medium';
       case 'low':
-        return todo.priority === 0;
+        return (typeof todo.priority === 'number' ? numberToPriority(todo.priority) : todo.priority) === 'low';
       default:
         return true;
     }
@@ -1092,9 +1093,9 @@ function App() {
       const now = new Date();
       return todo.scheduledFor && new Date(todo.scheduledFor) < now && !todo.completed;
     }).length,
-    high: todos.filter(todo => todo.priority === 2).length,
-    medium: todos.filter(todo => todo.priority === 1).length,
-    low: todos.filter(todo => todo.priority === 0).length
+    high: todos.filter(todo => (typeof todo.priority === 'number' ? numberToPriority(todo.priority) : todo.priority) === 'high').length,
+    medium: todos.filter(todo => (typeof todo.priority === 'number' ? numberToPriority(todo.priority) : todo.priority) === 'medium').length,
+    low: todos.filter(todo => (typeof todo.priority === 'number' ? numberToPriority(todo.priority) : todo.priority) === 'low').length
   };
 
   // キーボードショートカットハンドラ（filteredTodosを使用）
@@ -1178,8 +1179,13 @@ function App() {
       return a.order - b.order;
     }
 
-    if (a.priority !== b.priority) {
-      return b.priority - a.priority;
+    const aPriorityValue = typeof a.priority === 'number' ? a.priority : 
+                         a.priority === 'high' ? 2 : a.priority === 'medium' ? 1 : 0;
+    const bPriorityValue = typeof b.priority === 'number' ? b.priority : 
+                         b.priority === 'high' ? 2 : b.priority === 'medium' ? 1 : 0;
+    
+    if (aPriorityValue !== bPriorityValue) {
+      return bPriorityValue - aPriorityValue;
     }
 
     if (a.scheduledFor && b.scheduledFor) {

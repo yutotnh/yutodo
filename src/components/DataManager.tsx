@@ -2,6 +2,7 @@ import React, { useRef } from 'react';
 import { Upload, FileText, Database } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Todo } from '../types/todo';
+import { numberToPriority } from '../utils/priorityUtils';
 
 
 interface DataManagerProps {
@@ -107,7 +108,7 @@ export const DataManager: React.FC<DataManagerProps> = ({ todos, onImport }) => 
         tasksToml += `title = "${todo.title.replace(/"/g, '\\"')}"\n`;  // エスケープ処理
         tasksToml += `description = "${(todo.description || "").replace(/"/g, '\\"')}"\n`;
         tasksToml += `completed = ${todo.completed}\n`;
-        tasksToml += `priority = ${todo.priority}\n`;
+        tasksToml += `priority = "${typeof todo.priority === 'number' ? numberToPriority(todo.priority) : todo.priority}"\n`;
         tasksToml += `scheduled_for = "${todo.scheduledFor || ""}"\n`;
         tasksToml += `created_at = "${todo.createdAt}"\n`;
         tasksToml += `updated_at = "${todo.updatedAt}"\n`;
@@ -167,7 +168,7 @@ export const DataManager: React.FC<DataManagerProps> = ({ todos, onImport }) => 
             typeof todo.id === 'string' &&
             typeof todo.title === 'string' &&
             typeof todo.completed === 'boolean' &&
-            typeof todo.priority === 'number'
+            (typeof todo.priority === 'number' || typeof todo.priority === 'string')
           ).map((todo: any) => ({
             ...todo,
             // TOML形式でのデータマッピング（空文字列をundefinedに変換）
