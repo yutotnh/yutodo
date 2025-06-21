@@ -19,7 +19,9 @@ This is a Tauri desktop application for todo list management with a React fronte
 - **Backend**: `server/server.ts` handles WebSocket events and SQLite operations
 - **Types**: Shared interfaces in `src/types/todo.ts` and `src/types/config.ts`
 - **Hooks**: Custom hooks for socket communication (`useSocket.ts`) and keyboard shortcuts (`useKeyboardShortcuts.ts`)
-- **Configuration**: TOML-based config system with `src/utils/configManager.ts`
+- **Configuration**: 
+  - **Client**: TOML-based config system with `src/utils/configManager.ts`
+  - **Server**: Comprehensive server configuration system in `server/src/config/ServerConfigManager.ts`
 - **Internationalization**: `src/i18n/` - Complete i18n system with English/Japanese support  
 - **Menu System**: Custom header-integrated menu bar (`src/components/MenuBar.tsx`) replacing native Tauri menus
 
@@ -45,6 +47,12 @@ npm run start        # Run compiled server from dist/
 npm test             # Run backend tests with Jest
 npm run test:watch   # Run tests in watch mode
 npm run test:parallel # Run tests in parallel (faster)
+
+# Server configuration examples
+YUTODO_SERVER_PORT=8080 npm run dev                    # Custom port
+YUTODO_CONFIG_PATH=/path/to/config.toml npm run dev    # Custom config file
+YUTODO_LOG_LEVEL=debug npm run dev                     # Debug logging
+npm test server-config                                 # Test config system only
 ```
 
 ### Testing Commands
@@ -281,10 +289,62 @@ npm test
 - State flows from server → Socket.IO → useSocket → App.tsx → UI components
 
 ### Configuration System
+
+#### Client-Side Configuration
 - TOML-based configuration with JSON Schema validation (`config.schema.json`)
 - `configManager.ts` handles file operations with localStorage fallback
 - Settings persist both in memory and configuration file
 - Conversion functions between `AppSettings` and `TodoAppConfig` interfaces
+
+#### Server-Side Configuration System
+- **Architecture**: Comprehensive TOML-based server configuration with Zod schema validation
+- **Location**: `server/src/config/ServerConfigManager.ts` and `server/src/types/config.ts`
+- **OS-Standard Paths**: Automatically uses platform-appropriate directories:
+  - **Windows**: `%APPDATA%/YuToDo/server-config.toml`
+  - **macOS**: `~/Library/Application Support/YuToDo/server-config.toml`
+  - **Linux**: `~/.config/YuToDo/server-config.toml`
+
+#### Environment Variable Support
+**Configuration Path Resolution** (priority order):
+```bash
+# 1. Constructor argument (highest priority)
+new ServerConfigManager('/custom/path/config.toml')
+
+# 2. Full config file path
+YUTODO_CONFIG_PATH=/path/to/server-config.toml
+
+# 3. Config directory (filename fixed as server-config.toml)
+YUTODO_CONFIG_DIR=/path/to/config/directory
+
+# 4. OS standard path (default)
+```
+
+**Configuration Overrides**:
+```bash
+YUTODO_SERVER_PORT=8080          # Server port
+YUTODO_SERVER_HOST=0.0.0.0       # Server host
+YUTODO_DB_PATH=/custom/todos.db   # Database file path
+YUTODO_DB_CACHE_SIZE=2000        # SQLite cache size
+YUTODO_LOG_LEVEL=debug           # Logging level
+YUTODO_SCHEDULE_INTERVAL=120     # Schedule check interval (seconds)
+YUTODO_ENABLE_DEBUG=true         # Debug mode
+```
+
+#### Server Configuration Categories
+- **Server Settings**: Port, host, connection limits, timeouts
+- **Database Configuration**: SQLite pragmas (cache_size, journal_mode, synchronous), backup settings
+- **Schedule Engine**: Check intervals, timezone, concurrent execution limits
+- **Logging & Monitoring**: Log levels, output destinations, file rotation
+- **Security & CORS**: Allowed origins, rate limiting, request size limits
+- **Performance**: Memory limits, compression, keep-alive settings
+- **Development**: Debug mode, hot reload, error simulation
+
+#### Configuration Features
+- **Type Safety**: Full TypeScript support with Zod schema validation
+- **Error Handling**: Graceful fallbacks when config files are invalid or missing
+- **Hot Configuration**: Live config updates without server restart
+- **Import/Export**: TOML format configuration export and import
+- **Testing**: 24 comprehensive tests covering all functionality
 
 ### Theme and UI State
 - Dark/light/auto theme detection with system preference monitoring
@@ -833,3 +893,84 @@ Automated dependency updates via `.github/dependabot.yml`:
 - **Dependency Health**: Automated updates with compatibility testing
 
 This automation ensures consistent code quality, security compliance, and reliable releases without manual intervention.
+
+## Server Configuration Examples
+
+### Development Environment
+```bash
+# Local development with debug logging
+cd server
+YUTODO_LOG_LEVEL=debug \
+YUTODO_ENABLE_DEBUG=true \
+npm run dev
+```
+
+### Production Environment
+```bash
+# Production deployment with custom config
+YUTODO_CONFIG_PATH=/etc/yutodo/production.toml \
+YUTODO_SERVER_PORT=80 \
+YUTODO_LOG_LEVEL=warn \
+npm start
+```
+
+### Docker Deployment
+```bash
+# Docker container with volume-mounted config
+docker run -d \
+  -e YUTODO_CONFIG_PATH=/config/server-config.toml \
+  -e YUTODO_SERVER_PORT=3001 \
+  -v /host/config:/config \
+  -p 3001:3001 \
+  yutodo-server
+```
+
+### Testing Environment
+```bash
+# Isolated test environment
+YUTODO_DB_PATH=/tmp/test-todos.db \
+YUTODO_SERVER_PORT=9999 \
+YUTODO_CONFIG_DIR=/tmp/test-config \
+npm test
+```
+
+### Example Server Configuration File
+```toml
+# /etc/yutodo/production.toml
+
+[server]
+port = 3001
+host = "0.0.0.0"
+max_connections = 1000
+request_timeout = 30000
+
+[database]
+location = "/var/lib/yutodo/todos.db"
+cache_size = 5000
+journal_mode = "WAL"
+backup_enabled = true
+backup_interval = 6  # hours
+
+[schedules]
+check_interval = 30  # seconds
+timezone = "UTC"
+max_concurrent_executions = 10
+
+[logging]
+level = "info"
+output = "both"
+file_path = "/var/log/yutodo/server.log"
+max_file_size = 50  # MB
+max_files = 10
+
+[security]
+cors_origins = ["https://yutodo.example.com"]
+enable_rate_limiting = true
+rate_limit_max_requests = 1000
+max_request_size = "5mb"
+
+[performance]
+memory_limit = 1024  # MB
+enable_compression = true
+enable_keep_alive = true
+```

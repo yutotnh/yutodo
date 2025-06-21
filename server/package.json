@@ -15,6 +15,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@iarna/toml": "^2.2.5",
     "@types/express": "^5.0.3",
     "@types/node": "^24.0.1",
     "express": "^5.1.0",
@@ -22,7 +23,8 @@
     "sqlite3": "^5.1.7",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3",
-    "uuid": "^11.1.0"
+    "uuid": "^11.1.0",
+    "zod": "^3.25.67"
   },
   "devDependencies": {
     "@types/jest": "^29.5.13",
@@ -34,10 +36,14 @@
   "jest": {
     "preset": "ts-jest",
     "testEnvironment": "node",
-    "testMatch": ["**/__tests__/**/*.test.ts"],
+    "testMatch": [
+      "**/__tests__/**/*.test.ts"
+    ],
     "testTimeout": 20000,
     "maxWorkers": 1,
-    "setupFilesAfterEnv": ["<rootDir>/__tests__/setup.js"],
+    "setupFilesAfterEnv": [
+      "<rootDir>/__tests__/setup.js"
+    ],
     "collectCoverageFrom": [
       "**/*.ts",
       "!**/*.d.ts",

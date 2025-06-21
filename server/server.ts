@@ -6,19 +6,45 @@ import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
 import { homedir } from 'os';
 import { existsSync, mkdirSync } from 'fs';
+import { serverConfigManager } from './src/config/ServerConfigManager';
+import { ServerConfig } from './src/types/config';
 
-const app = express();
-const server = createServer(app);
-const io = new SocketIOServer(server, {
-  cors: {
-    origin: "*",
-    methods: ["GET", "POST"]
-  }
-});
+// Initialize configuration (will be properly set up after config loading)
+let config: ServerConfig;
+let app: express.Application;
+let server: any;
+let io: SocketIOServer;
+let db: sqlite3.Database;
+let scheduleExecutor: ScheduleExecutor;
 
-app.use(express.json());
+// Function to initialize server with configuration
+async function initializeServer() {
+  // Initialize configuration system
+  await serverConfigManager.initialize();
+  config = serverConfigManager.getConfig();
+  
+  console.log('⚙️ Server configuration loaded:');
+  console.log(`  Port: ${config.server.port}`);
+  console.log(`  Host: ${config.server.host}`);
+  console.log(`  CORS Origins: ${config.security.cors_origins.join(', ')}`);
+  console.log(`  Database: ${config.database.location}`);
+  console.log(`  Schedule Interval: ${config.schedules.check_interval}s`);
+  
+  app = express();
+  server = createServer(app);
+  io = new SocketIOServer(server, {
+    cors: {
+      origin: config.security.cors_origins,
+      methods: config.security.cors_methods
+    }
+  });
+  
+  return { app, server, io };
+}
 
-// OS別のデータディレクトリを取得
+// app.use moved to startServer function
+
+// OS別のデータディレクトリを取得（設定システムと共通化）
 function getDataDir(): string {
   const home = homedir();
   
@@ -32,44 +58,53 @@ function getDataDir(): string {
   }
 }
 
-// データディレクトリとDBパスを設定
-const dataDir = getDataDir();
-
-// 🧪 TEST ENVIRONMENT: Use separate database for testing
-function getDbPath(): string {
+// データベースパスを取得（設定に基づく + テスト環境対応）
+function getDatabasePath(): string {
+  // 🧪 TEST ENVIRONMENT: Use in-memory database for testing
   const isTest = process.env.NODE_ENV === 'test' || process.env.YUTODO_TEST === 'true';
   
   if (isTest) {
-    // Use in-memory database for tests to ensure complete isolation
     console.log('🧪 TEST MODE: Using in-memory database for complete isolation');
     return ':memory:';
   }
   
-  // Production/development database
-  return path.join(dataDir, 'todos.db');
+  // Production/development: Use configuration-based path
+  const dbLocation = config.database.location;
+  
+  if (dbLocation === 'auto') {
+    const dataDir = getDataDir();
+    return path.join(dataDir, 'todos.db');
+  } else {
+    return path.resolve(dbLocation);
+  }
 }
 
-const dbPath = getDbPath();
-
-// ディレクトリが存在しない場合は作成
-if (!existsSync(dataDir)) {
-  console.log(`📁 Creating data directory: ${dataDir}`);
-  mkdirSync(dataDir, { recursive: true });
+// データディレクトリを初期化
+function initializeDataDirectory(): string {
+  const dbPath = getDatabasePath();
+  const dataDir = path.dirname(dbPath);
+  
+  // ディレクトリが存在しない場合は作成
+  if (!existsSync(dataDir)) {
+    console.log(`📁 Creating data directory: ${dataDir}`);
+    mkdirSync(dataDir, { recursive: true });
+  }
+  
+  console.log(`💾 Database location: ${dbPath}`);
+  return dbPath;
 }
-
-console.log(`💾 Database location: ${dbPath}`);
 
 // 旧データベースからのマイグレーション処理
-function migrateFromOldDatabase(): void {
+function migrateFromOldDatabase(newDbPath: string): void {
   const oldDbPath = path.join(__dirname, 'todos.db');
   
-  if (existsSync(oldDbPath) && !existsSync(dbPath)) {
+  if (existsSync(oldDbPath) && !existsSync(newDbPath)) {
     console.log(`🔄 Migrating data from old database: ${oldDbPath}`);
     
     try {
       // 旧DBからデータを読み込み
       const oldDb = new sqlite3.Database(oldDbPath);
-      const newDb = new sqlite3.Database(dbPath);
+      const newDb = new sqlite3.Database(newDbPath);
       
       // 新DBのテーブルを作成
       newDb.serialize(() => {
@@ -159,12 +194,15 @@ function migrateFromOldDatabase(): void {
 }
 
 // マイグレーション実行
-migrateFromOldDatabase();
+// Migration moved to initializeDatabaseWithConfig function
 
 // SQLite database setup
-const db = new sqlite3.Database(dbPath);
+// Database will be initialized in startServer function
+// const db = new sqlite3.Database(dbPath); // Moved to initializeDatabaseWithConfig
 
-// Initialize database tables
+// Database table initialization moved to migrateFromOldDatabase function
+// All database setup is now handled in initializeDatabaseWithConfig
+/*
 db.serialize(() => {
   db.run(`
     CREATE TABLE IF NOT EXISTS todos (
@@ -218,6 +256,7 @@ db.serialize(() => {
     )
   `);
 });
+*/
 
 interface Todo {
   id: string;
@@ -271,8 +310,9 @@ interface Schedule {
   nextExecution?: string;
 }
 
-// Socket.IO connection handling
-io.on('connection', (socket) => {
+// Socket.IOハンドラーを設定する関数
+function setupSocketHandlers() {
+  io.on('connection', (socket) => {
   console.log('Client connected:', socket.id);
 
   // Send all todos to newly connected client
@@ -683,11 +723,16 @@ io.on('connection', (socket) => {
     console.log('Client disconnected:', socket.id);
   });
 });
+}
 
-// Schedule execution engine
 class ScheduleExecutor {
   private intervalId: NodeJS.Timeout | null = null;
-  private readonly CHECK_INTERVAL = 60000; // Check every minute
+  private readonly CHECK_INTERVAL: number;
+  
+  constructor() {
+    // スケジュール間隔を設定から取得（ミリ秒に変換）
+    this.CHECK_INTERVAL = config.schedules.check_interval * 1000;
+  }
 
   start() {
     if (this.intervalId) {
@@ -1197,81 +1242,152 @@ class ScheduleExecutor {
   }
 }
 
-// 🧪 TEST ENVIRONMENT: Add data clearing endpoint for E2E tests
-const isTestEnv = process.env.NODE_ENV === 'test' || process.env.YUTODO_TEST === 'true';
+// ScheduleExecutorはメイン初期化関数内で作成される
+// (設定が読み込まれた後に作成する必要がある)
 
-if (isTestEnv) {
-  console.log('🧪 ADDING TEST ENDPOINTS for database isolation');
+// メイン初期化関数
+async function startServer() {
+  try {
+    // 設定システムを初期化
+    await initializeServer();
+    
+    // データベースパスを初期化
+    const dbPath = initializeDataDirectory();
+    
+    // データベースを設定で初期化
+    initializeDatabaseWithConfig(dbPath);
+    
+    // スケジュール実行エンジンを作成
+    scheduleExecutor = new ScheduleExecutor();
+    
+    // ミドルウェアを設定
+    app.use(express.json({ limit: config.security.max_request_size }));
+    
+    // 既存のAPIエンドポイントを設定（ここに既存のio.onハンドラーを移動）
+    setupSocketHandlers();
+    
+    // 🧪 TEST ENVIRONMENT: Add data clearing endpoint for E2E tests
+    const isTestEnv = process.env.NODE_ENV === 'test' || process.env.YUTODO_TEST === 'true';
+    
+    if (isTestEnv) {
+      console.log('🧪 ADDING TEST ENDPOINTS for database isolation');
+      
+      // Clear all test data endpoint
+      app.post('/test/clear-data', (req, res) => {
+        console.log('🧼 CLEARING ALL TEST DATA');
+        
+        db.serialize(() => {
+          // Clear all tables
+          db.run('DELETE FROM todos', function(err) {
+            if (err) {
+              console.error('❌ Failed to clear todos:', err.message);
+              res.status(500).json({ error: 'Failed to clear todos' });
+              return;
+            }
+            console.log('✅ Todos table cleared');
+          });
+          
+          db.run('DELETE FROM schedules', function(err) {
+            if (err) {
+              console.error('❌ Failed to clear schedules:', err.message);
+              res.status(500).json({ error: 'Failed to clear schedules' });
+              return;
+            }
+            console.log('✅ Schedules table cleared');
+          });
+          
+          // Reset SQLite sequence counters
+          db.run('DELETE FROM sqlite_sequence WHERE name IN ("todos", "schedules")', function(err) {
+            if (err) {
+              console.log('⚠️ Note: Could not reset sequence counters (this is normal for in-memory DB)');
+            }
+            console.log('🎯 TEST DATA CLEARING COMPLETED');
+            res.json({ success: true, message: 'All test data cleared' });
+          });
+        });
+      });
+      
+      // Get test data stats endpoint
+      app.get('/test/data-stats', (req, res) => {
+        db.get('SELECT COUNT(*) as todoCount FROM todos', (err, todoRow: any) => {
+          if (err) {
+            res.status(500).json({ error: 'Failed to get todo count' });
+            return;
+          }
+          
+          db.get('SELECT COUNT(*) as scheduleCount FROM schedules', (err, scheduleRow: any) => {
+            if (err) {
+              res.status(500).json({ error: 'Failed to get schedule count' });
+              return;
+            }
+            
+            res.json({
+              todos: todoRow.todoCount,
+              schedules: scheduleRow.scheduleCount,
+              dbPath: getDatabasePath(),
+              isTestMode: true
+            });
+          });
+        });
+      });
+    }
+    
+    // サーバーを開始
+    const PORT = config.server.port;
+    const HOST = config.server.host;
+    
+    server.listen(PORT, HOST, () => {
+      console.log(`🚀 Server running on ${HOST}:${PORT}`);
+      console.log(`🔧 Configuration file: ${serverConfigManager.getConfigFilePath()}`);
+      
+      // スケジュール実行エンジンを開始
+      scheduleExecutor.start();
+    });
+    
+  } catch (error) {
+    console.error('❌ Server initialization failed:', error);
+    process.exit(1);
+  }
+}
+
+// データベースを設定で初期化
+function initializeDatabaseWithConfig(dbPath: string): void {
+    // 既存のマイグレーション処理を実行
+  migrateFromOldDatabase(dbPath);
   
-  // Clear all test data endpoint
-  app.post('/test/clear-data', (req, res) => {
-    console.log('🧼 CLEARING ALL TEST DATA');
+  // グローバルデータベース接続を設定に基づいて初期化
+  db = new sqlite3.Database(dbPath, (err) => {
+    if (err) {
+      console.error('❌ Database connection failed:', err);
+      process.exit(1);
+    }
+    
+    console.log('💾 Applying database configuration...');
+    
+    // SQLiteプラグマを設定に基づいて適用
+    const pragmas = [
+      `PRAGMA cache_size = ${config.database.cache_size}`,
+      `PRAGMA journal_mode = ${config.database.journal_mode}`,
+      `PRAGMA synchronous = ${config.database.synchronous}`,
+      `PRAGMA temp_store = ${config.database.temp_store}`
+    ];
     
     db.serialize(() => {
-      // Clear all tables
-      db.run('DELETE FROM todos', function(err) {
-        if (err) {
-          console.error('❌ Failed to clear todos:', err.message);
-          res.status(500).json({ error: 'Failed to clear todos' });
-          return;
-        }
-        console.log('✅ Todos table cleared');
-      });
-      
-      db.run('DELETE FROM schedules', function(err) {
-        if (err) {
-          console.error('❌ Failed to clear schedules:', err.message);
-          res.status(500).json({ error: 'Failed to clear schedules' });
-          return;
-        }
-        console.log('✅ Schedules table cleared');
-      });
-      
-      // Reset SQLite sequence counters
-      db.run('DELETE FROM sqlite_sequence WHERE name IN ("todos", "schedules")', function(err) {
-        if (err) {
-          console.log('⚠️ Note: Could not reset sequence counters (this is normal for in-memory DB)');
-        }
-        console.log('🎯 TEST DATA CLEARING COMPLETED');
-        res.json({ success: true, message: 'All test data cleared' });
-      });
-    });
-  });
-  
-  // Get test data stats endpoint
-  app.get('/test/data-stats', (req, res) => {
-    db.get('SELECT COUNT(*) as todoCount FROM todos', (err, todoRow: any) => {
-      if (err) {
-        res.status(500).json({ error: 'Failed to get todo count' });
-        return;
-      }
-      
-      db.get('SELECT COUNT(*) as scheduleCount FROM schedules', (err, scheduleRow: any) => {
-        if (err) {
-          res.status(500).json({ error: 'Failed to get schedule count' });
-          return;
-        }
-        
-        res.json({
-          todos: todoRow.todoCount,
-          schedules: scheduleRow.scheduleCount,
-          dbPath: dbPath,
-          isTestMode: true
+      pragmas.forEach(pragma => {
+        db.run(pragma, (err) => {
+          if (err) {
+            console.warn(`⚠️ Failed to apply pragma: ${pragma}`, err);
+          } else {
+            console.log(`✅ Applied: ${pragma}`);
+          }
         });
       });
     });
   });
 }
 
-// Create and start the schedule executor
-const scheduleExecutor = new ScheduleExecutor();
-
-const PORT = process.env.PORT || 3001;
-server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  // Start the schedule execution engine after server starts
-  scheduleExecutor.start();
-});
+// サーバーを開始
+startServer();
 
 // Graceful shutdown
 process.on('SIGINT', () => {
