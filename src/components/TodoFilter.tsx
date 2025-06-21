@@ -45,6 +45,7 @@ export const TodoFilter: React.FC<TodoFilterProps> = ({ currentFilter, onFilterC
               key={filter.key}
               onClick={() => onFilterChange(filter.key)}
               className={`filter-btn ${currentFilter === filter.key ? 'filter-btn--active' : ''}`}
+              data-testid={`filter-${filter.key}`}
             >
               <Icon size={14} />
               <span>{filter.label}</span>

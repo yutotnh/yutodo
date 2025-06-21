@@ -30,13 +30,25 @@ export default defineConfig(async () => ({
     },
   },
   build: {
+    // Increase chunk size warning limit for Tauri apps
+    chunkSizeWarningLimit: 1000,
     rollupOptions: {
       external: [
         '@tauri-apps/plugin-dialog',
         '@tauri-apps/plugin-fs',
         '@tauri-apps/plugin-opener',
         '@tauri-apps/plugin-clipboard-manager'
-      ]
+      ],
+      output: {
+        manualChunks: {
+          // Separate vendor chunks for better caching
+          vendor: ['react', 'react-dom'],
+          dnd: ['@dnd-kit/core', '@dnd-kit/sortable', '@dnd-kit/utilities'],
+          i18n: ['react-i18next', 'i18next', 'i18next-browser-languagedetector'],
+          markdown: ['react-markdown', 'remark-gfm'],
+          ui: ['lucide-react', 'react-datepicker']
+        }
+      }
     }
   },
   optimizeDeps: {

@@ -34,7 +34,22 @@ function getDataDir(): string {
 
 // データディレクトリとDBパスを設定
 const dataDir = getDataDir();
-const dbPath = path.join(dataDir, 'todos.db');
+
+// 🧪 TEST ENVIRONMENT: Use separate database for testing
+function getDbPath(): string {
+  const isTest = process.env.NODE_ENV === 'test' || process.env.YUTODO_TEST === 'true';
+  
+  if (isTest) {
+    // Use in-memory database for tests to ensure complete isolation
+    console.log('🧪 TEST MODE: Using in-memory database for complete isolation');
+    return ':memory:';
+  }
+  
+  // Production/development database
+  return path.join(dataDir, 'todos.db');
+}
+
+const dbPath = getDbPath();
 
 // ディレクトリが存在しない場合は作成
 if (!existsSync(dataDir)) {
@@ -1180,6 +1195,72 @@ class ScheduleExecutor {
         break;
     }
   }
+}
+
+// 🧪 TEST ENVIRONMENT: Add data clearing endpoint for E2E tests
+const isTestEnv = process.env.NODE_ENV === 'test' || process.env.YUTODO_TEST === 'true';
+
+if (isTestEnv) {
+  console.log('🧪 ADDING TEST ENDPOINTS for database isolation');
+  
+  // Clear all test data endpoint
+  app.post('/test/clear-data', (req, res) => {
+    console.log('🧼 CLEARING ALL TEST DATA');
+    
+    db.serialize(() => {
+      // Clear all tables
+      db.run('DELETE FROM todos', function(err) {
+        if (err) {
+          console.error('❌ Failed to clear todos:', err.message);
+          res.status(500).json({ error: 'Failed to clear todos' });
+          return;
+        }
+        console.log('✅ Todos table cleared');
+      });
+      
+      db.run('DELETE FROM schedules', function(err) {
+        if (err) {
+          console.error('❌ Failed to clear schedules:', err.message);
+          res.status(500).json({ error: 'Failed to clear schedules' });
+          return;
+        }
+        console.log('✅ Schedules table cleared');
+      });
+      
+      // Reset SQLite sequence counters
+      db.run('DELETE FROM sqlite_sequence WHERE name IN ("todos", "schedules")', function(err) {
+        if (err) {
+          console.log('⚠️ Note: Could not reset sequence counters (this is normal for in-memory DB)');
+        }
+        console.log('🎯 TEST DATA CLEARING COMPLETED');
+        res.json({ success: true, message: 'All test data cleared' });
+      });
+    });
+  });
+  
+  // Get test data stats endpoint
+  app.get('/test/data-stats', (req, res) => {
+    db.get('SELECT COUNT(*) as todoCount FROM todos', (err, todoRow: any) => {
+      if (err) {
+        res.status(500).json({ error: 'Failed to get todo count' });
+        return;
+      }
+      
+      db.get('SELECT COUNT(*) as scheduleCount FROM schedules', (err, scheduleRow: any) => {
+        if (err) {
+          res.status(500).json({ error: 'Failed to get schedule count' });
+          return;
+        }
+        
+        res.json({
+          todos: todoRow.todoCount,
+          schedules: scheduleRow.scheduleCount,
+          dbPath: dbPath,
+          isTestMode: true
+        });
+      });
+    });
+  });
 }
 
 // Create and start the schedule executor

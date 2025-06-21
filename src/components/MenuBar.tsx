@@ -280,8 +280,7 @@ export const MenuBar: React.FC<MenuBarProps> = ({
   const handleMenuClick = (menuKey: string, event?: React.MouseEvent) => {
     if (event) {
       event.preventDefault();
-      // Don't stop propagation to allow window dragging through menu bar
-      // event.stopPropagation();
+      event.stopPropagation(); // Stop propagation to prevent window dragging interference
     }
     const newActiveMenu = activeMenu === menuKey ? null : menuKey;
     setActiveMenu(newActiveMenu);
@@ -401,6 +400,7 @@ export const MenuBar: React.FC<MenuBarProps> = ({
                     return (
                       <button
                         key={item.id}
+                        data-testid={`menu-item-${item.id}`}
                         className="menu-dropdown-item side-menu-subitem"
                         onClick={(e) => handleHamburgerItemClick(item.action, e)}
                       >
@@ -419,6 +419,7 @@ export const MenuBar: React.FC<MenuBarProps> = ({
         Object.entries(menus).map(([key, menu]) => (
           <div key={key} className="menu-item">
             <button
+              data-testid={`menu-${key}`}
               className={`menu-button ${activeMenu === key ? 'menu-button--active' : ''}`}
               onClick={(e) => handleMenuClick(key, e)}
               onMouseEnter={() => activeMenu && setActiveMenu(key)}
@@ -429,7 +430,7 @@ export const MenuBar: React.FC<MenuBarProps> = ({
             </button>
             
             {activeMenu === key && (
-              <div className="menu-dropdown">
+              <div data-testid={`menu-${key}-dropdown`} className="menu-dropdown">
                 {menu.items.map((item, index) => {
                   if (item.separator) {
                     return <div key={`${item.id}-${index}`} className="menu-separator" />;
@@ -443,6 +444,7 @@ export const MenuBar: React.FC<MenuBarProps> = ({
                   return (
                     <button
                       key={item.id}
+                      data-testid={`menu-item-${item.id}`}
                       className={`menu-dropdown-item ${isSelected ? 'menu-dropdown-item--selected' : ''}`}
                       onClick={(e) => handleMenuItemClick(item.action, e)}
                       onMouseEnter={() => {

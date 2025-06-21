@@ -69,7 +69,7 @@ export const ShortcutHelp: React.FC<ShortcutHelpProps> = ({ onClose }) => {
   ];
   return (
     <div className="settings-overlay">
-      <div className="settings-panel" ref={shortcutPanelRef}>
+      <div className="settings-panel" ref={shortcutPanelRef} data-testid="shortcut-help">
         <div className="settings-header" onMouseDown={handleHeaderDrag}>
           <h2>
             <Keyboard size={20} />
@@ -85,7 +85,12 @@ export const ShortcutHelp: React.FC<ShortcutHelpProps> = ({ onClose }) => {
             {shortcuts.map((shortcut, index) => (
               <div key={index} className="shortcut-item">
                 <kbd className="shortcut-key">{shortcut.key}</kbd>
-                <span className="shortcut-description">{shortcut.description}</span>
+                <span 
+                  className="shortcut-description"
+                  data-testid={index < displayShortcuts.length ? `shortcut-${displayShortcuts[index].id}` : undefined}
+                >
+                  {shortcut.description}
+                </span>
               </div>
             ))}
           </div>

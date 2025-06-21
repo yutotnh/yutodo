@@ -26,6 +26,7 @@ export const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder={placeholder || t('tasks.search')}
             className="search-input"
+            data-testid="search-input"
           />
           {searchQuery && (
             <button

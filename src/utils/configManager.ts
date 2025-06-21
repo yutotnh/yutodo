@@ -1,4 +1,4 @@
-import * as TOML from '@ltd/j-toml';
+// Dynamic import for consistency with other modules
 import { TodoAppConfig, DEFAULT_CONFIG, configToAppSettings, appSettingsToConfig } from '../types/config';
 import { AppSettings } from '../types/todo';
 
@@ -191,6 +191,7 @@ export class ConfigManager {
 
   async importConfig(tomlContent: string): Promise<TodoAppConfig> {
     try {
+      const TOML = await import('@ltd/j-toml');
       const parsed = TOML.parse(tomlContent);
       const normalizedConfig = this.normalizeParsedConfig(parsed as any);
       const config = this.mergeWithDefaults(normalizedConfig);

@@ -266,13 +266,13 @@ export const Settings: React.FC<SettingsProps> = ({ settings, onSettingsChange, 
 
   return (
     <div className="settings-overlay">
-      <div className="settings-panel" ref={settingsPanelRef}>
+      <div data-testid="settings-modal" className="settings-panel" ref={settingsPanelRef}>
         <div className="settings-header" onMouseDown={handleHeaderDrag}>
           <h2>
             <SettingsIcon size={20} />
             {t('settings.title')}
           </h2>
-          <button onClick={onClose} className="settings-close">
+          <button data-testid="settings-close" onClick={onClose} className="settings-close">
             <X size={20} />
           </button>
         </div>
@@ -285,6 +285,7 @@ export const Settings: React.FC<SettingsProps> = ({ settings, onSettingsChange, 
             </h3>
             <label className="setting-item">
               <input
+                data-testid="always-on-top-toggle"
                 type="checkbox"
                 checked={localSettings.alwaysOnTop}
                 onChange={(e) => handleAlwaysOnTopChange(e.target.checked)}
@@ -296,6 +297,7 @@ export const Settings: React.FC<SettingsProps> = ({ settings, onSettingsChange, 
                 type="checkbox"
                 checked={localSettings.detailedMode}
                 onChange={(e) => handleDetailedModeChange(e.target.checked)}
+                data-testid="detailed-mode-toggle"
               />
               <span>
                 <List size={14} />

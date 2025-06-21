@@ -64,6 +64,7 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({
   if (isSlimMode) {
     return (
       <div 
+        data-testid="connection-status"
         className={`inline-flex items-center justify-center ${className}`}
         title={statusInfo.text}
       >
@@ -78,7 +79,7 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({
   }
 
   return (
-    <div className={`inline-flex items-center gap-2 px-2 py-1 rounded-full ${statusInfo.bgColor} ${className}`}>
+    <div data-testid="connection-status" className={`inline-flex items-center gap-2 px-2 py-1 rounded-full ${statusInfo.bgColor} ${className}`}>
       <span className={statusInfo.color}>
         {statusInfo.icon}
       </span>

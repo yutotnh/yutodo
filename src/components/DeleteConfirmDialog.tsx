@@ -93,6 +93,7 @@ export const DeleteConfirmDialog: React.FC<DeleteConfirmDialogProps> = ({
           <button 
             onClick={handleConfirm} 
             className="btn btn--danger"
+            data-testid="confirm-delete"
             autoFocus
           >
             {t('buttons.delete')}

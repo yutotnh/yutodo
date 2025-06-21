@@ -220,14 +220,44 @@ e2e/
 - **Priority Testing**: Comprehensive testing of priority type migration and conversion utilities
 - **Backward Compatibility**: Tests ensure both legacy numeric and new string priority formats work
 
+### E2E Testing with WebDriver (Tauri Official)
+- **Framework**: WebdriverIO with Tauri WebDriver support
+- **Test Coverage**: App launch, todo operations, keyboard shortcuts, window operations
+- **Platform Support**: Linux (with Xvfb) and Windows (Edge WebDriver)
+- **CI/CD Integration**: GitHub Actions workflow with virtual display for Linux
+- **Test Organization**:
+  - `e2e/tests/app-launch.spec.ts` - Application startup and UI component tests
+  - `e2e/tests/todo-operations.spec.ts` - CRUD operations, filtering, search
+  - `e2e/tests/keyboard-shortcuts.spec.ts` - Keyboard navigation and shortcuts
+  - `e2e/tests/window-operations.spec.ts` - Window controls and menu interactions
+- **Helper Functions**: Reusable test utilities in `e2e/helpers/tauri-helpers.ts`
+- **Requirements**: `tauri-driver`, platform-specific WebDriver (webkit2gtk-driver for Linux, Edge WebDriver for Windows)
+
 ### Running Tests
-- **Frontend**: All 291 tests pass with clean output, no warnings
+- **Frontend**: All 336 tests pass with clean output, no warnings
 - **Backend**: Comprehensive coverage of database operations and WebSocket events  
-- **E2E**: Real GUI interaction tests with Playwright for Tauri app validation
+- **E2E**: WebDriver-based GUI tests for Tauri app with 4 test suites (30+ test cases)
 - **CI/CD Ready**: Tests designed for automated testing environments with Xvfb support
 - **Fast Execution**: Optimized test performance with proper mocking and cleanup
 - **100% Pass Rate**: Complete test coverage achieved with comprehensive component testing
 - **Warning-Free**: All React DatePicker DOM prop warnings and act() issues resolved
+
+### E2E Testing Setup
+```bash
+# Install tauri-driver
+cargo install tauri-driver --locked
+
+# Linux: Install WebDriver
+sudo apt install webkit2gtk-driver
+
+# Windows: Download Edge WebDriver matching your Edge version
+# https://developer.microsoft.com/microsoft-edge/tools/webdriver/
+
+# Run E2E tests
+cd e2e
+npm install
+npm test
+```
 
 ## Architecture Patterns
 

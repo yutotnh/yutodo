@@ -58,9 +58,10 @@ export const AddTodoForm = forwardRef<AddTodoFormRef, AddTodoFormProps>(({ onAdd
   };
 
   return (
-    <form onSubmit={handleSubmit} className="add-todo-form" onKeyDown={handleKeyDown}>
+    <form data-testid="add-todo-form" onSubmit={handleSubmit} className="add-todo-form" onKeyDown={handleKeyDown}>
       <div className="add-todo-input-group">
         <input
+          data-testid="add-todo-title"
           ref={inputRef}
           type="text"
           value={title}
@@ -69,14 +70,23 @@ export const AddTodoForm = forwardRef<AddTodoFormRef, AddTodoFormProps>(({ onAdd
           className="add-todo-input"
           onFocus={() => !slimMode && setIsExpanded(true)}
         />
-        <button type="submit" className="add-todo-btn" disabled={!title.trim()}>
+        <button 
+          data-testid="add-todo-button" 
+          type="submit" 
+          className="add-todo-btn" 
+          disabled={!title.trim()}
+          title={t('tasks.addTask')}
+          aria-label={t('tasks.addTask')}
+        >
           <Plus size={20} />
+          <span className="sr-only">{t('tasks.addTask')}</span>
         </button>
       </div>
 
       {isExpanded && !slimMode && (
         <div className="add-todo-expanded">
           <textarea
+            data-testid="add-todo-description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Description (supports Markdown)..."

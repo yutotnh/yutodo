@@ -384,6 +384,8 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onUpdate, on
 
   return (
     <div 
+      data-testid="todo-item"
+      data-todo-id={todo.id}
       ref={setNodeRef}
       style={style}
       className={`todo-item ${todo.completed ? 'todo-item--completed' : ''} ${isOverdue ? 'todo-item--overdue' : ''} ${isSelected ? 'todo-item--selected' : ''}`}
@@ -394,6 +396,7 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onUpdate, on
     >
       <div className="todo-item__check">
         <button
+          data-testid="todo-checkbox"
           onClick={() => onToggle(todo.id)}
           className={`check-btn ${todo.completed ? 'check-btn--checked' : ''}`}
         >
@@ -404,6 +407,7 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onUpdate, on
       <div className="todo-item__content">
         {isInlineEditing ? (
           <input
+            data-testid="todo-edit-input"
             ref={editInputRef}
             type="text"
             value={editTitle}
@@ -415,6 +419,7 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onUpdate, on
           />
         ) : (
           <div 
+            data-testid="todo-title"
             className="todo-item__title" 
             onDoubleClick={handleTitleDoubleClick}
             style={{ cursor: slimMode ? 'pointer' : 'default' }}
@@ -476,7 +481,7 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onUpdate, on
         {slimMode ? (
           <div className="todo-item__slim-meta">
             {/* 優先度表示 */}
-            <span className={getPriorityClass(todo.priority)} style={{ fontSize: '10px' }}>
+            <span className={getPriorityClass(todo.priority)} style={{ fontSize: '10px' }} data-testid="todo-priority">
               <AlertCircle size={10} style={{ marginRight: '2px' }} />
               {getPriorityText(todo.priority)}
             </span>
@@ -601,7 +606,7 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onUpdate, on
             )}
             
             <div className="todo-item__meta">
-              <span className={getPriorityClass(todo.priority)}>
+              <span className={getPriorityClass(todo.priority)} data-testid="todo-priority">
                 <AlertCircle size={12} style={{ marginRight: '4px' }} />
                 {getPriorityText(todo.priority)}
               </span>
@@ -632,6 +637,7 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onUpdate, on
           <Edit2 size={16} />
         </button>
         <button
+          data-testid="delete-button"
           onClick={() => onDelete(todo.id)}
           className="action-btn action-btn--delete"
         >

@@ -215,12 +215,13 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       aria-modal="true"
       aria-label={t('commandPalette.title', 'Command Palette')}
     >
-      <div className="command-palette" ref={paletteRef} onKeyDown={handleKeyDown}>
+      <div data-testid="command-palette" className="command-palette" ref={paletteRef} onKeyDown={handleKeyDown}>
         {/* Header with search input */}
         <div className="command-palette__header">
           <div className="command-palette__search">
             <Search className="command-palette__search-icon" size={16} />
             <input
+              data-testid="command-search"
               ref={inputRef}
               type="text"
               value={searchQuery}

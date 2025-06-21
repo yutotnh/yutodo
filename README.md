@@ -512,9 +512,35 @@ The app automatically detects WSLg (Windows Subsystem for Linux GUI) environment
 ### Testing Guidelines
 - **Frontend Tests**: Use Vitest + React Testing Library for component testing
 - **Backend Tests**: Use Jest for API and WebSocket functionality
+- **E2E Tests**: Use WebdriverIO with Tauri WebDriver for GUI testing
 - **Mock Strategy**: Mock external dependencies (Tauri plugins, libraries) properly
 - **Error Testing**: Use console.error suppression for intentional error scenarios
 - **Coverage**: Maintain comprehensive test coverage for all new features
+
+#### E2E Testing Setup
+```bash
+# Initial setup (installs tauri-driver and WebDriver dependencies)
+npm run setup:e2e
+
+# Run E2E tests
+npm run test:e2e          # Headless mode
+npm run test:e2e:headed   # With visible browser window
+npm run test:e2e:ui       # Same as headed mode
+
+# Build app first (required for E2E tests)
+npm run tauri build
+```
+
+**Platform Support:**
+- ✅ **Linux**: webkit2gtk-driver + Xvfb
+- ✅ **Windows**: Edge WebDriver  
+- ❌ **macOS**: Not supported (no WKWebView driver)
+
+**Test Coverage:**
+- App launch and UI component validation
+- Todo CRUD operations, filtering, and search
+- Keyboard shortcuts and command palette
+- Window operations and menu interactions
 
 ## License
 

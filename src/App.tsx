@@ -1171,7 +1171,7 @@ function App() {
           // AddTodoFormのフォーカスを防ぐため、少し遅延してイベントを発火
           setTimeout(() => {
             const editEvent = new CustomEvent('startEdit', { detail: { todoId: selectedId } });
-            window.dispatchEvent(editEvent);
+            document.dispatchEvent(editEvent);
           }, 10);
         }
       }
@@ -1279,8 +1279,8 @@ function App() {
   };
 
   return (
-    <div className={`app ${!settings.detailedMode ? 'app--slim' : ''} ${getThemeClass()}`}>
-      <header className={`app-header ${(settings.detailedMode || showHeader) ? 'app-header--visible' : 'app-header--hidden'}`} onMouseDown={handleHeaderMouseDown}>
+    <div data-testid="app-container" className={`app ${!settings.detailedMode ? 'app--slim' : ''} ${getThemeClass()}`}>
+      <header data-testid="app-header" className={`app-header ${(settings.detailedMode || showHeader) ? 'app-header--visible' : 'app-header--hidden'}`} onMouseDown={handleHeaderMouseDown}>
         <div className="header-left">
           <MenuBar
             settings={settings}
@@ -1310,6 +1310,7 @@ function App() {
         </div>
         <div className="header-right">
           <button
+            data-testid="minimize-button"
             onClick={handleMinimize}
             className="window-control minimize-btn"
             title={t('app.minimize')}
@@ -1317,6 +1318,7 @@ function App() {
             <Minus size={12} />
           </button>
           <button
+            data-testid="close-button"
             onClick={handleClose}
             className="window-control close-btn"
             title={t('app.close')}
@@ -1348,7 +1350,7 @@ function App() {
             {/* 選択カウンター */}
             {selectedTodos.size > 1 && (
               <div className="selection-counter">
-                <span className="selection-counter__text">
+                <span className="selection-counter__text" data-testid="selection-count">
                   {t('tasks.selectedItems', { count: selectedTodos.size })}
                 </span>
                 <button 
@@ -1370,7 +1372,7 @@ function App() {
           onDragEnd={handleDragEnd}
           autoScroll={false} // 自動スクロール無効化でパフォーマンス向上
         >
-          <div className="todo-list">
+          <div data-testid="todo-list" className="todo-list">
             {pendingTodos.length === 0 && completedTodos.length === 0 ? (
               <div className="empty-state">
                 {todos.length === 0 ? (
@@ -1578,6 +1580,7 @@ function App() {
       {/* ミニモード用の固定接続状況インジケーター */}
       {!settings.detailedMode && (
         <div 
+          data-testid="connection-status"
           className="fixed-connection-indicator-container"
           style={{
             position: 'fixed',
