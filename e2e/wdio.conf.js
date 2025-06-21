@@ -21,7 +21,9 @@ export const config = {
     capabilities: [{
         browserName: 'wry',
         'tauri:options': {
-            application: '../src-tauri/target/release/yutodo',
+            application: process.platform === 'win32' 
+                ? '../src-tauri/target/release/yutodo.exe'
+                : '../src-tauri/target/release/yutodo',
         }
     }],
     logLevel: 'info',
@@ -38,19 +40,35 @@ export const config = {
 
 
     onPrepare: async function () {
-        // Kill any existing processes
+        // Kill any existing processes (cross-platform)
         try {
             await new Promise((resolve) => {
-                const killProcesses = spawn('pkill', ['-f', 'tauri-driver'], { stdio: 'ignore' });
+                const isWindows = process.platform === 'win32';
+                let killProcesses;
+                
+                if (isWindows) {
+                    // Windows: Use taskkill command
+                    killProcesses = spawn('taskkill', ['/F', '/IM', 'tauri-driver.exe'], { 
+                        stdio: 'ignore',
+                        shell: true 
+                    });
+                } else {
+                    // Linux/Unix: Use pkill command
+                    killProcesses = spawn('pkill', ['-f', 'tauri-driver'], { stdio: 'ignore' });
+                }
+                
                 killProcesses.on('close', () => resolve());
-                setTimeout(resolve, 1000); // Timeout after 1 second
+                killProcesses.on('error', () => resolve()); // Ignore errors - process might not exist
+                setTimeout(resolve, 2000); // Timeout after 2 seconds
             });
         } catch (e) {
-            // Ignore if no processes to kill
+            console.log('No existing tauri-driver processes found');
         }
 
-        // Check if binary already exists
-        const binaryPath = join(__dirname, '../src-tauri/target/release/yutodo');
+        // Check if binary already exists (cross-platform)
+        const isWindows = process.platform === 'win32';
+        const binaryName = isWindows ? 'yutodo.exe' : 'yutodo';
+        const binaryPath = join(__dirname, '../src-tauri/target/release', binaryName);
         const fs = await import('fs');
         
         if (!fs.existsSync(binaryPath)) {
