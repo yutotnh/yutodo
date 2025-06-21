@@ -6,19 +6,45 @@ import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
 import { homedir } from 'os';
 import { existsSync, mkdirSync } from 'fs';
+import { serverConfigManager } from './src/config/ServerConfigManager';
+import { ServerConfig } from './src/types/config';
 
-const app = express();
-const server = createServer(app);
-const io = new SocketIOServer(server, {
-  cors: {
-    origin: "*",
-    methods: ["GET", "POST"]
-  }
-});
+// Initialize configuration (will be properly set up after config loading)
+let config: ServerConfig;
+let app: express.Application;
+let server: any;
+let io: SocketIOServer;
+let db: sqlite3.Database;
+let scheduleExecutor: ScheduleExecutor;
 
-app.use(express.json());
+// Function to initialize server with configuration
+async function initializeServer() {
+  // Initialize configuration system
+  await serverConfigManager.initialize();
+  config = serverConfigManager.getConfig();
+  
+  console.log('⚙️ Server configuration loaded:');
+  console.log(`  Port: ${config.server.port}`);
+  console.log(`  Host: ${config.server.host}`);
+  console.log(`  CORS Origins: ${config.security.cors_origins.join(', ')}`);
+  console.log(`  Database: ${config.database.location}`);
+  console.log(`  Schedule Interval: ${config.schedules.check_interval}s`);
+  
+  app = express();
+  server = createServer(app);
+  io = new SocketIOServer(server, {
+    cors: {
+      origin: config.security.cors_origins,
+      methods: config.security.cors_methods
+    }
+  });
+  
+  return { app, server, io };
+}
 
-// OS別のデータディレクトリを取得
+// app.use moved to startServer function
+
+// OS別のデータディレクトリを取得（設定システムと共通化）
 function getDataDir(): string {
   const home = homedir();
   
@@ -32,29 +58,44 @@ function getDataDir(): string {
   }
 }
 
-// データディレクトリとDBパスを設定
-const dataDir = getDataDir();
-const dbPath = path.join(dataDir, 'todos.db');
-
-// ディレクトリが存在しない場合は作成
-if (!existsSync(dataDir)) {
-  console.log(`📁 Creating data directory: ${dataDir}`);
-  mkdirSync(dataDir, { recursive: true });
+// データベースパスを取得（設定に基づく）
+function getDatabasePath(): string {
+  const dbLocation = config.database.location;
+  
+  if (dbLocation === 'auto') {
+    const dataDir = getDataDir();
+    return path.join(dataDir, 'todos.db');
+  } else {
+    return path.resolve(dbLocation);
+  }
 }
 
-console.log(`💾 Database location: ${dbPath}`);
+// データディレクトリを初期化
+function initializeDataDirectory(): string {
+  const dbPath = getDatabasePath();
+  const dataDir = path.dirname(dbPath);
+  
+  // ディレクトリが存在しない場合は作成
+  if (!existsSync(dataDir)) {
+    console.log(`📁 Creating data directory: ${dataDir}`);
+    mkdirSync(dataDir, { recursive: true });
+  }
+  
+  console.log(`💾 Database location: ${dbPath}`);
+  return dbPath;
+}
 
 // 旧データベースからのマイグレーション処理
-function migrateFromOldDatabase(): void {
+function migrateFromOldDatabase(newDbPath: string): void {
   const oldDbPath = path.join(__dirname, 'todos.db');
   
-  if (existsSync(oldDbPath) && !existsSync(dbPath)) {
+  if (existsSync(oldDbPath) && !existsSync(newDbPath)) {
     console.log(`🔄 Migrating data from old database: ${oldDbPath}`);
     
     try {
       // 旧DBからデータを読み込み
       const oldDb = new sqlite3.Database(oldDbPath);
-      const newDb = new sqlite3.Database(dbPath);
+      const newDb = new sqlite3.Database(newDbPath);
       
       // 新DBのテーブルを作成
       newDb.serialize(() => {
@@ -144,12 +185,15 @@ function migrateFromOldDatabase(): void {
 }
 
 // マイグレーション実行
-migrateFromOldDatabase();
+// Migration moved to initializeDatabaseWithConfig function
 
 // SQLite database setup
-const db = new sqlite3.Database(dbPath);
+// Database will be initialized in startServer function
+// const db = new sqlite3.Database(dbPath); // Moved to initializeDatabaseWithConfig
 
-// Initialize database tables
+// Database table initialization moved to migrateFromOldDatabase function
+// All database setup is now handled in initializeDatabaseWithConfig
+/*
 db.serialize(() => {
   db.run(`
     CREATE TABLE IF NOT EXISTS todos (
@@ -203,6 +247,7 @@ db.serialize(() => {
     )
   `);
 });
+*/
 
 interface Todo {
   id: string;
@@ -256,8 +301,9 @@ interface Schedule {
   nextExecution?: string;
 }
 
-// Socket.IO connection handling
-io.on('connection', (socket) => {
+// Socket.IOハンドラーを設定する関数
+function setupSocketHandlers() {
+  io.on('connection', (socket) => {
   console.log('Client connected:', socket.id);
 
   // Send all todos to newly connected client
@@ -668,11 +714,16 @@ io.on('connection', (socket) => {
     console.log('Client disconnected:', socket.id);
   });
 });
+}
 
-// Schedule execution engine
 class ScheduleExecutor {
   private intervalId: NodeJS.Timeout | null = null;
-  private readonly CHECK_INTERVAL = 60000; // Check every minute
+  private readonly CHECK_INTERVAL: number;
+  
+  constructor() {
+    // スケジュール間隔を設定から取得（ミリ秒に変換）
+    this.CHECK_INTERVAL = config.schedules.check_interval * 1000;
+  }
 
   start() {
     if (this.intervalId) {
@@ -1182,15 +1233,86 @@ class ScheduleExecutor {
   }
 }
 
-// Create and start the schedule executor
-const scheduleExecutor = new ScheduleExecutor();
+// ScheduleExecutorはメイン初期化関数内で作成される
+// (設定が読み込まれた後に作成する必要がある)
 
-const PORT = process.env.PORT || 3001;
-server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  // Start the schedule execution engine after server starts
-  scheduleExecutor.start();
-});
+// メイン初期化関数
+async function startServer() {
+  try {
+    // 設定システムを初期化
+    await initializeServer();
+    
+    // データベースパスを初期化
+    const dbPath = initializeDataDirectory();
+    
+    // データベースを設定で初期化
+    initializeDatabaseWithConfig(dbPath);
+    
+    // スケジュール実行エンジンを作成
+    scheduleExecutor = new ScheduleExecutor();
+    
+    // ミドルウェアを設定
+    app.use(express.json({ limit: config.security.max_request_size }));
+    
+    // 既存のAPIエンドポイントを設定（ここに既存のio.onハンドラーを移動）
+    setupSocketHandlers();
+    
+    // サーバーを開始
+    const PORT = config.server.port;
+    const HOST = config.server.host;
+    
+    server.listen(PORT, HOST, () => {
+      console.log(`🚀 Server running on ${HOST}:${PORT}`);
+      console.log(`🔧 Configuration file: ${serverConfigManager.getConfigFilePath()}`);
+      
+      // スケジュール実行エンジンを開始
+      scheduleExecutor.start();
+    });
+    
+  } catch (error) {
+    console.error('❌ Server initialization failed:', error);
+    process.exit(1);
+  }
+}
+
+// データベースを設定で初期化
+function initializeDatabaseWithConfig(dbPath: string): void {
+    // 既存のマイグレーション処理を実行
+  migrateFromOldDatabase(dbPath);
+  
+  // グローバルデータベース接続を設定に基づいて初期化
+  db = new sqlite3.Database(dbPath, (err) => {
+    if (err) {
+      console.error('❌ Database connection failed:', err);
+      process.exit(1);
+    }
+    
+    console.log('💾 Applying database configuration...');
+    
+    // SQLiteプラグマを設定に基づいて適用
+    const pragmas = [
+      `PRAGMA cache_size = ${config.database.cache_size}`,
+      `PRAGMA journal_mode = ${config.database.journal_mode}`,
+      `PRAGMA synchronous = ${config.database.synchronous}`,
+      `PRAGMA temp_store = ${config.database.temp_store}`
+    ];
+    
+    db.serialize(() => {
+      pragmas.forEach(pragma => {
+        db.run(pragma, (err) => {
+          if (err) {
+            console.warn(`⚠️ Failed to apply pragma: ${pragma}`, err);
+          } else {
+            console.log(`✅ Applied: ${pragma}`);
+          }
+        });
+      });
+    });
+  });
+}
+
+// サーバーを開始
+startServer();
 
 // Graceful shutdown
 process.on('SIGINT', () => {
