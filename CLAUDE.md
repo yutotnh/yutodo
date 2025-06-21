@@ -61,6 +61,11 @@ npm test                   # Run all backend tests (sequential due to SQLite)
 npm run test:watch         # Watch mode for development
 npm run test:parallel      # Run tests in parallel (faster but may conflict)
 npm test -- --testNamePattern="socket" # Run specific tests
+
+# E2E testing (from root directory)
+npm run test:e2e           # Run all E2E tests headlessly
+npm run test:e2e:ui        # Launch Playwright UI for interactive debugging
+npm run test:e2e:headed    # Run E2E tests with visible browser window
 ```
 
 ## Development Workflow
@@ -159,6 +164,13 @@ Claude Code evaluates each change and makes CHANGELOG.md update decisions at com
 - **Configuration**: Tests run in band (sequential) to prevent database conflicts
 - **Setup**: Test database isolation and cleanup between tests
 
+### E2E Testing (Playwright + Tauri)
+- **Framework**: Playwright for cross-platform GUI testing
+- **Environment**: Real Tauri application with backend server
+- **Test Coverage**: App launch, todo operations, keyboard shortcuts, window operations
+- **CI Support**: GitHub Actions with virtual display (Xvfb) for Linux
+- **Artifacts**: Screenshots, videos, and HTML reports on test failures
+
 ### Test Files Structure
 ```
 src/test/
@@ -185,6 +197,16 @@ server/__tests__/
 ├── database.test.ts           # Database operations and migration tests
 ├── socket.test.ts             # WebSocket event handling tests
 └── integration.test.ts        # End-to-end API integration tests
+
+e2e/
+├── helpers/
+│   └── tauri-helpers.ts       # Tauri app launch/control utilities
+├── tests/
+│   ├── app-launch.spec.ts     # App initialization and UI tests
+│   ├── todo-operations.spec.ts # Todo CRUD operation tests
+│   ├── keyboard-shortcuts.spec.ts # Keyboard shortcut tests
+│   └── window-operations.spec.ts # Window management tests
+└── screenshots/               # Test failure screenshots
 ```
 
 ### Testing Patterns
@@ -201,7 +223,8 @@ server/__tests__/
 ### Running Tests
 - **Frontend**: All 291 tests pass with clean output, no warnings
 - **Backend**: Comprehensive coverage of database operations and WebSocket events  
-- **CI/CD Ready**: Tests designed for automated testing environments
+- **E2E**: Real GUI interaction tests with Playwright for Tauri app validation
+- **CI/CD Ready**: Tests designed for automated testing environments with Xvfb support
 - **Fast Execution**: Optimized test performance with proper mocking and cleanup
 - **100% Pass Rate**: Complete test coverage achieved with comprehensive component testing
 - **Warning-Free**: All React DatePicker DOM prop warnings and act() issues resolved
@@ -710,6 +733,14 @@ The project includes comprehensive CI/CD automation:
   - **Frontend Tests**: Vitest with coverage reporting to Codecov
   - **Backend Tests**: Jest with coverage reporting to Codecov  
   - **Tauri Build Test**: Multi-platform build verification (Windows/macOS/Linux)
+
+#### **e2e-tests.yml** - GUI End-to-End Tests
+- **Triggers**: Push/PR to `main` and `develop` branches
+- **Jobs**:
+  - **E2E Tests**: Playwright tests on Windows/macOS/Linux
+  - **Virtual Display**: Xvfb for headless Linux GUI testing
+  - **Artifacts**: Screenshots and videos on test failures
+  - **Test Report**: Consolidated results across all platforms
 
 #### **release-please.yml** - Automated Releases
 - **Triggers**: Push to `main` branch
