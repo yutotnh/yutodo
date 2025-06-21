@@ -79,7 +79,6 @@ export const AddTodoForm = forwardRef<AddTodoFormRef, AddTodoFormProps>(({ onAdd
           aria-label={t('tasks.addTask')}
         >
           <Plus size={20} />
-          <span className="sr-only">{t('tasks.addTask')}</span>
         </button>
       </div>
 
@@ -123,8 +122,14 @@ export const AddTodoForm = forwardRef<AddTodoFormRef, AddTodoFormProps>(({ onAdd
           </div>
           
           <div className="add-todo-actions">
-            <button type="submit" className="btn btn--primary" disabled={!title.trim()}>
-              {t('tasks.addTask')}
+            <button 
+              type="submit" 
+              className="btn btn--primary" 
+              disabled={!title.trim()}
+              title={t('tasks.addTask')}
+              aria-label={t('tasks.addTask')}
+            >
+              <Plus size={16} />
             </button>
             <button 
               type="button" 

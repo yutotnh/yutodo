@@ -116,8 +116,10 @@ describe('AddTodoForm', () => {
     fireEvent.change(descriptionInput, { target: { value: 'Test description' } });
     fireEvent.change(prioritySelect, { target: { value: 'medium' } });
     
-    const submitButton = screen.getByText('tasks.addTask');
-    fireEvent.click(submitButton);
+    // Find all buttons with aria-label="tasks.addTask" and use the second one (expanded mode)
+    const submitButtons = screen.getAllByRole('button', { name: /tasks\.addTask/ });
+    const expandedSubmitButton = submitButtons[1]; // Second button is the expanded mode button
+    fireEvent.click(expandedSubmitButton);
     
     expect(mockOnAdd).toHaveBeenCalledWith({
       title: 'Test Task',
@@ -139,8 +141,9 @@ describe('AddTodoForm', () => {
     const descriptionInput = screen.getByPlaceholderText('Description (supports Markdown)...');
     fireEvent.change(descriptionInput, { target: { value: 'Test description' } });
     
-    const submitButton = screen.getByText('tasks.addTask');
-    fireEvent.click(submitButton);
+    const submitButtons = screen.getAllByRole('button', { name: /tasks\.addTask/ });
+    const expandedSubmitButton = submitButtons[1]; // Second button is the expanded mode button
+    fireEvent.click(expandedSubmitButton);
     
     await waitFor(() => {
       expect(titleInput).toHaveValue('');
@@ -159,8 +162,9 @@ describe('AddTodoForm', () => {
     // Form should be expanded
     expect(screen.getByPlaceholderText('Description (supports Markdown)...')).toBeInTheDocument();
     
-    const submitButton = screen.getByText('tasks.addTask');
-    fireEvent.click(submitButton);
+    const submitButtons = screen.getAllByRole('button', { name: /tasks\.addTask/ });
+    const expandedSubmitButton = submitButtons[1]; // Second button is the expanded mode button
+    fireEvent.click(expandedSubmitButton);
     
     await waitFor(() => {
       expect(screen.queryByPlaceholderText('Description (supports Markdown)...')).not.toBeInTheDocument();
@@ -177,8 +181,9 @@ describe('AddTodoForm', () => {
     const datePicker = screen.getByTestId('datepicker');
     fireEvent.change(datePicker, { target: { value: '2024-12-25' } });
     
-    const submitButton = screen.getByText('tasks.addTask');
-    fireEvent.click(submitButton);
+    const submitButtons = screen.getAllByRole('button', { name: /tasks\.addTask/ });
+    const expandedSubmitButton = submitButtons[1]; // Second button is the expanded mode button
+    fireEvent.click(expandedSubmitButton);
     
     expect(mockOnAdd).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -215,8 +220,9 @@ describe('AddTodoForm', () => {
     const descriptionInput = screen.getByPlaceholderText('Description (supports Markdown)...');
     fireEvent.change(descriptionInput, { target: { value: '  Test description  ' } });
     
-    const submitButton = screen.getByText('tasks.addTask');
-    fireEvent.click(submitButton);
+    const submitButtons = screen.getAllByRole('button', { name: /tasks\.addTask/ });
+    const expandedSubmitButton = submitButtons[1]; // Second button is the expanded mode button
+    fireEvent.click(expandedSubmitButton);
     
     expect(mockOnAdd).toHaveBeenCalledWith({
       title: 'Test Task',

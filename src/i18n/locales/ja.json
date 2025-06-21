@@ -9,7 +9,7 @@
     "clearSearch": "検索をクリア",
     "noTasks": "タスクがありません。上記から新しいタスクを追加してください。",
     "noMatchingTasks": "検索条件またはフィルターに一致するタスクがありません。",
-    "addTask": "新しいタスクを追加",
+    "addTask": "追加",
     "editTask": "タスクを編集",
     "deleteTask": "タスクを削除",
     "deleteTaskConfirm": "「{{title}}」を削除しますか？",
@@ -45,7 +45,7 @@
   },
   "shortcuts": {
     "title": "キーボードショートカット",
-    "addNewTask": "新しいタスクを追加",
+    "addNewTask": "タスクを追加",
     "commandPalette": "コマンドパレットを開く",
     "openSettings": "設定を開く",
     "search": "検索",

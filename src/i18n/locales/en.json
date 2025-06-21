@@ -9,7 +9,7 @@
     "clearSearch": "Clear search",
     "noTasks": "No tasks found. Add a new task from above.",
     "noMatchingTasks": "No tasks match the search or filter criteria.",
-    "addTask": "Add new task",
+    "addTask": "Add",
     "editTask": "Edit task",
     "deleteTask": "Delete Task",
     "deleteTaskConfirm": "Delete \"{{title}}\"?",
@@ -45,7 +45,7 @@
   },
   "shortcuts": {
     "title": "Keyboard Shortcuts",
-    "addNewTask": "Add new task",
+    "addNewTask": "Add task",
     "commandPalette": "Open command palette",
     "openSettings": "Open settings",
     "search": "Search",
