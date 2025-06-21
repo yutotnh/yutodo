@@ -55,14 +55,51 @@ jobs:
       - name: Install Edge WebDriver (Windows)
         if: matrix.platform == 'windows-latest'
         run: |
-          # Download Edge WebDriver
-          $edgeVersion = (Get-Item "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe").VersionInfo.FileVersion
-          $driverVersion = $edgeVersion.Split('.')[0..2] -join '.'
-          $url = "https://msedgedriver.azureedge.net/$driverVersion/edgedriver_win64.zip"
+          # Get Edge version from registry (more reliable)
+          $edgePath = "${env:ProgramFiles(x86)}\Microsoft\Edge\Application\msedge.exe"
+          if (-Not (Test-Path $edgePath)) {
+            $edgePath = "${env:ProgramFiles}\Microsoft\Edge\Application\msedge.exe"
+          }
           
-          Invoke-WebRequest -Uri $url -OutFile "edgedriver.zip"
-          Expand-Archive -Path "edgedriver.zip" -DestinationPath "."
-          Move-Item -Path "msedgedriver.exe" -Destination "C:\Windows\System32\"
+          if (Test-Path $edgePath) {
+            $edgeVersion = (Get-Item $edgePath).VersionInfo.FileVersion
+            Write-Host "Found Edge version: $edgeVersion"
+            
+            # Try the new Microsoft WebDriver distribution
+            $majorVersion = $edgeVersion.Split('.')[0]
+            $fullVersion = $edgeVersion
+            
+            # Try multiple URL patterns for WebDriver download
+            $urls = @(
+              "https://msedgedriver.azureedge.net/$fullVersion/edgedriver_win64.zip",
+              "https://developer.microsoft.com/en-us/microsoft-edge/tools/webdriver/releases/$majorVersion/edgedriver_win64.zip",
+              "https://github.com/MicrosoftEdge/MSEdgeDriver/releases/latest/download/edgedriver_win64.zip"
+            )
+            
+            $downloaded = $false
+            foreach ($url in $urls) {
+              try {
+                Write-Host "Trying URL: $url"
+                Invoke-WebRequest -Uri $url -OutFile "edgedriver.zip" -ErrorAction Stop
+                $downloaded = $true
+                break
+              } catch {
+                Write-Host "Failed to download from $url : $($_.Exception.Message)"
+              }
+            }
+            
+            if ($downloaded) {
+              Expand-Archive -Path "edgedriver.zip" -DestinationPath "." -Force
+              Move-Item -Path "msedgedriver.exe" -Destination "C:\Windows\System32\" -Force
+              Write-Host "Edge WebDriver installed successfully"
+            } else {
+              Write-Error "Failed to download Edge WebDriver from all URLs"
+              exit 1
+            }
+          } else {
+            Write-Error "Microsoft Edge not found on this system"
+            exit 1
+          }
         shell: pwsh
 
       - name: Install tauri-driver
