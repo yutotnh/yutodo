@@ -172,4 +172,38 @@ describe('DeleteConfirmDialog', () => {
 
     expect(screen.queryByText('1 tasks will be deleted.')).not.toBeInTheDocument();
   });
+
+  describe('window dragging integration', () => {
+    it('should have header element for window dragging', () => {
+      render(
+        <DeleteConfirmDialog
+          isOpen={true}
+          title="Delete Task"
+          message="Are you sure?"
+          onConfirm={mockOnConfirm}
+          onClose={mockOnClose}
+        />
+      );
+
+      const header = document.querySelector('.delete-confirm-header');
+      expect(header).toBeInTheDocument();
+    });
+
+    it('should not interfere with button functionality', () => {
+      render(
+        <DeleteConfirmDialog
+          isOpen={true}
+          title="Delete Task"
+          message="Are you sure?"
+          onConfirm={mockOnConfirm}
+          onClose={mockOnClose}
+        />
+      );
+
+      const deleteButton = screen.getByText('buttons.delete');
+      fireEvent.click(deleteButton);
+
+      expect(mockOnConfirm).toHaveBeenCalled();
+    });
+  });
 });

@@ -163,4 +163,26 @@ describe('ScheduleModal', () => {
     const titleInput = screen.getByLabelText('schedule.title');
     expect(titleInput).toBeRequired();
   });
+
+  describe('window dragging integration', () => {
+    it('should have modal header for window dragging', () => {
+      render(<ScheduleModal {...defaultProps} />);
+
+      const header = document.querySelector('.modal-header');
+      expect(header).toBeInTheDocument();
+    });
+
+    it('should not interfere with form functionality', () => {
+      render(<ScheduleModal {...defaultProps} />);
+
+      const titleInput = screen.getByLabelText('schedule.title');
+      const typeSelect = screen.getByLabelText('schedule.type');
+
+      expect(titleInput).toBeInTheDocument();
+      expect(typeSelect).toBeInTheDocument();
+
+      fireEvent.change(titleInput, { target: { value: 'Test' } });
+      expect(titleInput).toHaveValue('Test');
+    });
+  });
 });
