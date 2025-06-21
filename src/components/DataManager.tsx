@@ -3,6 +3,7 @@ import { Upload, FileText, Database } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Todo } from '../types/todo';
 import { numberToPriority } from '../utils/priorityUtils';
+import { formatTomlKeyValue } from '../utils/tomlUtils';
 
 
 interface DataManagerProps {
@@ -105,8 +106,8 @@ export const DataManager: React.FC<DataManagerProps> = ({ todos, onImport }) => 
       todos.forEach(todo => {
         tasksToml += '\n[[tasks]]\n';
         tasksToml += `id = "${todo.id}"\n`;
-        tasksToml += `title = "${todo.title.replace(/"/g, '\\"')}"\n`;  // エスケープ処理
-        tasksToml += `description = "${(todo.description || "").replace(/"/g, '\\"')}"\n`;
+        tasksToml += formatTomlKeyValue('title', todo.title);
+        tasksToml += formatTomlKeyValue('description', todo.description || '');
         tasksToml += `completed = ${todo.completed}\n`;
         tasksToml += `priority = "${typeof todo.priority === 'number' ? numberToPriority(todo.priority) : todo.priority}"\n`;
         tasksToml += `scheduled_for = "${todo.scheduledFor || ""}"\n`;

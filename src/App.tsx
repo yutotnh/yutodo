@@ -35,6 +35,7 @@ import { AppSettings, Todo, Schedule } from './types/todo';
 import { CommandContext } from './types/commands';
 import { configManager } from './utils/configManager';
 import { numberToPriority } from './utils/priorityUtils';
+import { formatTomlKeyValue } from './utils/tomlUtils';
 import { registerDefaultCommands } from './commands/defaultCommands';
 import logger from './utils/logger';
 import './App.css';
@@ -731,8 +732,8 @@ function App() {
       todos.forEach(todo => {
         tasksToml += '\n[[tasks]]\n';
         tasksToml += `id = "${todo.id}"\n`;
-        tasksToml += `title = "${todo.title.replace(/"/g, '\\"')}"\n`;  // エスケープ処理
-        tasksToml += `description = "${(todo.description || "").replace(/"/g, '\\"')}"\n`;
+        tasksToml += formatTomlKeyValue('title', todo.title);
+        tasksToml += formatTomlKeyValue('description', todo.description || '');
         tasksToml += `completed = ${todo.completed}\n`;
         tasksToml += `priority = "${typeof todo.priority === 'number' ? numberToPriority(todo.priority) : todo.priority}"\n`;
         tasksToml += `scheduled_for = "${todo.scheduledFor || ""}"\n`;
