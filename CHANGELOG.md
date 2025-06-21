@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Comprehensive server configuration system** - Complete server-side configuration management with validation and hot-reloading
+- **100% E2E test coverage** - Achieved full WebdriverIO test suite pass rate with cross-platform compatibility
 - **VSCode-style command palette** - Quick access to all application commands with Ctrl+Shift+P
 - **Centralized keyboard shortcut management** - Single source of truth for all shortcuts with automatic synchronization
 - Complete YuToDo application with Tauri desktop framework
@@ -46,6 +48,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved slim mode to display full datetime instead of date-only in task list for better scheduling visibility
 
 ### Fixed
+- **Development server port conflicts** - Vite now automatically selects available ports (1420, 1421, 1422...) instead of failing when 1420 is in use
+- **E2E test reliability** - Resolved Edge WebDriver version conflicts in GitHub Actions CI/CD pipeline by using tauri-driver exclusively
+- **Cross-platform E2E testing** - Fixed Windows/Linux compatibility issues in WebdriverIO test configuration 
+- **Add todo button UI** - Simplified button to icon-only ("+") design for cleaner interface
 - Header positioning to use static layout instead of overlay in detailed mode
 - CSS class application for proper mode switching
 - Test coverage for header visibility behavior

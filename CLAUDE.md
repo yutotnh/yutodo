@@ -29,7 +29,7 @@ This is a Tauri desktop application for todo list management with a React fronte
 
 ### Frontend (Tauri + React)
 ```bash
-npm run dev          # Start Vite dev server
+npm run dev          # Start Vite dev server (auto-selects available port starting from 1420)
 npm run build        # Build React app and TypeScript
 npm run preview      # Preview built app
 npm run tauri dev    # Start Tauri development mode
@@ -81,6 +81,8 @@ npm run test:e2e:headed    # Run E2E tests with visible browser window
 1. Start the backend server: `cd server && npm run dev`
 2. Start the Tauri app: `npm run tauri dev`
 3. The app connects to the server at `http://localhost:3001` by default
+
+**Note**: The frontend development server automatically selects an available port starting from 1420. If 1420 is in use, it will try 1421, 1422, etc.
 
 ## Release Management & CHANGELOG
 
