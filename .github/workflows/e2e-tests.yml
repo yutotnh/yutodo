@@ -51,57 +51,12 @@ jobs:
             webkit2gtk-driver \
             xvfb
 
-      # Windows specific setup - Use Chocolatey for reliable WebDriver installation
-      - name: Install Edge WebDriver (Windows)
+      # Windows: tauri-driver will handle WebDriver automatically
+      - name: Windows preparation (tauri-driver only)
         if: matrix.platform == 'windows-latest'
         run: |
-          # Method 1: Use Chocolatey for most reliable installation
-          try {
-            Write-Host "Installing Edge WebDriver via Chocolatey..."
-            choco install selenium-edge-driver -y --force
-            Write-Host "Edge WebDriver installed via Chocolatey successfully"
-          } catch {
-            Write-Host "Chocolatey installation failed: $($_.Exception.Message)"
-            
-            # Method 2: Direct download from GitHub releases (most reliable)
-            try {
-              Write-Host "Trying GitHub releases..."
-              $apiUrl = "https://api.github.com/repos/MicrosoftEdge/MSEdgeDriver/releases/latest"
-              $response = Invoke-RestMethod -Uri $apiUrl -UseBasicParsing
-              $downloadUrl = $response.assets | Where-Object { $_.name -like "*win64.zip" } | Select-Object -First 1 -ExpandProperty browser_download_url
-              
-              if ($downloadUrl) {
-                Write-Host "Downloading from GitHub: $downloadUrl"
-                Invoke-WebRequest -Uri $downloadUrl -OutFile "edgedriver.zip" -UseBasicParsing
-                Expand-Archive -Path "edgedriver.zip" -DestinationPath "." -Force
-                
-                # Find the driver executable
-                $driverPath = Get-ChildItem -Path "." -Name "msedgedriver.exe" -Recurse | Select-Object -First 1 -ExpandProperty FullName
-                if ($driverPath) {
-                  Copy-Item -Path $driverPath -Destination "C:\Windows\System32\" -Force
-                  Write-Host "Edge WebDriver installed from GitHub successfully"
-                } else {
-                  throw "msedgedriver.exe not found in downloaded archive"
-                }
-              } else {
-                throw "No suitable download URL found in GitHub releases"
-              }
-            } catch {
-              Write-Host "GitHub download failed: $($_.Exception.Message)"
-              
-              # Method 3: Use npm selenium-webdriver (fallback)
-              try {
-                Write-Host "Trying npm selenium-webdriver..."
-                npm install -g selenium-webdriver
-                npx selenium-webdriver install edge
-                Write-Host "Edge WebDriver installed via npm successfully"
-              } catch {
-                Write-Host "npm installation failed: $($_.Exception.Message)"
-                Write-Warning "All Edge WebDriver installation methods failed. Tests may not work properly."
-                # Don't exit with error - let tests try to run without explicit driver
-              }
-            }
-          }
+          Write-Host "Windows E2E setup - tauri-driver will handle WebView communication"
+          Write-Host "No additional WebDriver installation needed for Tauri applications"
         shell: pwsh
 
       - name: Install tauri-driver
