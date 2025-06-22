@@ -614,20 +614,14 @@ command = "showHelp"
 
   /**
    * Restart a specific watcher to address one-shot behavior
-   * 🔧 Temporarily disabled to prevent infinite loop
+   * 🔧 Re-enabled with proper event filtering to prevent infinite loop
    */
-  // Commented out to prevent infinite loop
-  /*
   private async restartWatcher(type: 'settings' | 'keybindings'): Promise<void> {
-    // 🔧 Method temporarily disabled to prevent infinite loop
-    logger.warn(`🚫 restartWatcher(${type}) temporarily disabled to prevent infinite loop`);
-    return;
-    
-    // Original implementation commented out:
-    /*
     if (!this.paths) {
       throw new Error('Cannot restart watcher: paths not initialized');
     }
+
+    logger.debug(`🔄 Restarting ${type} watcher...`);
 
     try {
       if (type === 'settings') {
@@ -642,12 +636,30 @@ command = "showHelp"
           this.settingsWatcher = null;
         }
 
-        // Restart settings watcher
-        logger.info('👀 Restarting settings file watcher...');
+        // Check if settings file exists
+        const settingsExists = await exists(this.paths.settingsFile);
+        if (!settingsExists) {
+          logger.warn('📄 Settings file does not exist - skipping watcher restart');
+          return;
+        }
+
+        // Restart settings watcher with event filtering
+        logger.debug('👀 Restarting settings file watcher...');
         this.settingsWatcher = await watch(
           'YuToDo/settings.toml',
           (event) => {
-            logger.info('🔥 Settings file changed! Event:', event);
+            // 🔧 書き込みイベントのみを処理（読み込みイベントは無視）
+            if (event.type && typeof event.type === 'object') {
+              const eventType = event.type;
+              // アクセスイベントや読み込み専用イベントは無視
+              if ('access' in eventType || 
+                  ('modify' in eventType && eventType.modify?.kind === 'metadata')) {
+                logger.debug('🚫 Ignoring non-write settings event:', event);
+                return;
+              }
+            }
+            
+            logger.info('🔥 Settings file write detected! Event:', event);
             logger.info('📝 Triggering settings reload...');
             this.handleFileChange('settings');
           },
@@ -656,7 +668,7 @@ command = "showHelp"
             delayMs: 300
           }
         );
-        logger.info('✅ Settings file watcher restarted successfully');
+        logger.debug('✅ Settings file watcher restarted successfully');
 
       } else if (type === 'keybindings') {
         // Stop existing watcher if running
@@ -673,7 +685,7 @@ command = "showHelp"
         // Check if keybindings file exists before restarting watcher
         const keybindingsExists = await exists(this.paths.keybindingsFile);
         if (keybindingsExists) {
-          logger.info('👀 Restarting keybindings file watcher...');
+          logger.debug('👀 Restarting keybindings file watcher...');
           this.keybindingsWatcher = await watch(
             'YuToDo/keybindings.toml',
             (event) => {
@@ -697,16 +709,16 @@ command = "showHelp"
               delayMs: 300
             }
           );
-          logger.info('✅ Keybindings file watcher restarted successfully');
+          logger.debug('✅ Keybindings file watcher restarted successfully');
         } else {
-          logger.info('📄 Keybindings file does not exist - skipping watcher restart');
+          logger.debug('📄 Keybindings file does not exist - skipping watcher restart');
         }
       }
     } catch (error) {
-      logger.error(`❌ Failed to restart watcher:`, error);
+      logger.error(`❌ Failed to restart ${type} watcher:`, error);
       throw error;
     }
-    */
+  }
   
   /**
    * Handle file change events
@@ -734,13 +746,21 @@ command = "showHelp"
           logger.info('✅ Keybindings reload completed');
         }
         
-        // 🔧 Auto-restart機構を一時的に無効化（無限ループ防止）
-        logger.debug('⚠️ Auto-restart disabled to prevent infinite loop');
+        // 🔄 File watcher restart - safe with event filtering
+        logger.info('🔄 Restarting file watcher to ensure continued monitoring...');
+        await this.restartWatcher(type);
+        logger.info('✅ File watcher restarted successfully');
       } catch (error) {
         logger.error(`❌ Error reloading ${type}:`, error);
         
-        // 🔧 エラー時の再起動も一時的に無効化
-        logger.warn('⚠️ Auto-restart on error disabled to prevent infinite loop');
+        // Try to restart watcher even on error
+        try {
+          logger.warn('⚠️ Attempting to restart watcher after error...');
+          await this.restartWatcher(type);
+          logger.info('✅ File watcher restarted after error');
+        } catch (restartError) {
+          logger.error('❌ Failed to restart watcher after error:', restartError);
+        }
       }
       
       this.debounceTimers.delete(type);
@@ -1310,7 +1330,18 @@ command = "showHelp"
     this.keybindingsWatcher = await watch(
       'YuToDo/keybindings.toml',
       (event) => {
-        logger.info('🔥 Keybindings file changed! Event:', event);
+        // 🔧 書き込みイベントのみを処理（読み込みイベントは無視）
+        if (event.type && typeof event.type === 'object') {
+          const eventType = event.type;
+          // アクセスイベントや読み込み専用イベントは無視
+          if ('access' in eventType || 
+              ('modify' in eventType && eventType.modify?.kind === 'metadata')) {
+            logger.debug('🚫 Ignoring non-write keybindings event:', event);
+            return;
+          }
+        }
+        
+        logger.info('🔥 Keybindings file write detected! Event:', event);
         this.handleFileChange('keybindings');
       },
       {
