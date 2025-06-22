@@ -39,6 +39,11 @@ vi.mock('react-i18next', () => ({
       if (key === 'schedule.completed') return 'Completed';
       if (key === 'schedule.activeSchedules') return 'Active Schedules';
       if (key === 'schedule.inactiveSchedules') return 'Inactive Schedules';
+      if (key === 'schedule.deleteInactiveSchedules') return 'Delete Inactive Schedules';
+      if (key === 'schedule.deleteInactiveSchedulesConfirm') return 'Delete all inactive schedules?';
+      if (key === 'schedule.deleteInactiveSchedulesDesc') return 'This will permanently delete all inactive and completed schedules. This action cannot be undone.';
+      if (key === 'buttons.cancel') return 'Cancel';
+      if (key === 'buttons.delete') return 'Delete';
       return key;
     },
   }),
@@ -50,12 +55,15 @@ describe('ScheduleView', () => {
   const mockOnDeleteSchedule = vi.fn();
   const mockOnToggleSchedule = vi.fn();
 
+  const mockOnDeleteInactiveSchedules = vi.fn();
+
   const defaultProps = {
     schedules: [],
     onCreateSchedule: mockOnCreateSchedule,
     onEditSchedule: mockOnEditSchedule,
     onDeleteSchedule: mockOnDeleteSchedule,
     onToggleSchedule: mockOnToggleSchedule,
+    onDeleteInactiveSchedules: mockOnDeleteInactiveSchedules,
   };
 
   const sampleSchedules: Schedule[] = [
@@ -101,6 +109,7 @@ describe('ScheduleView', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockOnDeleteInactiveSchedules.mockClear();
   });
 
   it('renders schedule view with title', () => {
@@ -416,6 +425,85 @@ describe('ScheduleView', () => {
       
       // Inactive schedule should show "Inactive"
       expect(screen.getByText(/Next Execution: Inactive/)).toBeInTheDocument();
+    });
+  });
+
+  describe('Delete Inactive Schedules', () => {
+    it('shows delete button for inactive schedules when handler is provided', () => {
+      render(<ScheduleView {...defaultProps} schedules={sampleSchedules} />);
+      
+      // Expand inactive section
+      const inactiveSectionHeader = screen.getByText(/Inactive Schedules/);
+      fireEvent.click(inactiveSectionHeader);
+      
+      // Delete button should be visible
+      const deleteButton = screen.getByTitle('Delete Inactive Schedules');
+      expect(deleteButton).toBeInTheDocument();
+    });
+
+    it('does not show delete button when handler is not provided', () => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { onDeleteInactiveSchedules, ...propsWithoutDelete } = defaultProps;
+      
+      render(<ScheduleView {...propsWithoutDelete} schedules={sampleSchedules} />);
+      
+      // Delete button should not be visible
+      const deleteButton = screen.queryByTitle('Delete Inactive Schedules');
+      expect(deleteButton).not.toBeInTheDocument();
+    });
+
+    it('shows confirmation dialog when delete button is clicked', () => {
+      render(<ScheduleView {...defaultProps} schedules={sampleSchedules} />);
+      
+      // Expand inactive section
+      const inactiveSectionHeader = screen.getByText(/Inactive Schedules/);
+      fireEvent.click(inactiveSectionHeader);
+      
+      // Click delete button
+      const deleteButton = screen.getByTitle('Delete Inactive Schedules');
+      fireEvent.click(deleteButton);
+      
+      // Confirmation dialog should appear
+      expect(screen.getByText('Delete all inactive schedules?')).toBeInTheDocument();
+      expect(screen.getByText(/This will permanently delete all inactive and completed schedules/)).toBeInTheDocument();
+    });
+
+    it('calls delete handler when confirmed', () => {
+      render(<ScheduleView {...defaultProps} schedules={sampleSchedules} />);
+      
+      // Expand inactive section
+      const inactiveSectionHeader = screen.getByText(/Inactive Schedules/);
+      fireEvent.click(inactiveSectionHeader);
+      
+      // Click delete button
+      const deleteButton = screen.getByTitle('Delete Inactive Schedules');
+      fireEvent.click(deleteButton);
+      
+      // Click confirm button
+      const confirmButton = screen.getByText('Delete');
+      fireEvent.click(confirmButton);
+      
+      // Handler should be called
+      expect(mockOnDeleteInactiveSchedules).toHaveBeenCalled();
+    });
+
+    it('closes dialog when cancelled', () => {
+      render(<ScheduleView {...defaultProps} schedules={sampleSchedules} />);
+      
+      // Expand inactive section
+      const inactiveSectionHeader = screen.getByText(/Inactive Schedules/);
+      fireEvent.click(inactiveSectionHeader);
+      
+      // Click delete button
+      const deleteButton = screen.getByTitle('Delete Inactive Schedules');
+      fireEvent.click(deleteButton);
+      
+      // Click cancel button
+      const cancelButton = screen.getByText('Cancel');
+      fireEvent.click(cancelButton);
+      
+      // Dialog should be closed
+      expect(screen.queryByText('Delete all inactive schedules?')).not.toBeInTheDocument();
     });
   });
 });

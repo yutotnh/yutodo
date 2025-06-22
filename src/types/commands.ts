@@ -16,6 +16,7 @@ export type CommandCategory =
   | 'file'
   | 'view' 
   | 'task'
+  | 'schedule'
   | 'search'
   | 'settings'
   | 'navigation';
@@ -49,6 +50,9 @@ export interface CommandContext {
   onToggleSlimMode: () => void;
   onToggleAlwaysOnTop: () => void;
   onShowHelp: () => void;
+  // Schedule handlers
+  onDeleteInactiveSchedules?: () => void;
+  onCreateSchedule?: () => void;
 }
 
 export interface CommandRegistry {

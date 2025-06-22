@@ -229,7 +229,11 @@
     "pending": "Pending",
     "completed": "Completed",
     "activeSchedules": "Active Schedules",
-    "inactiveSchedules": "Inactive Schedules"
+    "inactiveSchedules": "Inactive Schedules",
+    "deleteInactiveSchedules": "Delete Inactive Schedules",
+    "deleteInactiveSchedulesConfirm": "Delete all inactive schedules?",
+    "deleteInactiveSchedulesDesc": "This will permanently delete all inactive and completed schedules. This action cannot be undone.",
+    "inactiveSchedulesDeleted": "{{count}} inactive schedules deleted"
   },
   "common": {
     "cancel": "Cancel",
@@ -250,6 +254,7 @@
       "file": "File",
       "view": "View",
       "task": "Task",
+      "schedule": "Schedule",
       "search": "Search",
       "settings": "Settings",
       "navigation": "Navigation"
@@ -311,6 +316,16 @@
         "toggleCompletion": {
           "title": "Toggle Task Completion",
           "description": "Mark selected tasks as complete/incomplete"
+        }
+      },
+      "schedule": {
+        "deleteInactiveSchedules": {
+          "title": "Delete Inactive Schedules",
+          "description": "Delete all inactive and completed schedules"
+        },
+        "createSchedule": {
+          "title": "Create Schedule",
+          "description": "Create a new schedule"
         }
       },
       "search": {

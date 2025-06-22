@@ -10,6 +10,7 @@ interface ScheduleViewProps {
   onEditSchedule: (schedule: Schedule) => void;
   onDeleteSchedule: (scheduleId: string) => void;
   onToggleSchedule: (scheduleId: string) => void;
+  onDeleteInactiveSchedules?: () => void;
 }
 
 export const ScheduleView: React.FC<ScheduleViewProps> = ({
@@ -17,10 +18,12 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
   onCreateSchedule,
   onEditSchedule,
   onDeleteSchedule,
-  onToggleSchedule
+  onToggleSchedule,
+  onDeleteInactiveSchedules
 }) => {
   const { t } = useTranslation();
   const [showInactive, setShowInactive] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // スケジュールが実行予定がないかどうかを判定
   const isScheduleInactive = (schedule: Schedule): boolean => {
@@ -48,6 +51,14 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
   // アクティブと非アクティブなスケジュールに分ける
   const activeSchedules = schedules.filter(schedule => !isScheduleInactive(schedule));
   const inactiveSchedules = schedules.filter(schedule => isScheduleInactive(schedule));
+
+  // 非アクティブスケジュール削除ハンドラー
+  const handleDeleteInactiveSchedules = () => {
+    if (onDeleteInactiveSchedules) {
+      onDeleteInactiveSchedules();
+      setShowDeleteConfirm(false);
+    }
+  };
 
 
   const formatScheduleDescription = (schedule: Schedule): string => {
@@ -296,17 +307,36 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
             {/* 非アクティブなスケジュール */}
             {inactiveSchedules.length > 0 && (
               <div className="schedule-section">
-                <button 
-                  className="schedule-section-header"
-                  onClick={() => setShowInactive(!showInactive)}
-                >
-                  <div className="schedule-section-header-content">
-                    {showInactive ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-                    <h2 className="schedule-section-title">
-                      {t('schedule.inactiveSchedules')} ({inactiveSchedules.length})
-                    </h2>
-                  </div>
-                </button>
+                <div className="schedule-section-header-row">
+                  <button 
+                    className="schedule-section-header"
+                    onClick={() => setShowInactive(!showInactive)}
+                  >
+                    <div className="schedule-section-header-content">
+                      {showInactive ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                      <h2 className="schedule-section-title">
+                        {t('schedule.inactiveSchedules')} ({inactiveSchedules.length})
+                      </h2>
+                    </div>
+                  </button>
+                  {onDeleteInactiveSchedules && (
+                    <button
+                      className="btn btn--ghost btn--small btn--danger"
+                      onClick={() => setShowDeleteConfirm(true)}
+                      title={t('schedule.deleteInactiveSchedules')}
+                      style={{
+                        background: 'rgba(239, 68, 68, 0.1)',
+                        color: '#ef4444',
+                        border: '1px solid rgba(239, 68, 68, 0.2)',
+                        borderRadius: '0.5rem',
+                        padding: '0.375rem',
+                        transition: 'all 0.2s ease'
+                      }}
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  )}
+                </div>
                 {showInactive && (
                   <div className="schedule-section-content">
                     {inactiveSchedules.map(renderScheduleItem)}
@@ -317,6 +347,35 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
           </>
         )}
       </div>
+
+      {/* 削除確認ダイアログ */}
+      {showDeleteConfirm && (
+        <div className="modal-overlay" onClick={() => setShowDeleteConfirm(false)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>{t('schedule.deleteInactiveSchedulesConfirm')}</h2>
+            </div>
+            <div className="modal-content">
+              <p>{t('schedule.deleteInactiveSchedulesDesc')}</p>
+              <p><strong>{inactiveSchedules.length}</strong> {t('schedule.inactiveSchedules').toLowerCase()}</p>
+            </div>
+            <div className="modal-actions">
+              <button 
+                className="btn btn--secondary" 
+                onClick={() => setShowDeleteConfirm(false)}
+              >
+                {t('buttons.cancel')}
+              </button>
+              <button 
+                className="btn btn--danger" 
+                onClick={handleDeleteInactiveSchedules}
+              >
+                {t('buttons.delete')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

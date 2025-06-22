@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Delete inactive schedules command** - Bulk delete functionality for completed and inactive schedules with confirmation dialog and command palette integration
 - **Comprehensive server configuration system** - Complete server-side configuration management with validation and hot-reloading
 - **100% E2E test coverage** - Achieved full WebdriverIO test suite pass rate with cross-platform compatibility
 - **VSCode-style command palette** - Quick access to all application commands with Ctrl+Shift+P

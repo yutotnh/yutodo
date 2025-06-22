@@ -3362,14 +3362,21 @@ body {
   background-clip: text;
 }
 
+.schedule-section-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
 .schedule-section-header {
-  width: 100%;
+  flex: 1;
   background: none;
   border: none;
   padding: 0;
   cursor: pointer;
   text-align: left;
-  margin-bottom: 1.5rem;
 }
 
 .schedule-section-header-content {

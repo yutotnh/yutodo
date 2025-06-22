@@ -1012,6 +1012,35 @@ function App() {
     deleteSchedule(scheduleId);
   };
 
+  const handleDeleteInactiveSchedules = () => {
+    // 非アクティブなスケジュールのIDを特定
+    const inactiveScheduleIds = schedules.filter(schedule => {
+      // スケジュールが実行予定がないかどうかを判定（ScheduleViewと同じロジック）
+      if (!schedule.isActive) return true;
+      
+      const today = new Date().toISOString().split('T')[0];
+      
+      // 終了日が過去の場合
+      if (schedule.endDate && schedule.endDate < today) return true;
+      
+      // 実行完了したスケジュール（nextExecutionがnull）は非アクティブ
+      if (!schedule.nextExecution) {
+        // ただし、まだ実行されていない'once'タイプは例外
+        if (schedule.type === 'once' && !schedule.lastExecuted) {
+          // 開始日が過去の場合のみ非アクティブ
+          return schedule.startDate < today;
+        }
+        // その他のケース（実行完了、endDate到達など）は非アクティブ
+        return true;
+      }
+      
+      return false;
+    }).map(schedule => schedule.id);
+
+    // 一括削除
+    inactiveScheduleIds.forEach(id => deleteSchedule(id));
+  };
+
   const handleToggleSchedule = (scheduleId: string) => {
     toggleSchedule(scheduleId);
   };
@@ -1275,7 +1304,10 @@ function App() {
     },
     onToggleSlimMode: () => setSettings(prev => ({ ...prev, detailedMode: !settings.detailedMode })),
     onToggleAlwaysOnTop: () => setSettings(prev => ({ ...prev, alwaysOnTop: !settings.alwaysOnTop })),
-    onShowHelp: () => setShowShortcutHelp(true)
+    onShowHelp: () => setShowShortcutHelp(true),
+    // Schedule handlers
+    onDeleteInactiveSchedules: handleDeleteInactiveSchedules,
+    onCreateSchedule: handleCreateSchedule
   };
 
   return (
@@ -1521,6 +1553,7 @@ function App() {
             onEditSchedule={handleEditSchedule}
             onDeleteSchedule={handleDeleteSchedule}
             onToggleSchedule={handleToggleSchedule}
+            onDeleteInactiveSchedules={handleDeleteInactiveSchedules}
           />
         )}
       </main>

@@ -228,7 +228,11 @@
     "pending": "待機中",
     "completed": "完了",
     "activeSchedules": "アクティブなスケジュール",
-    "inactiveSchedules": "非アクティブなスケジュール"
+    "inactiveSchedules": "非アクティブなスケジュール",
+    "deleteInactiveSchedules": "非アクティブなスケジュールを削除",
+    "deleteInactiveSchedulesConfirm": "全ての非アクティブなスケジュールを削除しますか？",
+    "deleteInactiveSchedulesDesc": "非アクティブおよび完了したスケジュールを完全に削除します。この操作は取り消すことができません。",
+    "inactiveSchedulesDeleted": "{{count}}個の非アクティブなスケジュールを削除しました"
   },
   "common": {
     "cancel": "キャンセル",
@@ -249,6 +253,7 @@
       "file": "ファイル",
       "view": "表示",
       "task": "タスク",
+      "schedule": "スケジュール",
       "search": "検索",
       "settings": "設定",
       "navigation": "ナビゲーション"
@@ -310,6 +315,16 @@
         "toggleCompletion": {
           "title": "タスク完了状態を切り替え",
           "description": "選択したタスクの完了/未完了を切り替え"
+        }
+      },
+      "schedule": {
+        "deleteInactiveSchedules": {
+          "title": "非アクティブなスケジュールを削除",
+          "description": "非アクティブおよび完了したスケジュールを全て削除"
+        },
+        "createSchedule": {
+          "title": "スケジュールを作成",
+          "description": "新しいスケジュールを作成"
         }
       },
       "search": {
