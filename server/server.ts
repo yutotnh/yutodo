@@ -32,10 +32,28 @@ async function initializeServer() {
   
   app = express();
   server = createServer(app);
+  // CORS設定: ワイルドカードまたは具体的なオリジンをサポート
+  const corsOrigin = config.security.cors_origins.includes('*') 
+    ? true  // '*' の場合はすべてのオリジンを許可
+    : config.security.cors_origins.length === 1 && config.security.cors_origins[0] === '*'
+    ? true  // ['*'] の場合もすべてのオリジンを許可
+    : (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+        // 開発環境用: localhost:1400-1500 の範囲を自動的に許可
+        if (origin && /^http:\/\/localhost:(1[4-5]\d{2})$/.test(origin)) {
+          callback(null, true);
+        } else if (!origin || config.security.cors_origins.includes(origin)) {
+          // オリジンなし（同一オリジン）または設定されたオリジンリストに含まれる場合
+          callback(null, true);
+        } else {
+          callback(new Error('Not allowed by CORS'));
+        }
+      };
+  
   io = new SocketIOServer(server, {
     cors: {
-      origin: config.security.cors_origins,
-      methods: config.security.cors_methods
+      origin: corsOrigin,
+      methods: config.security.cors_methods,
+      credentials: true
     }
   });
   

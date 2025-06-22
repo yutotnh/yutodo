@@ -1021,27 +1021,31 @@ enable_keep_alive = true
 
 ### CORS Configuration for Development
 
-When running in development mode with Vite, the frontend may use different ports (1420-1430). To avoid CORS errors, configure the server to allow these origins:
+The server now supports flexible CORS configuration with wildcard support:
 
+#### Option 1: Wildcard (Recommended for Development)
 ```toml
 [security]
-# Development CORS configuration
+# Allow all origins - useful for development
+cors_origins = ["*"]
+```
+
+#### Option 2: Automatic Port Range Detection
+The server automatically allows `localhost:1400-1500` range, which covers all possible Vite development ports.
+
+#### Option 3: Explicit Origins
+```toml
+[security]
+# Explicitly list allowed origins
 cors_origins = [
   "http://localhost:1420",
   "http://localhost:1421", 
   "http://localhost:1422",
-  "http://localhost:1423",
-  "http://localhost:1424",
-  "http://localhost:1425",
-  "http://localhost:1426",
-  "http://localhost:1427",
-  "http://localhost:1428",
-  "http://localhost:1429",
-  "http://localhost:1430"
+  # ... add more as needed
 ]
 ```
 
-**Note**: Using `cors_origins = ["*"]` wildcard may not work properly with Socket.IO. It's better to explicitly list allowed origins.
+**Technical Implementation**: The server uses Socket.IO's dynamic origin validation to support wildcards properly, overcoming the limitation where `["*"]` wouldn't work with Socket.IO's default configuration.
 
 # important-instruction-reminders
 Do what has been asked; nothing more, nothing less.
