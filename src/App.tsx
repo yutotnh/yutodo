@@ -30,7 +30,7 @@ import { ScheduleView } from './components/ScheduleView';
 import { ScheduleModal } from './components/ScheduleModal';
 import { CommandPalette } from './components/CommandPalette';
 import { useSocket } from './hooks/useSocket';
-import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
+import { useKeyboardShortcutsV2 } from './hooks/useKeyboardShortcutsV2';
 import { AppSettings, Todo, Schedule } from './types/todo';
 import { CommandContext } from './types/commands';
 import { configManager } from './utils/configManager';
@@ -1224,11 +1224,41 @@ function App() {
     },
     onOpenCommandPalette: () => {
       setShowCommandPalette(true);
+    },
+    // View switching
+    onShowTasks: () => {
+      setSettings(prev => ({ ...prev, currentView: 'tasks' }));
+    },
+    onShowSchedules: () => {
+      setSettings(prev => ({ ...prev, currentView: 'schedules' }));
+    },
+    // Navigation (TODO: implement these)
+    onNextTask: () => {
+      logger.debug('Next task navigation not yet implemented');
+    },
+    onPreviousTask: () => {
+      logger.debug('Previous task navigation not yet implemented');
+    },
+    onFirstTask: () => {
+      logger.debug('First task navigation not yet implemented');
+    },
+    onLastTask: () => {
+      logger.debug('Last task navigation not yet implemented');
     }
   };
 
   // キーボードショートカットを有効化
-  useKeyboardShortcuts(keyboardHandlers, { isModalOpen: showSettings || showShortcutHelp || deleteConfirm.isOpen || showScheduleModal || showCommandPalette });
+  const { shortcuts, updateContext } = useKeyboardShortcutsV2(keyboardHandlers, { 
+    isModalOpen: showSettings || showShortcutHelp || deleteConfirm.isOpen || showScheduleModal || showCommandPalette 
+  });
+  
+  // Update keyboard context
+  useEffect(() => {
+    updateContext({
+      hasSelectedTasks: selectedTodos.size > 0,
+      isEditing: false // TODO: track editing state from TodoItem
+    });
+  }, [selectedTodos.size, updateContext]);
 
   // 未完了と完了済みタスクを分離
   const pendingTodos = filteredTodos.filter(todo => !todo.completed).sort((a, b) => {
@@ -1573,6 +1603,7 @@ function App() {
       {showShortcutHelp && (
         <ShortcutHelp
           onClose={() => setShowShortcutHelp(false)}
+          shortcuts={shortcuts}
         />
       )}
 

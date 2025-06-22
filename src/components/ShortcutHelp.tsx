@@ -6,9 +6,10 @@ import { useWindowDrag } from '../hooks/useWindowDrag';
 
 interface ShortcutHelpProps {
   onClose: () => void;
+  shortcuts?: Array<{ key: string; description: string; command?: string; when?: string }>;
 }
 
-export const ShortcutHelp: React.FC<ShortcutHelpProps> = ({ onClose }) => {
+export const ShortcutHelp: React.FC<ShortcutHelpProps> = ({ onClose, shortcuts: propShortcuts }) => {
   const { t } = useTranslation();
   const shortcutPanelRef = useRef<HTMLDivElement>(null);
   
@@ -49,24 +50,35 @@ export const ShortcutHelp: React.FC<ShortcutHelpProps> = ({ onClose }) => {
     };
   }, [onClose]);
   
-  // 中央集権的なショートカット定義から動的に取得
-  const displayShortcuts = getAllShortcutsForDisplay();
-  const modifierKey = getModifierKey();
+  // Use provided shortcuts or fall back to default
+  let shortcuts = propShortcuts;
   
-  // 追加の非キーボードショートカット（マウス操作など）
-  const additionalShortcuts = [
-    { key: `${modifierKey} + Click`, description: t('shortcuts.multipleSelection') },
-    { key: 'Shift + Click', description: t('shortcuts.rangeSelection') }
-  ];
+  if (!shortcuts) {
+    // 中央集権的なショートカット定義から動的に取得
+    const displayShortcuts = getAllShortcutsForDisplay();
+    const modifierKey = getModifierKey();
+    
+    // 追加の非キーボードショートカット（マウス操作など）
+    const additionalShortcuts = [
+      { key: `${modifierKey} + Click`, description: t('shortcuts.multipleSelection') },
+      { key: 'Shift + Click', description: t('shortcuts.rangeSelection') }
+    ];
+    
+    // ショートカット情報をマージ
+    shortcuts = [
+      ...displayShortcuts.map(shortcut => ({
+        key: shortcut.displayKey,
+        description: t(`shortcuts.${shortcut.id}`, { defaultValue: shortcut.description })
+      })),
+      ...additionalShortcuts
+    ];
+  }
   
-  // ショートカット情報をマージ
-  const shortcuts = [
-    ...displayShortcuts.map(shortcut => ({
-      key: shortcut.displayKey,
-      description: t(`shortcuts.${shortcut.id}`, { defaultValue: shortcut.description })
-    })),
-    ...additionalShortcuts
-  ];
+  // Filter out shortcuts that should not be shown in help
+  const visibleShortcuts = shortcuts.filter(s => {
+    // Don't show Enter or confirmEdit in the help
+    return s.command !== 'confirmEdit' && s.key !== 'Enter';
+  });
   return (
     <div className="settings-overlay">
       <div className="settings-panel" ref={shortcutPanelRef} data-testid="shortcut-help">
@@ -82,12 +94,12 @@ export const ShortcutHelp: React.FC<ShortcutHelpProps> = ({ onClose }) => {
 
         <div className="settings-content">
           <div className="shortcut-list">
-            {shortcuts.map((shortcut, index) => (
+            {visibleShortcuts.map((shortcut, index) => (
               <div key={index} className="shortcut-item">
                 <kbd className="shortcut-key">{shortcut.key}</kbd>
                 <span 
                   className="shortcut-description"
-                  data-testid={index < displayShortcuts.length ? `shortcut-${displayShortcuts[index].id}` : undefined}
+                  data-testid={shortcut.command ? `shortcut-${shortcut.command}` : undefined}
                 >
                   {shortcut.description}
                 </span>
