@@ -9,6 +9,7 @@ interface UseFileSettingsReturn {
   keybindings: Keybinding[];
   isLoading: boolean;
   error: Error | null;
+  lastChangeSource: 'app' | 'file' | 'migration' | null;
   updateSettings: (updates: Partial<AppSettingsFile>) => Promise<void>;
   addKeybinding: (keybinding: Keybinding) => Promise<void>;
   removeKeybinding: (key: string) => Promise<void>;
@@ -25,6 +26,7 @@ export function useFileSettings(): UseFileSettingsReturn {
   const [keybindings, setKeybindings] = useState<Keybinding[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const [lastChangeSource, setLastChangeSource] = useState<'app' | 'file' | 'migration' | null>(null);
   
   // Initialize settings manager
   useEffect(() => {
@@ -101,11 +103,19 @@ export function useFileSettings(): UseFileSettingsReturn {
           });
           
           if (event.type === 'settings') {
-            logger.info('⚙️ Updating React settings state...');
+            logger.info('⚙️ Updating React settings state...', {
+              source: event.source,
+              hasSettings: !!event.current
+            });
+            setLastChangeSource(event.source);
             setSettings(event.current as AppSettingsFile);
             logger.info('✅ React settings state updated');
           } else if (event.type === 'keybindings') {
-            logger.info('⌨️ Updating React keybindings state...');
+            logger.info('⌨️ Updating React keybindings state...', {
+              source: event.source,
+              hasKeybindings: !!event.current
+            });
+            setLastChangeSource(event.source);
             setKeybindings(event.current as Keybinding[]);
             logger.info('✅ React keybindings state updated');
           }
@@ -138,9 +148,11 @@ export function useFileSettings(): UseFileSettingsReturn {
   // Update settings
   const updateSettings = useCallback(async (updates: Partial<AppSettingsFile>) => {
     try {
+      logger.info('🔄 useFileSettings.updateSettings called with:', updates);
       await settingsManager.updateSettings(updates);
+      logger.info('✅ settingsManager.updateSettings completed successfully');
     } catch (err) {
-      logger.error('Failed to update settings:', err);
+      logger.error('❌ Failed to update settings in useFileSettings:', err);
       throw err;
     }
   }, []);
@@ -205,6 +217,7 @@ export function useFileSettings(): UseFileSettingsReturn {
     keybindings,
     isLoading,
     error,
+    lastChangeSource,
     updateSettings,
     addKeybinding,
     removeKeybinding,

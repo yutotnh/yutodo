@@ -95,7 +95,12 @@ const getTauriDefaultSettings = (): AppSettings => {
 
 function App() {
   const { t, i18n } = useTranslation();
-  const { settings: fileSettings, updateSettings: updateFileSettings, isLoading: isLoadingSettings } = useFileSettings();
+  const { 
+    settings: fileSettings, 
+    updateSettings: updateFileSettings, 
+    isLoading: isLoadingSettings,
+    lastChangeSource 
+  } = useFileSettings();
   const [settings, setSettings] = useState<AppSettings>(getTauriDefaultSettings());
   const [isInitialized, setIsInitialized] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -145,7 +150,16 @@ function App() {
   // ファイルベースの設定を適用
   useEffect(() => {
     if (!isLoadingSettings && fileSettings) {
-      logger.debug('Applying file-based settings:', fileSettings);
+      // 🔧 GUI変更からの設定変更の場合はファイル設定適用をスキップ
+      if (lastChangeSource === 'app') {
+        logger.debug('Skipping file settings application - change originated from app GUI');
+        return;
+      }
+      
+      logger.debug('Applying file-based settings from external source:', {
+        fileSettings,
+        source: lastChangeSource
+      });
       
       // ファイル設定からAppSettings形式に変換
       const appSettings: AppSettings = {
@@ -195,7 +209,7 @@ function App() {
       }
       setIsInitialized(true);
     }
-  }, [fileSettings, isLoadingSettings, i18n]);
+  }, [fileSettings, isLoadingSettings, lastChangeSource, i18n]);
 
   // 言語設定の変更を適用
   useEffect(() => {
@@ -509,11 +523,18 @@ function App() {
   }, [connectionStatus, reconnectAttempts]);
 
   const handleSettingsChange = async (newSettings: AppSettings) => {
+    logger.info('🔧 GUI Settings change requested:', {
+      oldSettings: settings,
+      newSettings,
+      hasUpdateFileSettings: !!updateFileSettings
+    });
+    
     setSettings(newSettings);
     
     // ファイルベース設定が利用可能な場合は更新
     if (updateFileSettings) {
       try {
+        logger.info('📝 Converting AppSettings to file format...');
         // AppSettings形式からファイル設定形式に変換
         const updates = {
           app: {
@@ -534,8 +555,9 @@ function App() {
           }
         };
         
+        logger.info('💾 Calling updateFileSettings with updates:', updates);
         await updateFileSettings(updates);
-        logger.debug('Updated file-based settings');
+        logger.info('✅ File-based settings updated successfully');
       } catch (error) {
         logger.error('Failed to update file-based settings:', error);
         // フォールバック: localStorage

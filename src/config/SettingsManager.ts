@@ -546,7 +546,18 @@ command = "showHelp"
       this.settingsWatcher = await watch(
         'YuToDo/settings.toml',
         (event) => {
-          logger.info('🔥 Settings file changed! Event:', event);
+          // 🔧 書き込みイベントのみを処理（読み込みイベントは無視）
+          if (event.type && typeof event.type === 'object') {
+            const eventType = event.type;
+            // アクセスイベントや読み込み専用イベントは無視
+            if ('access' in eventType || 
+                ('modify' in eventType && eventType.modify?.kind === 'metadata')) {
+              logger.debug('🚫 Ignoring non-write file event:', event);
+              return;
+            }
+          }
+          
+          logger.info('🔥 Settings file write detected! Event:', event);
           logger.info('📝 Triggering settings reload...');
           this.handleFileChange('settings');
         },
@@ -564,7 +575,18 @@ command = "showHelp"
           this.keybindingsWatcher = await watch(
             'YuToDo/keybindings.toml',
             (event) => {
-              logger.info('🔥 Keybindings file changed! Event:', event);
+              // 🔧 書き込みイベントのみを処理（読み込みイベントは無視）
+              if (event.type && typeof event.type === 'object') {
+                const eventType = event.type;
+                // アクセスイベントや読み込み専用イベントは無視
+                if ('access' in eventType || 
+                    ('modify' in eventType && eventType.modify?.kind === 'metadata')) {
+                  logger.debug('🚫 Ignoring non-write keybindings event:', event);
+                  return;
+                }
+              }
+              
+              logger.info('🔥 Keybindings file write detected! Event:', event);
               logger.info('⌨️ Triggering keybindings reload...');
               this.handleFileChange('keybindings');
             },
@@ -592,8 +614,17 @@ command = "showHelp"
 
   /**
    * Restart a specific watcher to address one-shot behavior
+   * 🔧 Temporarily disabled to prevent infinite loop
    */
+  // Commented out to prevent infinite loop
+  /*
   private async restartWatcher(type: 'settings' | 'keybindings'): Promise<void> {
+    // 🔧 Method temporarily disabled to prevent infinite loop
+    logger.warn(`🚫 restartWatcher(${type}) temporarily disabled to prevent infinite loop`);
+    return;
+    
+    // Original implementation commented out:
+    /*
     if (!this.paths) {
       throw new Error('Cannot restart watcher: paths not initialized');
     }
@@ -646,7 +677,18 @@ command = "showHelp"
           this.keybindingsWatcher = await watch(
             'YuToDo/keybindings.toml',
             (event) => {
-              logger.info('🔥 Keybindings file changed! Event:', event);
+              // 🔧 書き込みイベントのみを処理（読み込みイベントは無視）
+              if (event.type && typeof event.type === 'object') {
+                const eventType = event.type;
+                // アクセスイベントや読み込み専用イベントは無視
+                if ('access' in eventType || 
+                    ('modify' in eventType && eventType.modify?.kind === 'metadata')) {
+                  logger.debug('🚫 Ignoring non-write keybindings event:', event);
+                  return;
+                }
+              }
+              
+              logger.info('🔥 Keybindings file write detected! Event:', event);
               logger.info('⌨️ Triggering keybindings reload...');
               this.handleFileChange('keybindings');
             },
@@ -661,10 +703,10 @@ command = "showHelp"
         }
       }
     } catch (error) {
-      logger.error(`❌ Failed to restart ${type} watcher:`, error);
+      logger.error(`❌ Failed to restart watcher:`, error);
       throw error;
     }
-  }
+    */
   
   /**
    * Handle file change events
@@ -692,21 +734,13 @@ command = "showHelp"
           logger.info('✅ Keybindings reload completed');
         }
         
-        // 🔄 Critical: Restart watcher after file processing
-        logger.info('🔄 Restarting file watcher to ensure continued monitoring...');
-        await this.restartWatcher(type);
-        logger.info('✅ File watcher restarted successfully');
+        // 🔧 Auto-restart機構を一時的に無効化（無限ループ防止）
+        logger.debug('⚠️ Auto-restart disabled to prevent infinite loop');
       } catch (error) {
         logger.error(`❌ Error reloading ${type}:`, error);
         
-        // Try to restart watcher even on error
-        try {
-          logger.warn('⚠️ Attempting to restart watcher after error...');
-          await this.restartWatcher(type);
-          logger.info('✅ File watcher restarted after error');
-        } catch (restartError) {
-          logger.error('❌ Failed to restart watcher after error:', restartError);
-        }
+        // 🔧 エラー時の再起動も一時的に無効化
+        logger.warn('⚠️ Auto-restart on error disabled to prevent infinite loop');
       }
       
       this.debounceTimers.delete(type);
@@ -853,21 +887,59 @@ command = "showHelp"
    * Update settings preserving comments
    */
   async updateSettings(updates: Partial<AppSettingsFile>): Promise<void> {
+    logger.info('⚙️ SettingsManager.updateSettings called with:', {
+      updates,
+      currentSettings: this.settings,
+      hasSettingsFile: !!this.paths?.settingsFile
+    });
+    
     const previous = { ...this.settings };
     
     // Merge updates
     this.settings = this.mergeWithDefaults(updates, this.settings);
-    
-    // Update file preserving comments
-    await this.updateSettingsFile();
-    
-    // Notify listeners
-    this.notifyListeners({
-      type: 'settings',
+    logger.info('🔄 Settings merged:', {
       previous,
-      current: this.settings,
-      source: 'app'
+      updated: this.settings
     });
+    
+    // 🔧 Temporarily disable file watcher to prevent feedback loop
+    logger.debug('🛑 Temporarily disabling settings file watcher during update...');
+    const wasWatcherActive = !!this.settingsWatcher;
+    if (this.settingsWatcher) {
+      this.settingsWatcher();
+      this.settingsWatcher = null;
+    }
+    
+    try {
+      // Update file preserving comments
+      logger.info('📝 About to update settings file...');
+      await this.updateSettingsFile();
+      logger.info('✅ Settings file update completed');
+      
+      // Notify listeners
+      logger.info('📢 Notifying settings change listeners with source: app');
+      this.notifyListeners({
+        type: 'settings',
+        previous,
+        current: this.settings,
+        source: 'app'
+      });
+      
+      logger.debug('✅ Settings update completed successfully');
+    } finally {
+      // 🔄 Re-enable file watcher after update with delay
+      if (wasWatcherActive) {
+        logger.debug('⏳ Re-enabling settings file watcher in 500ms...');
+        setTimeout(async () => {
+          try {
+            await this.startSettingsWatcher();
+            logger.debug('✅ Settings file watcher re-enabled');
+          } catch (error) {
+            logger.error('❌ Failed to re-enable settings file watcher:', error);
+          }
+        }, 500); // 遅延を200ms→500msに増加
+      }
+    }
   }
   
   /**
@@ -878,10 +950,16 @@ command = "showHelp"
       throw new Error('Cannot update settings file: paths not initialized');
     }
     
+    logger.info('📄 Starting file update process...');
+    logger.debug('Current settings file content length:', this.settingsFileContent.length);
+    logger.debug('Settings file path:', this.paths.settingsFile);
+    
     // Parse current file to preserve structure
     const lines = this.settingsFileContent.split('\n');
     const updatedLines: string[] = [];
     let currentSection = '';
+    
+    logger.debug('🔍 Processing', lines.length, 'lines from settings file');
     
     for (const line of lines) {
       const trimmed = line.trim();
@@ -916,8 +994,15 @@ command = "showHelp"
     }
     
     const newContent = updatedLines.join('\n');
+    
+    logger.info('💾 Writing updated content to file...');
+    logger.debug('New content length:', newContent.length);
+    logger.debug('New content preview (first 200 chars):', newContent.substring(0, 200));
+    
     await writeTextFile(this.paths.settingsFile, newContent);
     this.settingsFileContent = newContent;
+    
+    logger.info('✅ Settings file successfully written to disk');
   }
   
   /**
@@ -968,16 +1053,41 @@ command = "showHelp"
     this.keybindings = this.keybindings.filter(kb => kb.key !== keybinding.key);
     this.keybindings.push(keybinding);
     
-    // Update file
-    await this.updateKeybindingsFile();
+    // 🔧 Temporarily disable file watcher to prevent feedback loop
+    logger.debug('🛑 Temporarily disabling keybindings file watcher during update...');
+    const wasWatcherActive = !!this.keybindingsWatcher;
+    if (this.keybindingsWatcher) {
+      this.keybindingsWatcher();
+      this.keybindingsWatcher = null;
+    }
     
-    // Notify listeners
-    this.notifyListeners({
-      type: 'keybindings',
-      previous,
-      current: this.keybindings,
-      source: 'app'
-    });
+    try {
+      // Update file
+      await this.updateKeybindingsFile();
+      
+      // Notify listeners
+      this.notifyListeners({
+        type: 'keybindings',
+        previous,
+        current: this.keybindings,
+        source: 'app'
+      });
+      
+      logger.debug('✅ Keybinding update completed successfully');
+    } finally {
+      // 🔄 Re-enable file watcher after update with delay
+      if (wasWatcherActive) {
+        logger.debug('⏳ Re-enabling keybindings file watcher in 500ms...');
+        setTimeout(async () => {
+          try {
+            await this.startKeybindingsWatcher();
+            logger.debug('✅ Keybindings file watcher re-enabled');
+          } catch (error) {
+            logger.error('❌ Failed to re-enable keybindings file watcher:', error);
+          }
+        }, 500); // 遅延を200ms→500msに増加
+      }
+    }
   }
   
   /**
@@ -988,16 +1098,41 @@ command = "showHelp"
     
     this.keybindings = this.keybindings.filter(kb => kb.key !== key);
     
-    // Update file
-    await this.updateKeybindingsFile();
+    // 🔧 Temporarily disable file watcher to prevent feedback loop
+    logger.debug('🛑 Temporarily disabling keybindings file watcher during removal...');
+    const wasWatcherActive = !!this.keybindingsWatcher;
+    if (this.keybindingsWatcher) {
+      this.keybindingsWatcher();
+      this.keybindingsWatcher = null;
+    }
     
-    // Notify listeners
-    this.notifyListeners({
-      type: 'keybindings',
-      previous,
-      current: this.keybindings,
-      source: 'app'
-    });
+    try {
+      // Update file
+      await this.updateKeybindingsFile();
+      
+      // Notify listeners
+      this.notifyListeners({
+        type: 'keybindings',
+        previous,
+        current: this.keybindings,
+        source: 'app'
+      });
+      
+      logger.debug('✅ Keybinding removal completed successfully');
+    } finally {
+      // 🔄 Re-enable file watcher after update with delay
+      if (wasWatcherActive) {
+        logger.debug('⏳ Re-enabling keybindings file watcher in 500ms...');
+        setTimeout(async () => {
+          try {
+            await this.startKeybindingsWatcher();
+            logger.debug('✅ Keybindings file watcher re-enabled');
+          } catch (error) {
+            logger.error('❌ Failed to re-enable keybindings file watcher:', error);
+          }
+        }, 500); // 遅延を200ms→500msに増加
+      }
+    }
   }
   
   /**
@@ -1102,6 +1237,88 @@ command = "showHelp"
       throw new Error('Keybindings path not available: SettingsManager not properly initialized');
     }
     return this.paths.keybindingsFile;
+  }
+  
+  /**
+   * Start settings file watcher
+   */
+  private async startSettingsWatcher(): Promise<void> {
+    if (!this.paths) {
+      throw new Error('Cannot start settings watcher: paths not initialized');
+    }
+    
+    // Check if settings file exists
+    const settingsExists = await exists(this.paths.settingsFile);
+    if (!settingsExists) {
+      throw new Error('Settings file does not exist - cannot watch');
+    }
+    
+    // Stop existing watcher if any
+    if (this.settingsWatcher) {
+      this.settingsWatcher();
+      this.settingsWatcher = null;
+    }
+    
+    logger.debug('👀 Starting settings file watcher...');
+    this.settingsWatcher = await watch(
+      'YuToDo/settings.toml',
+      (event) => {
+        // 🔧 書き込みイベントのみを処理（読み込みイベントは無視）
+        if (event.type && typeof event.type === 'object') {
+          const eventType = event.type;
+          // アクセスイベントや読み込み専用イベントは無視
+          if ('access' in eventType || 
+              ('modify' in eventType && eventType.modify?.kind === 'metadata')) {
+            logger.debug('🚫 Ignoring non-write file event:', event);
+            return;
+          }
+        }
+        
+        logger.info('🔥 Settings file write detected! Event:', event);
+        this.handleFileChange('settings');
+      },
+      {
+        baseDir: BaseDirectory.AppData,
+        delayMs: 300
+      }
+    );
+    logger.debug('✅ Settings file watcher started successfully');
+  }
+  
+  /**
+   * Start keybindings file watcher
+   */
+  private async startKeybindingsWatcher(): Promise<void> {
+    if (!this.paths) {
+      throw new Error('Cannot start keybindings watcher: paths not initialized');
+    }
+    
+    // Check if keybindings file exists
+    const keybindingsExists = await exists(this.paths.keybindingsFile);
+    if (!keybindingsExists) {
+      logger.warn('Keybindings file does not exist - skipping watcher');
+      return;
+    }
+    
+    // Stop existing watcher if any
+    if (this.keybindingsWatcher) {
+      this.keybindingsWatcher();
+      this.keybindingsWatcher = null;
+    }
+    
+    logger.debug('👀 Starting keybindings file watcher...');
+    this.keybindingsWatcher = await watch(
+      'YuToDo/keybindings.toml',
+      (event) => {
+        logger.info('🔥 Keybindings file changed! Event:', event);
+        this.handleFileChange('keybindings');
+      },
+      {
+        baseDir: BaseDirectory.AppData,
+        delayMs: 300
+      }
+    );
+    logger.debug('✅ Keybindings file watcher started successfully');
   }
   
   /**
