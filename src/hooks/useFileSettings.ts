@@ -89,41 +89,19 @@ export function useFileSettings(): UseFileSettingsReturn {
         setKeybindings(settingsManager.getKeybindings());
         
         // Subscribe to changes
-        logger.info('🔗 Subscribing to SettingsManager change events...');
         unsubscribe = settingsManager.onChange((event: SettingsChangeEvent) => {
           if (!mounted) {
-            logger.debug('🚫 Component unmounted, ignoring settings change event');
             return;
           }
           
-          logger.info('🎯 Settings change event received in useFileSettings!', {
-            type: event.type,
-            source: event.source,
-            hasSettings: !!event.current
-          });
-          
           if (event.type === 'settings') {
-            logger.info('⚙️ Updating React settings state...', {
-              source: event.source,
-              hasSettings: !!event.current
-            });
             setLastChangeSource(event.source);
             setSettings(event.current as AppSettingsFile);
-            logger.info('✅ React settings state updated');
           } else if (event.type === 'keybindings') {
-            logger.info('⌨️ Updating React keybindings state...', {
-              source: event.source,
-              hasKeybindings: !!event.current
-            });
             setLastChangeSource(event.source);
             setKeybindings(event.current as Keybinding[]);
-            logger.info('✅ React keybindings state updated');
           }
-          
-          logger.debug(`📋 Complete event details:`, event);
         });
-        
-        logger.info('✅ SettingsManager change event subscription completed');
         
         setIsLoading(false);
       } catch (err) {
@@ -148,11 +126,9 @@ export function useFileSettings(): UseFileSettingsReturn {
   // Update settings
   const updateSettings = useCallback(async (updates: Partial<AppSettingsFile>) => {
     try {
-      logger.info('🔄 useFileSettings.updateSettings called with:', updates);
       await settingsManager.updateSettings(updates);
-      logger.info('✅ settingsManager.updateSettings completed successfully');
     } catch (err) {
-      logger.error('❌ Failed to update settings in useFileSettings:', err);
+      logger.error('Failed to update settings:', err);
       throw err;
     }
   }, []);

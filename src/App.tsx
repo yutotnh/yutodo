@@ -523,18 +523,11 @@ function App() {
   }, [connectionStatus, reconnectAttempts]);
 
   const handleSettingsChange = async (newSettings: AppSettings) => {
-    logger.info('🔧 GUI Settings change requested:', {
-      oldSettings: settings,
-      newSettings,
-      hasUpdateFileSettings: !!updateFileSettings
-    });
-    
     setSettings(newSettings);
     
     // ファイルベース設定が利用可能な場合は更新
     if (updateFileSettings) {
       try {
-        logger.info('📝 Converting AppSettings to file format...');
         // AppSettings形式からファイル設定形式に変換
         const updates = {
           app: {
@@ -555,9 +548,7 @@ function App() {
           }
         };
         
-        logger.info('💾 Calling updateFileSettings with updates:', updates);
         await updateFileSettings(updates);
-        logger.info('✅ File-based settings updated successfully');
       } catch (error) {
         logger.error('Failed to update file-based settings:', error);
         // フォールバック: localStorage
