@@ -1,29 +1,19 @@
 import { AppSettings } from '../types/todo';
 import { AppSettingsFile, Keybinding } from '../types/settings';
-import { settingsManager } from './SettingsManager';
 import { exists, writeTextFile } from '@tauri-apps/plugin-fs';
 import { join, appDataDir } from '@tauri-apps/api/path';
 import logger from '../utils/logger';
 
 /**
- * Migrate from localStorage to file-based settings
+ * Get migration data from localStorage
  */
-export async function migrateToFileBasedSettings(): Promise<boolean> {
+export function getMigrationData(): { settings: AppSettingsFile; keybindings: Keybinding[] } | null {
   try {
-    logger.info('Starting migration to file-based settings...');
-    
-    // Check if migration is needed
-    const settingsPath = await settingsManager.getSettingsPath();
-    if (await exists(settingsPath)) {
-      logger.info('Settings file already exists, skipping migration');
-      return false;
-    }
-    
     // Get old settings from localStorage
     const oldSettingsJson = localStorage.getItem('yutodoAppSettings');
     if (!oldSettingsJson) {
       logger.info('No localStorage settings found, nothing to migrate');
-      return false;
+      return null;
     }
     
     // Parse old settings
@@ -34,25 +24,30 @@ export async function migrateToFileBasedSettings(): Promise<boolean> {
     const newSettings = convertToFileSettings(oldSettings);
     const keybindings = extractKeybindings(oldSettings);
     
-    // Save to files
-    await settingsManager.updateSettings(newSettings);
-    
-    // Add custom keybindings if any
-    for (const kb of keybindings) {
-      await settingsManager.addKeybinding(kb);
-    }
-    
-    // Backup old settings
-    await backupOldSettings(oldSettingsJson);
-    
-    // Remove from localStorage
-    localStorage.removeItem('yutodoAppSettings');
-    
-    logger.info('Migration completed successfully');
-    return true;
+    return { settings: newSettings, keybindings };
   } catch (error) {
-    logger.error('Migration failed:', error);
-    throw error;
+    logger.error('Failed to get migration data:', error);
+    return null;
+  }
+}
+
+/**
+ * Complete migration after settings have been saved
+ */
+export async function completeMigration(): Promise<void> {
+  try {
+    // Get old settings for backup
+    const oldSettingsJson = localStorage.getItem('yutodoAppSettings');
+    if (oldSettingsJson) {
+      // Backup old settings
+      await backupOldSettings(oldSettingsJson);
+      
+      // Remove from localStorage
+      localStorage.removeItem('yutodoAppSettings');
+      logger.info('Migration completed, localStorage cleared');
+    }
+  } catch (error) {
+    logger.error('Failed to complete migration:', error);
   }
 }
 
@@ -137,17 +132,41 @@ export function isTauriEnvironment(): boolean {
  * Check if migration is needed
  */
 export async function isMigrationNeeded(): Promise<boolean> {
-  // Only migrate in Tauri environment
-  if (!isTauriEnvironment()) {
+  try {
+    logger.info('Checking migration requirements...');
+    
+    // Only migrate in Tauri environment
+    if (!isTauriEnvironment()) {
+      logger.info('Not in Tauri environment, migration not needed');
+      return false;
+    }
+    
+    // Check if old settings exist
+    const hasOldSettings = localStorage.getItem('yutodoAppSettings') !== null;
+    logger.info('Has old localStorage settings:', hasOldSettings);
+    
+    if (!hasOldSettings) {
+      logger.info('No old settings found, migration not needed');
+      return false;
+    }
+    
+    // Check if new settings already exist by constructing path directly
+    logger.info('Checking if new settings file already exists...');
+    const dataDir = await appDataDir();
+    const configDir = await join(dataDir, 'YuToDo');
+    const settingsPath = await join(configDir, 'settings.toml');
+    
+    logger.info('Settings file path:', settingsPath);
+    const hasNewSettings = await exists(settingsPath);
+    logger.info('New settings file exists:', hasNewSettings);
+    
+    const needsMigration = hasOldSettings && !hasNewSettings;
+    logger.info('Migration needed decision:', needsMigration);
+    
+    return needsMigration;
+  } catch (error) {
+    logger.error('Error checking migration requirements:', error);
+    // On error, assume no migration needed to avoid blocking startup
     return false;
   }
-  
-  // Check if old settings exist
-  const hasOldSettings = localStorage.getItem('yutodoAppSettings') !== null;
-  
-  // Check if new settings already exist
-  const settingsPath = await settingsManager.getSettingsPath();
-  const hasNewSettings = await exists(settingsPath);
-  
-  return hasOldSettings && !hasNewSettings;
 }

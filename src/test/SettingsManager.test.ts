@@ -38,6 +38,9 @@ describe('SettingsManager', () => {
     // Reset all mocks
     vi.clearAllMocks();
     
+    // Mock Tauri environment
+    (window as any).__TAURI_INTERNALS__ = {};
+    
     // Mock path functions
     vi.mocked(path.appDataDir).mockResolvedValue(mockAppDataDir);
     vi.mocked(path.join).mockImplementation((...paths) => Promise.resolve(paths.join('/')));
@@ -52,6 +55,7 @@ describe('SettingsManager', () => {
   
   afterEach(() => {
     // Clean up
+    delete (window as any).__TAURI_INTERNALS__;
     vi.restoreAllMocks();
   });
 

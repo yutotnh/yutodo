@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { AppSettingsFile, Keybinding, SettingsChangeEvent } from '../types/settings';
 import { settingsManager } from '../config/SettingsManager';
-import { migrateToFileBasedSettings, isMigrationNeeded, isTauriEnvironment } from '../config/migrationUtils';
+import { getMigrationData, completeMigration, isMigrationNeeded, isTauriEnvironment } from '../config/migrationUtils';
 import logger from '../utils/logger';
 
 interface UseFileSettingsReturn {
@@ -40,13 +40,45 @@ export function useFileSettings(): UseFileSettingsReturn {
       
       try {
         // Check if migration is needed
-        if (await isMigrationNeeded()) {
-          logger.info('Migrating from localStorage to file-based settings');
-          await migrateToFileBasedSettings();
+        logger.info('Checking if migration is needed...');
+        const needsMigration = await isMigrationNeeded();
+        logger.info('Migration needed:', needsMigration);
+        
+        // Get migration data if needed
+        let migrationData = null;
+        if (needsMigration) {
+          logger.info('Starting migration from localStorage to file-based settings');
+          migrationData = getMigrationData();
+          
+          if (migrationData) {
+            logger.info('Migration data prepared, will apply after initialization');
+          }
         }
         
         // Initialize settings manager
+        logger.info('Starting SettingsManager initialization...');
         await settingsManager.initialize();
+        logger.info('SettingsManager initialization completed successfully');
+        
+        // Apply migration data if needed
+        if (migrationData) {
+          logger.info('Applying migration data...');
+          try {
+            // Update settings
+            await settingsManager.updateSettings(migrationData.settings);
+            
+            // Add custom keybindings if any
+            for (const kb of migrationData.keybindings) {
+              await settingsManager.addKeybinding(kb);
+            }
+            
+            // Complete migration by backing up and clearing localStorage
+            await completeMigration();
+            logger.info('Migration completed successfully');
+          } catch (error) {
+            logger.error('Failed to apply migration data:', error);
+          }
+        }
         
         if (!mounted) return;
         
@@ -55,17 +87,33 @@ export function useFileSettings(): UseFileSettingsReturn {
         setKeybindings(settingsManager.getKeybindings());
         
         // Subscribe to changes
+        logger.info('🔗 Subscribing to SettingsManager change events...');
         unsubscribe = settingsManager.onChange((event: SettingsChangeEvent) => {
-          if (!mounted) return;
-          
-          if (event.type === 'settings') {
-            setSettings(event.current as AppSettingsFile);
-          } else if (event.type === 'keybindings') {
-            setKeybindings(event.current as Keybinding[]);
+          if (!mounted) {
+            logger.debug('🚫 Component unmounted, ignoring settings change event');
+            return;
           }
           
-          logger.debug(`Settings updated from ${event.source}:`, event);
+          logger.info('🎯 Settings change event received in useFileSettings!', {
+            type: event.type,
+            source: event.source,
+            hasSettings: !!event.current
+          });
+          
+          if (event.type === 'settings') {
+            logger.info('⚙️ Updating React settings state...');
+            setSettings(event.current as AppSettingsFile);
+            logger.info('✅ React settings state updated');
+          } else if (event.type === 'keybindings') {
+            logger.info('⌨️ Updating React keybindings state...');
+            setKeybindings(event.current as Keybinding[]);
+            logger.info('✅ React keybindings state updated');
+          }
+          
+          logger.debug(`📋 Complete event details:`, event);
         });
+        
+        logger.info('✅ SettingsManager change event subscription completed');
         
         setIsLoading(false);
       } catch (err) {

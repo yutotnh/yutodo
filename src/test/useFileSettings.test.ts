@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { useFileSettings, fileSettingsToAppSettings, appSettingsToFileSettings } from '../hooks/useFileSettings';
 import { settingsManager } from '../config/SettingsManager';
-import { isMigrationNeeded, migrateToFileBasedSettings, isTauriEnvironment } from '../config/migrationUtils';
+import { isMigrationNeeded, getMigrationData, completeMigration, isTauriEnvironment } from '../config/migrationUtils';
 
 // Mock dependencies
 vi.mock('../config/SettingsManager');
@@ -47,7 +47,8 @@ describe('useFileSettings', () => {
     // Mock Tauri environment
     vi.mocked(isTauriEnvironment).mockReturnValue(true);
     vi.mocked(isMigrationNeeded).mockResolvedValue(false);
-    vi.mocked(migrateToFileBasedSettings).mockResolvedValue(true);
+    vi.mocked(getMigrationData).mockReturnValue(null);
+    vi.mocked(completeMigration).mockResolvedValue();
     
     // Mock settingsManager
     vi.mocked(settingsManager.initialize).mockResolvedValue();
@@ -82,11 +83,20 @@ describe('useFileSettings', () => {
 
     it('should perform migration if needed', async () => {
       vi.mocked(isMigrationNeeded).mockResolvedValue(true);
+      vi.mocked(getMigrationData).mockReturnValue({
+        settings: mockSettings,
+        keybindings: mockKeybindings
+      });
       
       renderHook(() => useFileSettings());
       
       await waitFor(() => {
-        expect(migrateToFileBasedSettings).toHaveBeenCalled();
+        expect(getMigrationData).toHaveBeenCalled();
+      });
+      
+      await waitFor(() => {
+        expect(settingsManager.updateSettings).toHaveBeenCalledWith(mockSettings);
+        expect(completeMigration).toHaveBeenCalled();
       });
     });
 

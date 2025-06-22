@@ -1,23 +1,16 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { 
-  migrateToFileBasedSettings, 
+  getMigrationData, 
+  completeMigration,
   isMigrationNeeded, 
   isTauriEnvironment 
 } from '../config/migrationUtils';
-import { settingsManager } from '../config/SettingsManager';
 import * as fs from '@tauri-apps/plugin-fs';
 import * as path from '@tauri-apps/api/path';
 
 // Mock the modules
 vi.mock('@tauri-apps/plugin-fs');
 vi.mock('@tauri-apps/api/path');
-vi.mock('../config/SettingsManager', () => ({
-  settingsManager: {
-    getSettingsPath: vi.fn(() => '/home/user/.config/YuToDo/settings.toml'),
-    updateSettings: vi.fn(),
-    addKeybinding: vi.fn()
-  }
-}));
 
 describe('migrationUtils', () => {
   const mockAppDataDir = '/home/user/.config';
@@ -98,7 +91,7 @@ describe('migrationUtils', () => {
     });
   });
 
-  describe('migrateToFileBasedSettings', () => {
+  describe('getMigrationData', () => {
     const oldSettings = {
       alwaysOnTop: true,
       detailedMode: false,
@@ -110,31 +103,20 @@ describe('migrationUtils', () => {
       currentView: 'schedules' as const
     };
 
-    it('should return false if settings file already exists', async () => {
-      vi.mocked(fs.exists).mockResolvedValue(true);
-      
-      const result = await migrateToFileBasedSettings();
-      expect(result).toBe(false);
-      expect(settingsManager.updateSettings).not.toHaveBeenCalled();
-    });
-
-    it('should return false if no old settings exist', async () => {
-      vi.mocked(fs.exists).mockResolvedValue(false);
+    it('should return null if no old settings exist', () => {
       vi.mocked(localStorage.getItem).mockReturnValue(null);
       
-      const result = await migrateToFileBasedSettings();
-      expect(result).toBe(false);
-      expect(settingsManager.updateSettings).not.toHaveBeenCalled();
+      const result = getMigrationData();
+      expect(result).toBeNull();
     });
 
-    it('should migrate old settings to new format', async () => {
-      vi.mocked(fs.exists).mockResolvedValue(false);
+    it('should convert old settings to new format', () => {
       vi.mocked(localStorage.getItem).mockReturnValue(JSON.stringify(oldSettings));
       
-      const result = await migrateToFileBasedSettings();
+      const result = getMigrationData();
       
-      expect(result).toBe(true);
-      expect(settingsManager.updateSettings).toHaveBeenCalledWith({
+      expect(result).not.toBeNull();
+      expect(result?.settings).toEqual({
         app: {
           theme: 'dark',
           language: 'ja',
@@ -159,29 +141,24 @@ describe('migrationUtils', () => {
       });
     });
 
-    it('should handle default values correctly', async () => {
+    it('should handle default values correctly', () => {
       const minimalSettings = { darkMode: 'auto' as const };
       
-      vi.mocked(fs.exists).mockResolvedValue(false);
       vi.mocked(localStorage.getItem).mockReturnValue(JSON.stringify(minimalSettings));
       
-      await migrateToFileBasedSettings();
+      const result = getMigrationData();
       
-      expect(settingsManager.updateSettings).toHaveBeenCalledWith(
-        expect.objectContaining({
-          app: expect.objectContaining({
-            theme: 'auto',
-            language: 'auto',
-            alwaysOnTop: false,
-            detailedMode: false,
-            confirmDelete: true, // Default is true
-            currentView: 'tasks'
-          })
-        })
-      );
+      expect(result?.settings.app).toMatchObject({
+        theme: 'auto',
+        language: 'auto',
+        alwaysOnTop: false,
+        detailedMode: false,
+        confirmDelete: true, // Default is true
+        currentView: 'tasks'
+      });
     });
 
-    it('should migrate custom keybindings if present', async () => {
+    it('should extract custom keybindings if present', () => {
       const settingsWithKeybindings = {
         ...oldSettings,
         keybindings: {
@@ -190,68 +167,68 @@ describe('migrationUtils', () => {
         }
       };
       
-      vi.mocked(fs.exists).mockResolvedValue(false);
       vi.mocked(localStorage.getItem).mockReturnValue(JSON.stringify(settingsWithKeybindings));
       
-      await migrateToFileBasedSettings();
+      const result = getMigrationData();
       
-      expect(settingsManager.addKeybinding).toHaveBeenCalledWith({
+      expect(result?.keybindings).toContainEqual({
         key: 'Ctrl+T',
         command: 'newTab'
       });
-      expect(settingsManager.addKeybinding).toHaveBeenCalledWith({
+      expect(result?.keybindings).toContainEqual({
         key: 'Ctrl+W',
         command: 'closeTab'
       });
     });
 
-    it('should backup old settings', async () => {
-      vi.mocked(fs.exists).mockResolvedValue(false);
+    it('should handle invalid JSON gracefully', () => {
+      vi.mocked(localStorage.getItem).mockReturnValue('invalid json');
+      
+      const result = getMigrationData();
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('completeMigration', () => {
+    const oldSettings = {
+      alwaysOnTop: true,
+      detailedMode: false,
+      darkMode: 'dark' as const
+    };
+
+    it('should backup and remove old settings', async () => {
       vi.mocked(localStorage.getItem).mockReturnValue(JSON.stringify(oldSettings));
       
-      await migrateToFileBasedSettings();
+      await completeMigration();
       
       // Check that backup was created
       expect(fs.writeTextFile).toHaveBeenCalledWith(
         expect.stringContaining('localStorage-backup'),
         JSON.stringify(oldSettings)
       );
-    });
-
-    it('should remove old settings from localStorage after migration', async () => {
-      vi.mocked(fs.exists).mockResolvedValue(false);
-      vi.mocked(localStorage.getItem).mockReturnValue(JSON.stringify(oldSettings));
       
-      await migrateToFileBasedSettings();
-      
+      // Check that localStorage was cleared
       expect(localStorage.removeItem).toHaveBeenCalledWith('yutodoAppSettings');
     });
 
-    it('should handle errors gracefully', async () => {
-      vi.mocked(fs.exists).mockResolvedValue(false);
-      vi.mocked(localStorage.getItem).mockReturnValue(JSON.stringify(oldSettings));
-      vi.mocked(settingsManager.updateSettings).mockRejectedValue(new Error('Write failed'));
+    it('should handle missing localStorage data gracefully', async () => {
+      vi.mocked(localStorage.getItem).mockReturnValue(null);
       
-      await expect(migrateToFileBasedSettings()).rejects.toThrow('Write failed');
+      await completeMigration();
+      
+      expect(fs.writeTextFile).not.toHaveBeenCalled();
+      expect(localStorage.removeItem).not.toHaveBeenCalled();
     });
 
     it('should continue even if backup fails', async () => {
-      vi.mocked(fs.exists).mockResolvedValue(false);
       vi.mocked(localStorage.getItem).mockReturnValue(JSON.stringify(oldSettings));
-      vi.mocked(fs.writeTextFile).mockRejectedValueOnce(new Error('Backup failed'));
+      vi.mocked(fs.writeTextFile).mockRejectedValue(new Error('Backup failed'));
       
-      const result = await migrateToFileBasedSettings();
+      // Should not throw
+      await completeMigration();
       
-      expect(result).toBe(true);
-      expect(settingsManager.updateSettings).toHaveBeenCalled();
-      expect(localStorage.removeItem).toHaveBeenCalled();
-    });
-
-    it('should handle invalid JSON in localStorage', async () => {
-      vi.mocked(fs.exists).mockResolvedValue(false);
-      vi.mocked(localStorage.getItem).mockReturnValue('invalid json');
-      
-      await expect(migrateToFileBasedSettings()).rejects.toThrow();
+      // Should still remove from localStorage
+      expect(localStorage.removeItem).toHaveBeenCalledWith('yutodoAppSettings');
     });
   });
 });

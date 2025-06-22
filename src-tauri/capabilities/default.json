@@ -14,6 +14,25 @@
     "dialog:allow-message",
     "fs:allow-write-text-file",
     "fs:allow-read-text-file",
+    "fs:allow-exists",
+    "fs:allow-mkdir",
+    "fs:allow-read-dir",
+    "fs:allow-appdata-write",
+    "fs:allow-appdata-write-recursive",
+    "fs:allow-appdata-meta",
+    "fs:allow-appdata-meta-recursive", 
+    "fs:allow-appdata-read",
+    "fs:allow-appdata-read-recursive",
+    "fs:allow-watch",
+    {
+      "identifier": "fs:scope-appdata",
+      "allow": [
+        {
+          "path": "$APPDATA/YuToDo/*"
+        }
+      ]
+    },
+    "core:path:default",
     "core:window:allow-set-always-on-top",
     "core:window:allow-is-always-on-top",
     "core:window:allow-set-size",
