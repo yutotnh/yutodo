@@ -341,8 +341,8 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({
               )}
             </div>
 
-            {/* 時刻 */}
-            {(type === 'once' || type === 'daily') && (
+            {/* 一回限り設定 */}
+            {type === 'once' && (
               <div className="form-group">
                 <label htmlFor="schedule-time">
                   <Clock size={14} />
@@ -360,14 +360,28 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({
             {/* 毎日設定 */}
             {type === 'daily' && (
               <div className="form-group">
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={excludeWeekends}
-                    onChange={(e) => setExcludeWeekends(e.target.checked)}
-                  />
-                  {t('schedule.excludeWeekends')}
+                <label htmlFor="daily-time">
+                  <Clock size={14} />
+                  {t('schedule.time')}
                 </label>
+                <input
+                  id="daily-time"
+                  type="time"
+                  value={time}
+                  onChange={(e) => setTime(e.target.value)}
+                />
+              </div>
+            )}
+
+            {type === 'daily' && (
+              <div className="form-group">
+                <label>{t('schedule.excludeWeekends')}</label>
+                <input
+                  type="checkbox"
+                  checked={excludeWeekends}
+                  onChange={(e) => setExcludeWeekends(e.target.checked)}
+                  className="simple-checkbox"
+                />
               </div>
             )}
 
