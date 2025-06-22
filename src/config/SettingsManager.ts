@@ -1060,7 +1060,27 @@ command = "showHelp"
       return value.toString();
     }
     
-    return JSON.stringify(value);
+    if (typeof value === 'bigint') {
+      return value.toString();
+    }
+    
+    // Handle arrays and objects, with BigInt-safe serialization
+    if (typeof value === 'object' && value !== null) {
+      try {
+        return JSON.stringify(value, (_key, val) => {
+          if (typeof val === 'bigint') {
+            return val.toString();
+          }
+          return val;
+        });
+      } catch (error) {
+        logger.warn('Failed to serialize object value, using string representation:', error);
+        return `"${String(value)}"`;
+      }
+    }
+    
+    // Fallback for other types
+    return `"${String(value)}"`;
   }
   
   /**
