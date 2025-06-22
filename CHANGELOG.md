@@ -49,7 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - **Schedule completion status display** - Completed schedules now properly show "Completed" status and move to inactive section instead of displaying past execution dates
-- **Schedule modal layout** - Fixed "Exclude weekends" checkbox positioning in daily schedule configuration to match other form elements
+- **Schedule modal layout** - Improved daily schedule configuration by placing time and "exclude weekends" settings in a horizontal row for better visual grouping and space efficiency
 - **Development server port conflicts** - Vite now automatically selects available ports (1420, 1421, 1422...) instead of failing when 1420 is in use
 - **E2E test reliability** - Resolved Edge WebDriver version conflicts in GitHub Actions CI/CD pipeline by using tauri-driver exclusively
 - **Cross-platform E2E testing** - Fixed Windows/Linux compatibility issues in WebdriverIO test configuration 
