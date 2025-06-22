@@ -227,6 +227,7 @@
     "nextMonth": "Next month", 
     "asScheduled": "As scheduled",
     "pending": "Pending",
+    "completed": "Completed",
     "activeSchedules": "Active Schedules",
     "inactiveSchedules": "Inactive Schedules"
   },

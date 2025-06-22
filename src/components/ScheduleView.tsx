@@ -31,8 +31,16 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
     // 終了日が過去の場合
     if (schedule.endDate && schedule.endDate < today) return true;
     
-    // 一回限りのスケジュールで開始日が過去の場合
-    if (schedule.type === 'once' && schedule.startDate < today) return true;
+    // 実行完了したスケジュール（nextExecutionがnull）は非アクティブ
+    if (!schedule.nextExecution) {
+      // ただし、まだ実行されていない'once'タイプは例外
+      if (schedule.type === 'once' && !schedule.lastExecuted) {
+        // 開始日が過去の場合のみ非アクティブ
+        return schedule.startDate < today;
+      }
+      // その他のケース（実行完了、endDate到達など）は非アクティブ
+      return true;
+    }
     
     return false;
   };
@@ -100,9 +108,15 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
 
   const formatNextExecution = (schedule: Schedule): string => {
     if (!schedule.nextExecution) {
-      // スケジュールタイプに基づいて次回実行の予測を表示
+      // 手動で非アクティブ化された場合
       if (!schedule.isActive) return t('schedule.inactive');
       
+      // 実行完了したスケジュールの場合
+      if (schedule.lastExecuted) {
+        return t('schedule.completed');
+      }
+      
+      // まだ実行されていないスケジュールの場合、タイプに基づいて次回実行の予測を表示
       switch (schedule.type) {
         case 'once': {
           // サーバー側のロジックと同じ方法で日付を処理

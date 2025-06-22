@@ -36,6 +36,7 @@ vi.mock('react-i18next', () => ({
       if (key === 'schedule.asScheduled') return 'As scheduled';
       if (key === 'schedule.pending') return 'Pending';
       if (key === 'schedule.inactive') return 'Inactive';
+      if (key === 'schedule.completed') return 'Completed';
       if (key === 'schedule.activeSchedules') return 'Active Schedules';
       if (key === 'schedule.inactiveSchedules') return 'Inactive Schedules';
       return key;
@@ -68,6 +69,7 @@ describe('ScheduleView', () => {
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
       time: '09:00',
+      nextExecution: '2024-01-15T09:00:00.000Z', // Active schedule with next execution
     },
     {
       id: '2',
@@ -81,6 +83,19 @@ describe('ScheduleView', () => {
       weeklyConfig: {
         daysOfWeek: [1, 3], // Monday, Wednesday
       },
+    },
+    {
+      id: '3',
+      title: 'Completed Task',
+      type: 'once',
+      startDate: '2024-01-01',
+      priority: 'low',
+      isActive: true,
+      createdAt: '2024-01-01T00:00:00.000Z',
+      updatedAt: '2024-01-01T00:00:00.000Z',
+      time: '10:00',
+      lastExecuted: '2024-01-01T10:00:00.000Z', // Completed schedule
+      nextExecution: undefined,
     },
   ];
 
@@ -277,6 +292,7 @@ describe('ScheduleView', () => {
         isActive: true,
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-01-01T00:00:00.000Z',
+        nextExecution: '2024-01-16T09:00:00.000Z', // Active schedule needs next execution
       };
 
       render(<ScheduleView {...defaultProps} schedules={[scheduleWithEndDate]} />);
@@ -293,6 +309,7 @@ describe('ScheduleView', () => {
         isActive: true,
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-01-01T00:00:00.000Z',
+        nextExecution: '2024-01-17T09:00:00.000Z', // Active schedule needs next execution
       };
 
       render(<ScheduleView {...defaultProps} schedules={[scheduleWithoutEndDate]} />);
@@ -315,6 +332,7 @@ describe('ScheduleView', () => {
         isActive: true,
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-01-01T00:00:00.000Z',
+        nextExecution: '2024-01-18T09:00:00.000Z', // Active schedule needs next execution
       };
 
       render(<ScheduleView {...defaultProps} schedules={[scheduleWithBothDates]} />);
@@ -338,11 +356,66 @@ describe('ScheduleView', () => {
         isActive: true,
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-01-01T00:00:00.000Z',
+        nextExecution: '2024-01-19T09:00:00.000Z', // Active schedule needs next execution
       };
 
       render(<ScheduleView {...defaultProps} schedules={[scheduleWithPastStartFutureEnd]} />);
       expect(screen.queryByText(/Start Date:/)).not.toBeInTheDocument();
       expect(screen.getByText(/End Date:/)).toBeInTheDocument();
+    });
+  });
+
+  describe('Completed Schedule Handling', () => {
+    it('shows completed schedule in inactive section with "Completed" status', () => {
+      render(<ScheduleView {...defaultProps} schedules={sampleSchedules} />);
+      
+      // Expand inactive section to see completed schedule
+      const inactiveSectionHeader = screen.getByText(/Inactive Schedules/);
+      fireEvent.click(inactiveSectionHeader);
+      
+      // Completed Task should be in inactive section
+      expect(screen.getByText('Completed Task')).toBeInTheDocument();
+      
+      // Should show "Completed" status in next execution field
+      expect(screen.getByText(/Next Execution: Completed/)).toBeInTheDocument();
+    });
+
+    it('correctly categorizes active, inactive, and completed schedules', () => {
+      render(<ScheduleView {...defaultProps} schedules={sampleSchedules} />);
+      
+      // Active schedule should be visible immediately
+      expect(screen.getByText('Daily Standup')).toBeInTheDocument();
+      
+      // Should show only Active section by default
+      expect(screen.getByText(/Active Schedules/)).toBeInTheDocument();
+      
+      // Inactive section should show count including completed schedule
+      expect(screen.getByText(/Inactive Schedules \(2\)/)).toBeInTheDocument();
+      
+      // Expand inactive section
+      const inactiveSectionHeader = screen.getByText(/Inactive Schedules/);
+      fireEvent.click(inactiveSectionHeader);
+      
+      // Both inactive schedules should be visible
+      expect(screen.getByText('Weekly Review')).toBeInTheDocument();
+      expect(screen.getByText('Completed Task')).toBeInTheDocument();
+    });
+
+    it('displays next execution correctly for different schedule states', () => {
+      render(<ScheduleView {...defaultProps} schedules={sampleSchedules} />);
+      
+      // Active schedule should show formatted next execution date
+      expect(screen.getByText(/2024\/1\/15/)).toBeInTheDocument();
+      
+      // Expand inactive section
+      const inactiveSectionHeader = screen.getByText(/Inactive Schedules/);
+      fireEvent.click(inactiveSectionHeader);
+      
+      // Completed schedule should show "Completed"
+      expect(screen.getByText(/Next Execution: Completed/)).toBeInTheDocument();
+      
+      // Inactive schedule should show "Inactive"
+      expect(screen.getByText(/Next Execution: Inactive/)).toBeInTheDocument();
     });
   });
 });

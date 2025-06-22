@@ -226,6 +226,7 @@
     "nextMonth": "来月",
     "asScheduled": "スケジュール通り",
     "pending": "待機中",
+    "completed": "完了",
     "activeSchedules": "アクティブなスケジュール",
     "inactiveSchedules": "非アクティブなスケジュール"
   },
