@@ -121,7 +121,57 @@
     "settingsImportFailed": "Failed to import settings. Please check file format.",
     "resetSettingsConfirm": "Reset all settings to defaults? This action cannot be undone.",
     "settingsReset": "Settings reset to defaults.",
-    "settingsResetFailed": "Failed to reset settings."
+    "settingsResetFailed": "Failed to reset settings.",
+    "tabs": {
+      "general": "General",
+      "appearance": "Appearance",
+      "server": "Server",
+      "data": "Data",
+      "keybindings": "Keybindings"
+    },
+    "window": {
+      "title": "Window Options",
+      "alwaysOnTop": "Always on top",
+      "detailedMode": "Detailed mode"
+    },
+    "language": {
+      "title": "Language",
+      "auto": "System Default"
+    },
+    "behavior": {
+      "title": "Behavior",
+      "confirmDelete": "Confirm before deleting tasks"
+    },
+    "theme": {
+      "title": "Theme",
+      "auto": "System",
+      "light": "Light",
+      "dark": "Dark"
+    },
+    "appearance": {
+      "customCss": "Custom CSS",
+      "customCssPlaceholder": "/* Add your custom CSS here */\\n.todo-item { background: #f0f0f0; }"
+    },
+    "server": {
+      "title": "Server Connection",
+      "url": "Server URL",
+      "status": {
+        "connecting": "Connecting...",
+        "connected": "Connected",
+        "disconnected": "Disconnected",
+        "error": "Connection Error"
+      },
+      "reconnectAttempts": "Reconnect attempts: {{count}}"
+    },
+    "keybindings": {
+      "title": "Keyboard Shortcuts",
+      "fileBasedDescription": "Keybindings are managed in the keybindings.toml file. Click below to open the file in your default text editor.",
+      "openFile": "Open Keybindings File",
+      "legacyDescription": "Keyboard shortcuts are built into the application.",
+      "pressForHelp": "Press {{key}} to view all shortcuts",
+      "when": "When"
+    },
+    "openSettingsFile": "Open Settings File"
   },
   "menu": {
     "menu": "Menu",

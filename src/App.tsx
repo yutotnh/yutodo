@@ -19,7 +19,7 @@ import {
 } from '@dnd-kit/sortable';
 import { TodoItem } from './components/TodoItem';
 import { AddTodoForm, AddTodoFormRef } from './components/AddTodoForm';
-import { Settings } from './components/Settings';
+import { SettingsV2 } from './components/SettingsV2';
 import { ShortcutHelp } from './components/ShortcutHelp';
 import { TodoFilter, FilterType } from './components/TodoFilter';
 import { SearchBar } from './components/SearchBar';
@@ -1559,7 +1559,7 @@ function App() {
       </main>
 
       {showSettings && (
-        <Settings
+        <SettingsV2
           settings={settings}
           onSettingsChange={handleSettingsChange}
           onClose={() => setShowSettings(false)}

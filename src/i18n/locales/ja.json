@@ -121,7 +121,57 @@
     "settingsImportFailed": "設定のインポートに失敗しました。ファイル形式を確認してください。",
     "resetSettingsConfirm": "すべての設定をデフォルトに戻しますか？この操作は元に戻せません。",
     "settingsReset": "設定をデフォルトに戻しました。",
-    "settingsResetFailed": "設定のリセットに失敗しました。"
+    "settingsResetFailed": "設定のリセットに失敗しました。",
+    "tabs": {
+      "general": "一般",
+      "appearance": "外観",
+      "server": "サーバー",
+      "data": "データ",
+      "keybindings": "キーボードショートカット"
+    },
+    "window": {
+      "title": "ウィンドウオプション",
+      "alwaysOnTop": "常に最前面に表示",
+      "detailedMode": "詳細モード"
+    },
+    "language": {
+      "title": "言語",
+      "auto": "システムのデフォルト"
+    },
+    "behavior": {
+      "title": "動作",
+      "confirmDelete": "タスク削除時に確認を表示"
+    },
+    "theme": {
+      "title": "テーマ",
+      "auto": "システム",
+      "light": "ライト",
+      "dark": "ダーク"
+    },
+    "appearance": {
+      "customCss": "カスタムCSS",
+      "customCssPlaceholder": "/* ここにカスタムCSSを追加 */\\n.todo-item { background: #f0f0f0; }"
+    },
+    "server": {
+      "title": "サーバー接続",
+      "url": "サーバーURL",
+      "status": {
+        "connecting": "接続中...",
+        "connected": "接続済み",
+        "disconnected": "未接続",
+        "error": "接続エラー"
+      },
+      "reconnectAttempts": "再接続試行回数: {{count}}"
+    },
+    "keybindings": {
+      "title": "キーボードショートカット",
+      "fileBasedDescription": "キーボードショートカットはkeybindings.tomlファイルで管理されています。下のボタンをクリックしてデフォルトのテキストエディタでファイルを開いてください。",
+      "openFile": "キーバインドファイルを開く",
+      "legacyDescription": "キーボードショートカットはアプリケーションに組み込まれています。",
+      "pressForHelp": "{{key}}を押してすべてのショートカットを表示",
+      "when": "条件"
+    },
+    "openSettingsFile": "設定ファイルを開く"
   },
   "menu": {
     "menu": "メニュー",

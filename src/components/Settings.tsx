@@ -307,7 +307,7 @@ export const Settings: React.FC<SettingsProps> = ({ settings, onSettingsChange, 
             <div className="setting-item setting-item--full">
               <span>
                 <Moon size={14} />
-                {t('settings.theme')}
+                Theme
               </span>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.5rem' }}>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -346,7 +346,7 @@ export const Settings: React.FC<SettingsProps> = ({ settings, onSettingsChange, 
             <div className="setting-item setting-item--full">
               <span>
                 <Globe size={14} />
-                {t('settings.language')}
+                Language
               </span>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.5rem' }}>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
