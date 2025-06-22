@@ -1832,7 +1832,7 @@ body {
 
 /* Data Manager */
 .data-manager {
-  margin-top: 2rem;
+  margin-top: 0;
 }
 
 .data-manager-title {
@@ -1842,7 +1842,7 @@ body {
   gap: 0.5rem;
   font-size: 1rem;
   font-weight: 600;
-  color: #374151;
+  color: #1e293b;
 }
 
 .data-manager-actions {
@@ -1855,7 +1855,7 @@ body {
   margin: 0 0 0.75rem 0;
   font-size: 0.875rem;
   font-weight: 600;
-  color: #4b5563;
+  color: #374151;
 }
 
 .data-manager-buttons {
@@ -1908,7 +1908,7 @@ body {
 .data-description {
   margin: 0;
   font-size: 0.75rem;
-  color: #6b7280;
+  color: #4b5563;
 }
 
 /* Shortcut Help */
@@ -2766,11 +2766,11 @@ body {
   }
 
   .data-manager-section h4 {
-    color: #e2e8f0;
+    color: #d1d5db;
   }
 
   .data-description {
-    color: #94a3b8;
+    color: #9ca3af;
   }
 }
 

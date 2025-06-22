@@ -208,42 +208,40 @@ export const DataManager: React.FC<DataManagerProps> = ({ todos, onImport }) => 
   };
 
   return (
-    <div className="data-manager">
-      <h3 className="data-manager-title">
+    <>
+      <h3>
         <Database size={16} />
         {t('dataManager.title')}
       </h3>
       
-      <div className="data-manager-actions">
-        <div className="data-manager-section">
-          <h4>{t('dataManager.export')}</h4>
-          <div className="data-manager-buttons">
-            <button
-              onClick={exportToTOML}
-              className="data-btn data-btn--export"
-              disabled={todos.length === 0}
-            >
-              <FileText size={14} />
-              {t('dataManager.export')}
-            </button>
-          </div>
-          <p className="data-description">
+      <div className="settings-group">
+        <h4>{t('dataManager.export')}</h4>
+        <div className="setting-item">
+          <button
+            onClick={exportToTOML}
+            className="data-btn data-btn--export"
+            disabled={todos.length === 0}
+          >
+            <FileText size={14} />
+            {t('dataManager.export')}
+          </button>
+          <p className="setting-description">
             {t('dataManager.saveTasksToFile', { count: todos.length })}
           </p>
         </div>
+      </div>
 
-        <div className="data-manager-section">
-          <h4>{t('dataManager.import')}</h4>
-          <div className="data-manager-buttons">
-            <button
-              onClick={triggerFileImport}
-              className="data-btn data-btn--import"
-            >
-              <Upload size={14} />
-              {t('dataManager.import')}
-            </button>
-          </div>
-          <p className="data-description">
+      <div className="settings-group">
+        <h4>{t('dataManager.import')}</h4>
+        <div className="setting-item">
+          <button
+            onClick={triggerFileImport}
+            className="data-btn data-btn--import"
+          >
+            <Upload size={14} />
+            {t('dataManager.import')}
+          </button>
+          <p className="setting-description">
             {t('dataManager.loadTasksFromToml')}
           </p>
         </div>
@@ -256,6 +254,6 @@ export const DataManager: React.FC<DataManagerProps> = ({ todos, onImport }) => 
         onChange={handleFileImport}
         style={{ display: 'none' }}
       />
-    </div>
+    </>
   );
 };
