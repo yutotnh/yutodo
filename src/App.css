@@ -4261,18 +4261,70 @@ body {
 
 /* 全てのselect要素の包括的なダークモード対応 */
 .app--dark select {
-  background: #374151;
-  border-color: #4b5563;
-  color: #f3f4f6;
+  background: #374151 !important;
+  border-color: #4b5563 !important;
+  color: #f3f4f6 !important;
 }
 
 .app--dark select option {
-  background: #374151;
-  color: #f3f4f6;
+  background: #374151 !important;
+  color: #f3f4f6 !important;
+}
+
+/* より具体的なセレクタによる強制適用 */
+.app--dark .add-todo-priority,
+.app--dark .add-todo-schedule,
+.app--dark .form-control,
+.app--dark .inline-select,
+.app--dark select[id*="schedule"],
+.app--dark select[id*="priority"] {
+  background: #374151 !important;
+  border-color: #4b5563 !important;
+  color: #f3f4f6 !important;
+}
+
+.app--dark .add-todo-priority option,
+.app--dark .add-todo-schedule option,
+.app--dark .form-control option,
+.app--dark .inline-select option,
+.app--dark select[id*="schedule"] option,
+.app--dark select[id*="priority"] option {
+  background: #374151 !important;
+  color: #f3f4f6 !important;
 }
 
 /* フォーカス時のスタイル統一 */
 .app--dark select:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+}
+
+/* React DatePicker対応 */
+.app--dark .react-datepicker-wrapper input,
+.app--dark .react-datepicker-wrapper select {
+  background: #374151 !important;
+  border-color: #4b5563 !important;
+  color: #f3f4f6 !important;
+}
+
+.app--dark .react-datepicker-wrapper input::placeholder {
+  color: #9ca3af !important;
+}
+
+/* ブラウザ固有のselect/option要素対応 */
+.app--dark select {
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+}
+
+/* 追加のブラウザ対応 */
+.app--dark select option:checked {
+  background: #4b5563 !important;
+  color: #f3f4f6 !important;
+}
+
+.app--dark select option:hover {
+  background: #4b5563 !important;
+  color: #f3f4f6 !important;
 }
