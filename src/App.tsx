@@ -31,9 +31,9 @@ import { ScheduleModal } from './components/ScheduleModal';
 import { CommandPalette } from './components/CommandPalette';
 import { useSocket } from './hooks/useSocket';
 import { useKeyboardShortcutsV2 } from './hooks/useKeyboardShortcutsV2';
+import { useFileSettings } from './hooks/useFileSettings';
 import { AppSettings, Todo, Schedule } from './types/todo';
 import { CommandContext } from './types/commands';
-import { configManager } from './utils/configManager';
 import { numberToPriority } from './utils/priorityUtils';
 import { formatTomlKeyValue } from './utils/tomlUtils';
 import { registerDefaultCommands } from './commands/defaultCommands';
@@ -95,6 +95,7 @@ const getTauriDefaultSettings = (): AppSettings => {
 
 function App() {
   const { t, i18n } = useTranslation();
+  const { settings: fileSettings, updateSettings: updateFileSettings, isLoading: isLoadingSettings } = useFileSettings();
   const [settings, setSettings] = useState<AppSettings>(getTauriDefaultSettings());
   const [isInitialized, setIsInitialized] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -141,31 +142,43 @@ function App() {
     toggleSchedule
   } = useSocket(settings.serverUrl);
 
+  // ファイルベースの設定を適用
   useEffect(() => {
-    const initializeConfig = async () => {
-      try {
-        logger.debug('Initializing config manager');
-        
-        // 古いlocalStorageキーからのマイグレーション
-        const oldSettings = localStorage.getItem('todoAppSettings');
-        if (oldSettings && !localStorage.getItem('yutodoAppSettings')) {
-          logger.info('Migrating old localStorage data');
-          localStorage.setItem('yutodoAppSettings', oldSettings);
-          localStorage.removeItem('todoAppSettings');
-        }
-        
-        // 古いi18n言語設定をクリア（アプリ設定に統一）
-        if (localStorage.getItem('yutodo-language')) {
-          logger.debug('Removing old i18n language setting');
-          localStorage.removeItem('yutodo-language');
-        }
-        
-        await configManager.initialize();
-        const appSettings = configManager.getAppSettings();
-        logger.debug('Loaded app settings:', appSettings);
-        
-        // 設定を適用
-        const finalSettings = { ...DEFAULT_SETTINGS, ...appSettings };
+    if (!isLoadingSettings && fileSettings) {
+      logger.debug('Applying file-based settings:', fileSettings);
+      
+      // ファイル設定からAppSettings形式に変換
+      const appSettings: AppSettings = {
+        alwaysOnTop: fileSettings.app.alwaysOnTop,
+        detailedMode: fileSettings.app.detailedMode,
+        darkMode: fileSettings.app.theme,
+        confirmDelete: fileSettings.app.confirmDelete,
+        customCss: fileSettings.appearance.customCss,
+        serverUrl: fileSettings.server.url,
+        language: fileSettings.app.language,
+        currentView: fileSettings.app.currentView
+      };
+      
+      const finalSettings = { ...DEFAULT_SETTINGS, ...appSettings };
+      setSettings(finalSettings);
+      
+      // 言語設定を明示的に適用
+      if (finalSettings.language === 'auto') {
+        const browserLang = navigator.language.split('-')[0];
+        const supportedLang = ['en', 'ja'].includes(browserLang) ? browserLang : 'en';
+        i18n.changeLanguage(supportedLang);
+      } else {
+        i18n.changeLanguage(finalSettings.language);
+      }
+      
+      setIsInitialized(true);
+    } else if (!isLoadingSettings && !fileSettings) {
+      // ファイル設定が利用できない場合はlocalStorageフォールバック
+      logger.debug('File settings not available, using localStorage fallback');
+      const savedSettings = localStorage.getItem('yutodoAppSettings');
+      if (savedSettings) {
+        const parsed = JSON.parse(savedSettings);
+        const finalSettings = { ...DEFAULT_SETTINGS, ...parsed };
         setSettings(finalSettings);
         
         // 言語設定を明示的に適用
@@ -176,42 +189,13 @@ function App() {
         } else {
           i18n.changeLanguage(finalSettings.language);
         }
-        
-        // デフォルトコマンドの登録は別のuseEffectで処理
-        
-        setIsInitialized(true);
-      } catch (error) {
-        logger.error('Failed to initialize config:', error);
-        // フォールバック: localStorage
-        logger.debug('Attempting localStorage fallback');
-        const savedSettings = localStorage.getItem('yutodoAppSettings');
-        if (savedSettings) {
-          logger.debug('Found saved settings in localStorage');
-          const parsed = JSON.parse(savedSettings);
-          const finalSettings = { ...DEFAULT_SETTINGS, ...parsed };
-          setSettings(finalSettings);
-          
-          // 言語設定を明示的に適用
-          if (finalSettings.language === 'auto') {
-            const browserLang = navigator.language.split('-')[0];
-            const supportedLang = ['en', 'ja'].includes(browserLang) ? browserLang : 'en';
-            i18n.changeLanguage(supportedLang);
-          } else {
-            i18n.changeLanguage(finalSettings.language);
-          }
-          
-          setIsInitialized(true);
-        } else {
-          logger.debug('No saved settings found in localStorage');
-          // デフォルト言語設定を適用
-          i18n.changeLanguage('en');
-          setIsInitialized(true);
-        }
+      } else {
+        setSettings(DEFAULT_SETTINGS);
+        i18n.changeLanguage('en');
       }
-    };
-
-    initializeConfig();
-  }, [i18n]); // tは削除、registerDefaultCommandsは別のuseEffectで処理
+      setIsInitialized(true);
+    }
+  }, [fileSettings, isLoadingSettings, i18n]);
 
   // 言語設定の変更を適用
   useEffect(() => {
@@ -244,29 +228,6 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settings.language]); // 言語変更時のみ
 
-  useEffect(() => {
-    // 初期化完了後にのみ保存処理を実行
-    if (!isInitialized) return;
-
-    logger.debug('Settings changed, saving to localStorage and config file');
-
-    // localStorageに保存
-    try {
-      localStorage.setItem('yutodoAppSettings', JSON.stringify(settings));
-      logger.debug('Settings saved to localStorage');
-    } catch (error) {
-      logger.error('Failed to save to localStorage:', error);
-    }
-
-    // 設定ファイルにも保存
-    configManager.updateFromAppSettings(settings)
-      .then(() => {
-        logger.debug('Settings successfully saved to config file');
-      })
-      .catch(error => {
-        logger.error('Failed to update config file:', error);
-      });
-  }, [settings, isInitialized]);
 
   // Tauri環境でAlways On Topを適用
   useEffect(() => {
@@ -547,8 +508,43 @@ function App() {
     updateTitle();
   }, [connectionStatus, reconnectAttempts]);
 
-  const handleSettingsChange = (newSettings: AppSettings) => {
+  const handleSettingsChange = async (newSettings: AppSettings) => {
     setSettings(newSettings);
+    
+    // ファイルベース設定が利用可能な場合は更新
+    if (updateFileSettings) {
+      try {
+        // AppSettings形式からファイル設定形式に変換
+        const updates = {
+          app: {
+            theme: newSettings.darkMode as 'auto' | 'light' | 'dark',
+            language: newSettings.language,
+            alwaysOnTop: newSettings.alwaysOnTop,
+            detailedMode: newSettings.detailedMode,
+            confirmDelete: newSettings.confirmDelete,
+            currentView: newSettings.currentView
+          },
+          server: {
+            url: newSettings.serverUrl,
+            reconnectInterval: 5000, // デフォルト値
+            timeout: 30000 // デフォルト値
+          },
+          appearance: {
+            customCss: newSettings.customCss
+          }
+        };
+        
+        await updateFileSettings(updates);
+        logger.debug('Updated file-based settings');
+      } catch (error) {
+        logger.error('Failed to update file-based settings:', error);
+        // フォールバック: localStorage
+        localStorage.setItem('yutodoAppSettings', JSON.stringify(newSettings));
+      }
+    } else {
+      // ファイル設定が利用できない場合はlocalStorageに保存
+      localStorage.setItem('yutodoAppSettings', JSON.stringify(newSettings));
+    }
   };
 
   const handleImportTodos = (importedTodos: Todo[]) => {
@@ -1227,10 +1223,10 @@ function App() {
     },
     // View switching
     onShowTasks: () => {
-      setSettings(prev => ({ ...prev, currentView: 'tasks' }));
+      handleSettingsChange({ ...settings, currentView: 'tasks' });
     },
     onShowSchedules: () => {
-      setSettings(prev => ({ ...prev, currentView: 'schedules' }));
+      handleSettingsChange({ ...settings, currentView: 'schedules' });
     },
     // Navigation (TODO: implement these)
     onNextTask: () => {
