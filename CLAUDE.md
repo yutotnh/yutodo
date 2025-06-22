@@ -1019,6 +1019,30 @@ enable_compression = true
 enable_keep_alive = true
 ```
 
+### CORS Configuration for Development
+
+When running in development mode with Vite, the frontend may use different ports (1420-1430). To avoid CORS errors, configure the server to allow these origins:
+
+```toml
+[security]
+# Development CORS configuration
+cors_origins = [
+  "http://localhost:1420",
+  "http://localhost:1421", 
+  "http://localhost:1422",
+  "http://localhost:1423",
+  "http://localhost:1424",
+  "http://localhost:1425",
+  "http://localhost:1426",
+  "http://localhost:1427",
+  "http://localhost:1428",
+  "http://localhost:1429",
+  "http://localhost:1430"
+]
+```
+
+**Note**: Using `cors_origins = ["*"]` wildcard may not work properly with Socket.IO. It's better to explicitly list allowed origins.
+
 # important-instruction-reminders
 Do what has been asked; nothing more, nothing less.
 NEVER create files unless they're absolutely necessary for achieving your goal.
