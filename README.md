@@ -1,24 +1,26 @@
 # YuToDo - Tauri Desktop Application
 
-A modern, feature-rich todo list application built with Tauri, React, and TypeScript. This desktop app provides real-time synchronization, native file operations, Markdown support, and extensive customization options.
+A modern, feature-rich todo list application built with Tauri, React, and TypeScript. This desktop app provides real-time synchronization, native file operations, Markdown support, comprehensive scheduling system, and extensive customization options.
 
 ## Features
 
 ### Core Functionality
 - ✅ **Real-time synchronization** - Multiple instances stay synchronized via WebSocket
 - ✅ **Drag & drop reordering** - Intuitive task organization
-- ✅ **Inline editing** - Click to edit tasks directly (slim mode support)
-- ✅ **Priority system** - High (2), Medium (1), Low (0) priority levels with visual indicators
+- ✅ **Inline editing** - Double-click to edit tasks directly with cursor positioning
+- ✅ **Priority system** - High, Medium, Low priority levels with visual indicators
 - ✅ **Due dates** - Schedule tasks with optional due dates and overdue detection
+- ✅ **Schedule management** - Comprehensive scheduling with once/daily/weekly/monthly/custom recurrence
 - ✅ **Search & filtering** - Find tasks by content, status, priority, or overdue status
 - ✅ **Multi-selection** - Excel-like task selection with Shift+Click (range) and Ctrl+Click (individual)
 - ✅ **Delete confirmation** - Optional confirmation dialogs (configurable)
 - ✅ **Markdown support** - Full Markdown rendering in task titles and descriptions
+- ✅ **Completed tasks section** - Collapsible section for completed tasks with expand/collapse toggle
 
 ### User Interface
 - 🎨 **Dark/Light themes** - Auto-detect system preference or manual selection
-- 🌐 **Internationalization** - Full English/Japanese language support with auto-detection
-- 📱 **Slim mode** - Compact view for minimal desktop footprint
+- 🌐 **Internationalization** - Full English/Japanese language support with app-controlled persistence
+- 📱 **Slim mode** - Compact view with priority, date, and description display
 - 🎯 **Auto-hiding header** - Clean interface that appears on mouse hover
 - ⌨️ **VSCode-style command palette** - Quick access to all commands with Ctrl+Shift+P (Cmd+Shift+P on macOS)
 - ⌨️ **Centralized keyboard shortcuts** - Unified shortcut system with OS-aware display (Ctrl/Cmd)
@@ -30,6 +32,15 @@ A modern, feature-rich todo list application built with Tauri, React, and TypeSc
 - 🎯 **Precise editing** - Click-to-position cursor in task editing with canvas-based positioning
 - 📋 **Header menu system** - Integrated File/Edit/View/Help menus with keyboard shortcuts and dropdown navigation
 
+### Schedule System
+- 📅 **Schedule types** - Once, Daily, Weekly, Monthly, and Custom recurrence patterns
+- ⏰ **Time-based execution** - Set specific times for schedule execution
+- 📆 **Date ranges** - Start and end dates for recurring schedules
+- 🚫 **Weekend exclusion** - Option to skip weekends for daily schedules
+- 📊 **Active/Inactive categorization** - Automatic organization of completed and inactive schedules
+- 🗑️ **Bulk operations** - Delete all inactive schedules with confirmation
+- 🔄 **Real-time sync** - Schedule changes synchronized across all clients
+
 ### Data Management & Export/Import
 - 💾 **SQLite database** - Reliable local data storage with OS-standard location
   - **Linux**: `~/.local/share/YuToDo/todos.db`
@@ -37,16 +48,11 @@ A modern, feature-rich todo list application built with Tauri, React, and TypeSc
   - **macOS**: `~/Library/Application Support/YuToDo/todos.db`
 - 🔄 **Automatic migration** - Seamless migration from old database location
 - 📤 **Native file operations** - Full Tauri-native file dialogs for export/import
-- 📄 **Multiple export formats**:
-  - **JSON export** - Complete task data with metadata and ordering
-  - **CSV export** - Spreadsheet-compatible format for data analysis
-  - **TOML config export** - Beautiful structured settings backup with comments
-- 📥 **Import functionality**:
-  - **JSON import** - Restore tasks from exported files with validation
-  - **TOML config import** - Restore settings from backup files
+- 📄 **TOML export/import** - Unified format for tasks using standard `[[tasks]]` table syntax
 - ⚙️ **TOML configuration** - Human-readable settings file with JSON Schema validation
 - 🔄 **Auto-save** - Settings and tasks automatically persisted
 - 📋 **Clipboard fallback** - Automatic clipboard copy when native save fails (WSLg support)
+- 📊 **Server configuration** - Comprehensive server-side configuration management
 
 ### Desktop Integration
 - 📌 **Always on top** - Keep the app visible above other windows
@@ -66,14 +72,16 @@ A modern, feature-rich todo list application built with Tauri, React, and TypeSc
 - **Real-time**: Socket.IO client for WebSocket communication
 - **Configuration**: @ltd/j-toml for TOML parsing and generation
 - **Markdown**: react-markdown with remark-gfm for GitHub Flavored Markdown
+- **i18n**: react-i18next for internationalization
 
 ### Backend (Node.js + Express)
 - **Server**: Express.js with TypeScript
 - **Database**: SQLite3 with OS-standard data directory location
 - **Real-time**: Socket.IO for WebSocket communication
-- **API**: RESTful endpoints for todo operations
+- **API**: RESTful endpoints for todo and schedule operations
 - **Schema**: Automatic database initialization and migration
-- **Data Management**: Automatic migration from old database locations
+- **Configuration**: Comprehensive TOML-based server configuration system
+- **Schedule Engine**: Server-side schedule execution engine
 
 ### Desktop (Tauri v2 + Rust)
 - **Framework**: Tauri v2 for modern cross-platform desktop apps
@@ -126,17 +134,19 @@ A modern, feature-rich todo list application built with Tauri, React, and TypeSc
    npm run tauri dev
    ```
 
-The app will connect to the server at `http://localhost:3001` by default.
+The app will connect to the server at `http://localhost:3001` by default. The frontend development server automatically selects an available port starting from 1420.
 
 ## Build Commands
 
 ### Frontend (React + Vite)
 ```bash
-npm run dev          # Start Vite dev server
+npm run dev          # Start Vite dev server (auto-selects port)
 npm run build        # Build React app and TypeScript
 npm run preview      # Preview built app
 npm test             # Run frontend tests with Vitest
 npm run test:ui      # Run tests with interactive UI
+npm run lint         # Run ESLint on source files
+npm run lint:fix     # Fix ESLint issues automatically
 ```
 
 ### Backend (Node.js Server)
@@ -159,226 +169,172 @@ npm run tauri build  # Build Tauri desktop app for distribution
 ### Testing
 ```bash
 # Frontend testing (from root directory)
-npm test                           # Run all frontend tests (142 tests)
+npm test                           # Run all frontend tests (346+ tests)
 npm test src/test/TodoItem.test.tsx # Run specific test file
+npm test -- --run                  # Run tests once (no watch mode)
 npm run test:ui                    # Interactive test UI with Vitest
 
 # Backend testing (from server directory)
 cd server
-npm test                          # Run all backend tests
+npm test                          # Run all backend tests (58 tests)
 npm run test:watch                # Watch mode for TDD
 npm test -- --testNamePattern="socket" # Run specific test patterns
+
+# E2E testing with WebdriverIO
+npm run test:e2e                  # Run E2E tests headlessly
+npm run test:e2e:ui               # Run with visible browser
+npm run test:e2e:headed           # Alternative headed mode
+npm run setup:e2e                 # Install tauri-driver and WebDriver
 ```
 
 ## Configuration
 
-### Settings File (TOML)
+### Client Settings File (TOML)
 The app supports a comprehensive TOML configuration file with the following structure:
 
 ```toml
 # YuToDo Configuration
 # Generated on 2025-06-14T12:34:56.789Z
-#
-# This file contains all settings for the YuToDo application.
-# You can edit this file manually or use the settings panel in the app.
 
-# Application window settings
-[app.window]
-always_on_top = false
-width = 800
-height = 600
-min_width = 400
-min_height = 300
+[app]
+alwaysOnTop = false
+detailedMode = false
+darkMode = "auto"  # "auto" | "light" | "dark"
+confirmDelete = true
+customCss = ""
+serverUrl = "http://localhost:3001"
+language = "auto"  # "auto" | "en" | "ja"
+currentView = "tasks"  # "tasks" | "schedules"
+```
 
-# User interface settings
-[app.ui]
-theme = "auto"  # "auto" | "light" | "dark"
-detailed_mode = false
-auto_hide_header = true
+### Server Configuration
+The server supports comprehensive configuration through environment variables and TOML files:
 
-# Application behavior settings
-[app.behavior]
-auto_save = true
-enable_shortcuts = true
-show_notifications = true
-confirm_delete = true
-
-# Server connection settings
-[server]
-url = "http://localhost:3001"
-timeout = 5000
-retry_attempts = 3
-
-# Visual appearance settings
-[appearance]
-custom_css = ""
-font_family = "Inter, sans-serif"
-font_size = 14
-
-# Keyboard shortcuts
-[shortcuts]
-new_task = "Ctrl+N"
-toggle_settings = "Ctrl+,"
-focus_search = "Ctrl+F"
-select_all = "Ctrl+A"
-delete_selected = "Delete"
-show_help = "F1"
+```bash
+# Environment variables
+YUTODO_SERVER_PORT=8080          # Server port
+YUTODO_SERVER_HOST=0.0.0.0       # Server host
+YUTODO_DB_PATH=/custom/todos.db   # Database file path
+YUTODO_LOG_LEVEL=debug           # Logging level
+YUTODO_SCHEDULE_INTERVAL=120     # Schedule check interval (seconds)
+YUTODO_CONFIG_PATH=/etc/yutodo/server-config.toml  # Config file path
 ```
 
 ### Configuration Management
-- **Export Settings**: Save current configuration as structured TOML file with comments
+- **Export Settings**: Save current configuration as TOML file
 - **Import Settings**: Load configuration from TOML file with validation
 - **Reset to Defaults**: Restore all settings to default values
 - **Live Updates**: Settings applied immediately without restart
 - **Validation**: JSON Schema validation for configuration integrity
 
-### JSON Schema
-A complete JSON Schema is provided in `config.schema.json` for IDE autocompletion and validation.
-
-## Markdown Support
-
-### Full Markdown Rendering
-- **Task Titles**: Support for inline Markdown formatting (bold, italic, code, links)
-- **Task Descriptions**: Complete Markdown support including headers, lists, code blocks
-- **GitHub Flavored Markdown**: Extended syntax support via remark-gfm
-
-### Interactive Features
-- **Clickable Links**: URLs in Markdown automatically open in default browser
-- **Right-click Context**: Right-click any link to copy URL to clipboard
-- **Cross-platform URL Handling**: Smart fallbacks for WSLg environments
-- **Visual Styling**: Consistent Markdown styling in both light and dark themes
-
-### Usage Examples
-```markdown
-**Important**: Review [documentation](https://example.com)
-*Progress*: `npm install` completed
-## Project Phase 1
-- [x] Setup development environment
-- [ ] Implement core features
-```
-
-## Data Export & Import
-
-### Export Formats
-
-#### JSON Export
-- Complete task data with all metadata
-- Includes ID, title, description, completion status, priority, due dates, and timestamps
-- Preserves custom ordering information and Markdown formatting
-- Full round-trip compatibility for backup/restore
-
-#### CSV Export
-- Spreadsheet-compatible format
-- Headers: ID, Title, Description, Completed, Priority, Scheduled For, Created At, Updated At
-- Handles text escaping and special characters (including Markdown)
-- Perfect for data analysis or external tool integration
-
-#### TOML Configuration Export
-- Human-readable settings backup with comments and section headers
-- Preserves all user customizations
-- Includes theme preferences, window settings, shortcuts, and custom CSS
-- Cross-device configuration sharing
-
-### Import Functionality
-- **JSON Import**: Restore tasks from exported JSON files with data validation
-- **TOML Import**: Restore settings from configuration backups
-- **File Validation**: Automatic format detection and error handling
-- **Native File Dialogs**: System-native file picker integration
-
 ## Keyboard Shortcuts
 
+### Essential Shortcuts
 | Shortcut | Action |
 |----------|--------|
+| `Ctrl+Shift+P` | Open command palette |
 | `Ctrl+N` | Create new task |
 | `Ctrl+,` | Toggle settings |
 | `Ctrl+F` | Focus search |
 | `Ctrl+A` | Select all tasks |
+| `Ctrl+D` | Toggle task completion |
 | `Delete` | Delete selected tasks |
-| `F1` | Show help |
-| `F2` | Edit task (slim mode) |
-| `Space` | Toggle task completion |
+| `Ctrl+K, Ctrl+S` | Show keyboard shortcuts help |
+
+### Navigation & Editing
+| Shortcut | Action |
+|----------|--------|
+| `↑/↓` | Navigate between tasks |
+| `E` or `F2` | Edit selected task |
 | `Enter` | Confirm action/Complete editing |
-| `Escape` | Cancel action/Close dialogs |
-| `Shift + Click` | Range selection (select from last selected to current) |
-| `Ctrl + Click` | Individual selection toggle |
-| `Double Click` | Edit task title (in-place editing) |
+| `Escape` | Cancel action/Close dialogs/Clear selection |
+| `Space` | Quick add new task (when no task selected) |
+| `Double Click` | Edit task title with cursor positioning |
 
-### Header Menu System
-The application features an integrated menu bar in the header with the following menus:
+### Selection
+| Shortcut | Action |
+|----------|--------|
+| `Shift + Click` | Range selection |
+| `Ctrl + Click` | Toggle individual selection |
+| `Shift + ↑/↓` | Extend selection |
 
-#### File Menu
-- **New Task** (Ctrl+N) - Create a new task
-- **Import Tasks** - Import tasks from JSON file
-- **Export Tasks** - Export tasks to JSON/CSV
-- **Quit** (Ctrl+Q) - Close application
+### Menu Navigation
+| Shortcut | Action |
+|----------|--------|
+| `Alt+F` | Open File menu |
+| `Alt+E` | Open Edit menu |
+| `Alt+V` | Open View menu |
+| `Alt+H` | Open Help menu |
 
-#### Edit Menu  
-- **Select All** (Ctrl+A) - Select all visible tasks
-- **Delete Selected** (Del) - Delete selected tasks
-- **Preferences** (Ctrl+,) - Open settings panel
+## Command Palette
 
-#### View Menu
-- **Toggle Slim Mode** - Switch between detailed and compact view
-- **Toggle Theme** - Cycle through auto/light/dark themes  
-- **Always on Top** - Keep window above other applications
+Access all application commands quickly with `Ctrl+Shift+P` (or `Cmd+Shift+P` on macOS). The command palette includes:
 
-#### Help Menu
-- **Keyboard Shortcuts** (Ctrl+K Ctrl+S) - Show shortcut reference
-- **About YuToDo** - Application information
+### Categories
+- **File**: Import/Export tasks, New task
+- **View**: Toggle theme, slim mode, task/schedule view
+- **Task**: Create, edit, delete, toggle completion
+- **Schedule**: Create schedule, delete inactive schedules
+- **Search**: Focus search, clear search
+- **Settings**: Open settings, toggle confirmations
+- **Navigation**: Various navigation commands
 
-**Menu Navigation**: Click menu titles to open dropdowns, press Esc to close, or click outside menu area. All menu items include their keyboard shortcuts for quick reference.
+Commands are searchable with fuzzy matching and show their keyboard shortcuts for learning.
 
 ## Internationalization
 
 ### Supported Languages
 - **English** - Full support with native UI text
 - **Japanese (日本語)** - Complete translation coverage
-- **Auto-detection** - Automatically detects browser language preference
+- **Auto-detection** - Automatically detects system language preference
 
 ### Language Features
 - **Real-time switching** - Change language instantly without restart
-- **Persistent settings** - Language preference saved in configuration
+- **Persistent settings** - Language preference saved in both localStorage and TOML config
 - **Fallback system** - Graceful fallback to English for missing translations
 - **Type-safe translations** - TypeScript integration for translation keys
-
-### Language Settings
-Access language settings through:
-1. Open Settings panel (Ctrl+, or gear icon)
-2. Navigate to Language section (🌐 icon)
-3. Choose from:
-   - **Auto** - Follow system language preference
-   - **English** - Force English interface
-   - **日本語** - Force Japanese interface
+- **OS-aware labels** - Keyboard shortcuts show Ctrl (Windows/Linux) or Cmd (macOS)
 
 ### Adding New Languages
-To contribute translations for additional languages:
-1. Create translation file in `src/i18n/locales/[language].json`
-2. Follow the existing structure from `en.json` or `ja.json`
-3. Add language configuration to the system
-4. Test translation coverage across all UI components
+To contribute translations:
+1. Create `src/i18n/locales/[language].json`
+2. Add to `resources` in `src/i18n/index.ts`
+3. Update `supportedLanguages` object
+4. Update language selector in Settings component
 
 ## Database Architecture
 
-### Database Location
-The application stores data in OS-standard application data directories:
-- **Linux**: `~/.local/share/YuToDo/todos.db`
-- **Windows**: `%APPDATA%/YuToDo/todos.db`
-- **macOS**: `~/Library/Application Support/YuToDo/todos.db`
-
-The server automatically creates the data directory and migrates existing data from old locations.
-
 ### Database Schema
 
-SQLite table `todos`:
+**Table `todos`:**
 - `id` (TEXT PRIMARY KEY) - Unique task identifier
 - `title` (TEXT NOT NULL) - Task title (supports Markdown)
 - `description` (TEXT) - Optional task description (supports Markdown)
 - `completed` (BOOLEAN) - Completion status
-- `priority` (INTEGER, 0-2) - Priority level (0=Low, 1=Medium, 2=High)
+- `priority` (INTEGER, 0-2) - Legacy numeric format (converted to strings in app)
 - `scheduledFor` (DATETIME) - Optional due date
 - `createdAt` (DATETIME) - Creation timestamp
 - `updatedAt` (DATETIME) - Last modification timestamp
 - `order_index` (INTEGER) - Custom ordering for drag & drop
+
+**Table `schedules`:**
+- `id` (TEXT PRIMARY KEY) - Unique schedule identifier
+- `title` (TEXT NOT NULL) - Schedule title
+- `description` (TEXT) - Optional description
+- `type` (TEXT) - Schedule type: once, daily, weekly, monthly, custom
+- `startDate` (TEXT) - Schedule start date
+- `endDate` (TEXT) - Optional end date
+- `time` (TEXT) - Execution time
+- `priority` (TEXT) - Priority: high, medium, low
+- `excludeWeekends` (BOOLEAN) - Skip weekends for daily schedules
+- `weeklyConfig` (TEXT) - JSON configuration for weekly schedules
+- `monthlyConfig` (TEXT) - JSON configuration for monthly schedules
+- `customConfig` (TEXT) - JSON configuration for custom schedules
+- `isActive` (BOOLEAN) - Active/inactive status
+- `lastExecuted` (TEXT) - Last execution timestamp
+- `nextExecution` (TEXT) - Next scheduled execution
+- `createdAt` (TEXT) - Creation timestamp
+- `updatedAt` (TEXT) - Last modification timestamp
 
 ## API Endpoints
 
@@ -387,17 +343,30 @@ SQLite table `todos`:
 - `POST /api/todos` - Create new todo
 - `PUT /api/todos/:id` - Update todo
 - `DELETE /api/todos/:id` - Delete todo
-- `POST /api/todos/bulk-import` - Import multiple todos
 - `POST /api/todos/reorder` - Update todo ordering
 
+### Schedule API
+- `GET /api/schedules` - Get all schedules
+- `POST /api/schedules` - Create new schedule
+- `PUT /api/schedules/:id` - Update schedule
+- `DELETE /api/schedules/:id` - Delete schedule
+- `PUT /api/schedules/:id/toggle` - Toggle schedule active status
+
 ### WebSocket Events (Socket.IO)
+#### Todo Events
 - `todos:list` - Get current todos list
 - `todo:add` - Add new todo
 - `todo:update` - Update existing todo
 - `todo:delete` - Delete todo
 - `todo:toggle` - Toggle completion status
-- `todos:bulk-import` - Import multiple todos
 - `todos:reorder` - Reorder todos
+
+#### Schedule Events
+- `schedules:list` - Get current schedules list
+- `schedule:add` - Add new schedule
+- `schedule:update` - Update existing schedule
+- `schedule:delete` - Delete schedule
+- `schedule:toggle` - Toggle schedule active status
 
 ## Technology Stack
 
@@ -412,135 +381,130 @@ SQLite table `todos`:
 - **react-markdown** - Markdown rendering with remark-gfm
 - **@ltd/j-toml** - TOML parsing and stringification
 - **react-i18next** - Internationalization framework
-- **i18next** - Core internationalization library
-- **i18next-browser-languagedetector** - Automatic language detection
-
-### Frontend Testing
-- **Vitest** - Fast unit testing framework with JSDOM environment
-- **React Testing Library** - Component testing utilities and best practices
-- **@testing-library/user-event** - Advanced user interaction simulation
-- **@testing-library/jest-dom** - Custom DOM matchers for better assertions
-- **jsdom** - Browser environment simulation for Node.js
-- **canvas** - Canvas API polyfill for JSDOM compatibility
 
 ### Backend
 - **Node.js** - JavaScript runtime
 - **Express.js** - Web framework
 - **TypeScript** - Type-safe server code
 - **Socket.IO** - Real-time WebSocket communication
-- **sqlite3** - SQLite database driver with OS-standard data locations
+- **sqlite3** - SQLite database driver
 - **uuid** - Unique identifier generation
-
-### Backend Testing
-- **Jest** - Comprehensive testing framework with TypeScript support
-- **ts-jest** - TypeScript preprocessor for Jest
-- **socket.io-client** - Socket.IO client for testing real-time features
-- **@types/jest** - TypeScript definitions for Jest
+- **zod** - Schema validation for configuration
 
 ### Desktop (Tauri v2)
 - **Tauri v2** - Modern Rust-based desktop framework
-- **Rust** - Systems programming language for performance and security
-- **tauri-plugin-dialog** - Native file save/open dialogs
+- **Rust** - Systems programming language
+- **tauri-plugin-dialog** - Native file dialogs
 - **tauri-plugin-fs** - Secure file system operations
-- **tauri-plugin-opener** - System integration and URL handling
-- **tauri-plugin-clipboard-manager** - Native clipboard operations
-- **Capability-based Security** - Fine-grained permission system
+- **tauri-plugin-opener** - System integration
+- **tauri-plugin-clipboard-manager** - Clipboard operations
 
-### Development & Testing Tools
-- **ts-node** - TypeScript execution for development
-- **Vite** - Modern build tooling with hot reload
-- **Cargo** - Rust package manager and build system
-- **Vitest** - Fast frontend testing framework with JSDOM environment
-- **Jest** - Backend testing framework with TypeScript support
-- **React Testing Library** - Component testing utilities
+### Testing
+- **Vitest** - Fast unit testing for frontend (346+ tests)
+- **Jest** - Comprehensive testing for backend (58 tests)
+- **React Testing Library** - Component testing
+- **WebdriverIO** - E2E testing with Tauri WebDriver
 - **@testing-library/user-event** - User interaction simulation
 
-## File System Integration
+## E2E Testing
 
-### Tauri Plugins Configuration
-The app uses Tauri v2's plugin system for secure native operations:
+### Setup
+```bash
+# Install tauri-driver and platform WebDriver
+npm run setup:e2e
 
-```json
-{
-  "permissions": [
-    "opener:allow-open-url",
-    "dialog:allow-save",
-    "dialog:allow-open",
-    "dialog:allow-message",
-    "fs:allow-write-text-file",
-    "fs:allow-read-text-file",
-    "clipboard-manager:allow-read-text",
-    "clipboard-manager:allow-write-text"
-  ]
-}
+# Linux additional requirement
+sudo apt install webkit2gtk-driver
+
+# Windows: Download Edge WebDriver for your Edge version
 ```
 
-### Cross-Platform File Operations
-- **Native Save Dialogs**: System-appropriate file save dialogs
-- **File Type Filtering**: Automatic file extension filtering (.json, .csv, .toml)
-- **Error Handling**: Graceful fallback to clipboard operations
-- **Path Management**: Secure file path handling with Tauri's sandboxed approach
-- **WSLg Support**: Automatic detection and clipboard fallbacks for WSL environments
+### Running E2E Tests
+```bash
+npm run test:e2e          # Headless mode
+npm run test:e2e:headed   # With visible browser
+npm run test:e2e:ui       # Interactive mode
+```
+
+### Platform Support
+- ✅ **Linux**: webkit2gtk-driver + Xvfb for CI
+- ✅ **Windows**: Edge WebDriver
+- ❌ **macOS**: Not supported (no WKWebView driver)
+
+### Test Coverage
+- App launch and UI validation
+- Todo CRUD operations
+- Keyboard shortcuts and navigation
+- Window operations and menus
+- Schedule management
+- Command palette interactions
 
 ## WSLg Environment Support
 
-### Automatic Detection
-The app automatically detects WSLg (Windows Subsystem for Linux GUI) environments and provides appropriate fallbacks:
+The app automatically detects and handles WSLg (Windows Subsystem for Linux GUI) environments:
 
 ### URL Handling
-- **Native Attempt**: First tries to open URLs in default browser
-- **Clipboard Fallback**: Automatically copies URLs to clipboard with user notification
-- **Right-click Option**: Alternative method to copy URLs manually
+- First attempts native browser opening
+- Falls back to clipboard copy with notification
+- Right-click always available for manual copy
 
 ### File Operations
-- **Native Dialogs**: Attempts to use system native file dialogs
-- **Clipboard Export**: Falls back to clipboard copy when file operations fail
-- **User Guidance**: Clear messages about WSLg limitations and workarounds
+- Native dialogs attempted first
+- Clipboard export as fallback
+- Clear user guidance for limitations
+
+### Graphics
+Normal warnings that don't affect functionality:
+```
+libEGL warning: DRI3: Screen seems not DRI3 capable
+MESA: error: ZINK: failed to choose pdev
+```
+
+Suppress with: `export LIBGL_ALWAYS_SOFTWARE=1`
 
 ## Contributing
 
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
-4. **Write tests** - All new features should include comprehensive tests
-   - Frontend: Add component tests in `src/test/`
-   - Backend: Add API and socket tests in `server/__tests__/`
-   - Run `npm test` to ensure all tests pass (142 frontend + backend tests)
-5. Verify test coverage and ensure no stderr errors in test output
+4. **Write tests** - All new features must include tests
+5. **Run validation** - Ensure all checks pass:
+   ```bash
+   npm run lint          # No errors allowed
+   npm run build         # Must succeed
+   npm test -- --run     # All 346+ tests must pass
+   cd server && npm test # All 58 tests must pass
+   ```
 6. Submit a pull request
 
-### Testing Guidelines
-- **Frontend Tests**: Use Vitest + React Testing Library for component testing
-- **Backend Tests**: Use Jest for API and WebSocket functionality
-- **E2E Tests**: Use WebdriverIO with Tauri WebDriver for GUI testing
-- **Mock Strategy**: Mock external dependencies (Tauri plugins, libraries) properly
-- **Error Testing**: Use console.error suppression for intentional error scenarios
-- **Coverage**: Maintain comprehensive test coverage for all new features
+### Testing Requirements
+- **Component Tests**: Add to `src/test/`
+- **Backend Tests**: Add to `server/__tests__/`
+- **E2E Tests**: Add to `e2e/tests/`
+- **100% Pass Rate**: All tests must pass
+- **Clean Output**: No console errors in tests
 
-#### E2E Testing Setup
+## Known Issues
+
+### Keyboard Behavior
+- **Enter Key**: May occasionally cause unresponsive state when task selected
+  - **Workaround**: Use `E` or `F2` for editing, press `Escape` to clear
+  - **Status**: Focus management issue under investigation
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Server Connection**: Ensure server running on port 3001
+2. **File Operations**: Check Tauri permissions in `capabilities/default.json`
+3. **Build Failures**: Update Rust toolchain: `rustup update`
+4. **Test Failures**: Run full test suite to identify issues
+5. **WSLg Limitations**: Use clipboard fallbacks for file/URL operations
+
+### Debug Mode
 ```bash
-# Initial setup (installs tauri-driver and WebDriver dependencies)
-npm run setup:e2e
-
-# Run E2E tests
-npm run test:e2e          # Headless mode
-npm run test:e2e:headed   # With visible browser window
-npm run test:e2e:ui       # Same as headed mode
-
-# Build app first (required for E2E tests)
-npm run tauri build
+npm run tauri dev  # Access browser DevTools with F12
 ```
-
-**Platform Support:**
-- ✅ **Linux**: webkit2gtk-driver + Xvfb
-- ✅ **Windows**: Edge WebDriver  
-- ❌ **macOS**: Not supported (no WKWebView driver)
-
-**Test Coverage:**
-- App launch and UI component validation
-- Todo CRUD operations, filtering, and search
-- Keyboard shortcuts and command palette
-- Window operations and menu interactions
 
 ## License
 
@@ -549,58 +513,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ## Recommended IDE Setup
 
 - [VS Code](https://code.visualstudio.com/) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer)
-- [WebStorm](https://www.jetbrains.com/webstorm/) for React/TypeScript development
-- [RustRover](https://www.jetbrains.com/rust/) for Rust development
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Export/Import not working**: Ensure Tauri plugins are properly configured in `capabilities/default.json`
-2. **Database connection issues**: Check that the server is running on port 3001
-3. **Build failures**: Verify Rust toolchain is installed and up to date
-4. **Permission errors**: Review Tauri capabilities configuration for required permissions
-5. **URLs not opening**: In WSLg environments, URLs are copied to clipboard instead
-6. **Always on top not working**: This feature may be limited in WSLg environments
-7. **Test failures**: Run `npm test` to ensure all 142 tests pass with clean output
-8. **Mock errors in tests**: Check that external dependencies are properly mocked in test setup
-
-### Debug Mode
-Run the app in development mode to access browser developer tools:
-```bash
-npm run tauri dev
-```
-
-### WSLg Specific Issues
-- **URL Opening**: Links will copy to clipboard instead of opening directly
-- **File Dialogs**: May fall back to clipboard operations
-- **Window Management**: Some features like "always on top" may not work
-- **Graphics Warnings**: EGL/Mesa warnings during startup are normal and can be ignored
-- **Solution**: Use the clipboard content in Windows applications
-
-### Graphics Driver Warnings (WSL2/WSLg)
-When running in WSL2/WSLg environments, you may see graphics-related warnings like:
-```
-libEGL warning: DRI3: Screen seems not DRI3 capable
-MESA: error: ZINK: failed to choose pdev
-libEGL warning: failed to open /dev/dri/renderD128: Permission denied
-```
-
-These warnings are normal and do not affect functionality. The app automatically falls back to software rendering. To suppress these warnings, you can set:
-```bash
-export LIBGL_ALWAYS_SOFTWARE=1
-npm run tauri dev
-```
-
-## Known Issues
-
-### Keyboard Behavior
-- **Enter Key Issue**: Pressing Enter while a task is selected may occasionally cause the task to become unresponsive (background appears darker) until Escape is pressed. This is a focus management issue under investigation.
-  - **Workaround**: Use `E` or `F2` keys for task editing, or press `Escape` to clear the state
-  - **Impact**: Temporary UI issue that doesn't affect core functionality
-
-### Header Menu System
-- **Menu Interaction**: The header menu system replaces native Tauri menus with a custom implementation
-- **Auto-hide Prevention**: When a menu is open, the header auto-hide feature is temporarily disabled to prevent accidental closing
-- **Event Handling**: Menu clicks are properly isolated to prevent conflicts with header dragging functionality
-- **Keyboard Navigation**: All menu items support keyboard activation and display their shortcuts for reference
+- TypeScript and ESLint extensions for optimal development experience

@@ -4,26 +4,28 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a Tauri desktop application for todo list management with a React frontend and Node.js backend. The app features real-time synchronization using WebSockets, keyboard shortcuts, SQLite database for persistence, and native desktop integration with export/import functionality.
+This is a Tauri desktop application for todo list management with a React frontend and Node.js backend. The app features real-time synchronization using WebSockets, keyboard shortcuts, SQLite database for persistence, native desktop integration with export/import functionality, and a comprehensive schedule management system.
 
 ### Architecture
 
 - **Frontend**: React + TypeScript + Vite running in Tauri webview
-- **Backend**: Node.js Express server with Socket.IO for real-time communication
-- **Database**: SQLite for todo persistence
+- **Backend**: Node.js Express server with Socket.IO for real-time communication and schedule execution engine
+- **Database**: SQLite with OS-standard storage locations and automatic migration
 - **Desktop**: Tauri v2 Rust wrapper for cross-platform desktop app
 
 ### Key Components
 
 - **Frontend**: `src/App.tsx` is the main component managing state, socket connections, and UI
-- **Backend**: `server/server.ts` handles WebSocket events and SQLite operations
-- **Types**: Shared interfaces in `src/types/todo.ts` and `src/types/config.ts`
+- **Backend**: `server/server.ts` handles WebSocket events, SQLite operations, and schedule execution
+- **Types**: Shared interfaces in `src/types/todo.ts`, `src/types/config.ts`, and `src/types/commands.ts`
 - **Hooks**: Custom hooks for socket communication (`useSocket.ts`) and keyboard shortcuts (`useKeyboardShortcuts.ts`)
 - **Configuration**: 
   - **Client**: TOML-based config system with `src/utils/configManager.ts`
   - **Server**: Comprehensive server configuration system in `server/src/config/ServerConfigManager.ts`
 - **Internationalization**: `src/i18n/` - Complete i18n system with English/Japanese support  
 - **Menu System**: Custom header-integrated menu bar (`src/components/MenuBar.tsx`) replacing native Tauri menus
+- **Command Palette**: VSCode-style command system (`src/components/CommandPalette.tsx`) with centralized command registry
+- **Schedule System**: Complete schedule management with `src/components/ScheduleView.tsx` and server-side execution engine
 
 ## Development Commands
 
@@ -36,6 +38,8 @@ npm run tauri dev    # Start Tauri development mode
 npm run tauri build  # Build Tauri desktop app
 npm test             # Run frontend tests with Vitest
 npm run test:ui      # Run tests with Vitest UI interface
+npm run lint         # Run ESLint on source files
+npm run lint:fix     # Fix ESLint issues automatically
 ```
 
 ### Backend (Node.js Server)
@@ -58,22 +62,23 @@ npm test server-config                                 # Test config system only
 ### Testing Commands
 ```bash
 # Frontend testing (from root directory)
-npm test                    # Run all frontend tests (291 total)
+npm test                    # Run all frontend tests (346+ tests)
 npm test src/test/TodoItem.test.tsx  # Run specific test file
 npm test -- --run          # Run tests once (no watch mode)
 npm run test:ui            # Launch Vitest UI for interactive testing
 
 # Backend testing (from server directory)  
 cd server
-npm test                   # Run all backend tests (sequential due to SQLite)
+npm test                   # Run all backend tests (58 tests)
 npm run test:watch         # Watch mode for development
 npm run test:parallel      # Run tests in parallel (faster but may conflict)
 npm test -- --testNamePattern="socket" # Run specific tests
 
-# E2E testing (from root directory)
+# E2E testing with WebdriverIO (from root directory)
 npm run test:e2e           # Run all E2E tests headlessly
-npm run test:e2e:ui        # Launch Playwright UI for interactive debugging
-npm run test:e2e:headed    # Run E2E tests with visible browser window
+npm run test:e2e:ui        # Run E2E tests with visible browser (HEADED=true)
+npm run test:e2e:headed    # Alternative command for headed mode
+npm run setup:e2e          # Install tauri-driver and WebDriver dependencies
 ```
 
 ## Development Workflow
@@ -165,7 +170,7 @@ Claude Code evaluates each change and makes CHANGELOG.md update decisions at com
 - **Testing Library**: @testing-library/react for component interaction testing
 - **Mock Strategy**: Comprehensive mocking of external dependencies (Tauri plugins, DnD Kit, ReactMarkdown)
 - **Setup**: Global test setup in `src/test/setup.ts` with jest-dom matchers and window mocks
-- **Coverage**: 291 tests across 16 test files covering all major components and hooks
+- **Coverage**: 346+ tests across 19 test files covering all major components and hooks
 
 ### Backend Testing (Jest + Socket.IO Testing)
 - **Framework**: Jest with ts-jest preset for TypeScript support
@@ -173,50 +178,57 @@ Claude Code evaluates each change and makes CHANGELOG.md update decisions at com
 - **Socket Testing**: Socket.IO client/server integration tests
 - **Configuration**: Tests run in band (sequential) to prevent database conflicts
 - **Setup**: Test database isolation and cleanup between tests
+- **Coverage**: 58 tests across 5 test files
 
-### E2E Testing (Playwright + Tauri)
-- **Framework**: Playwright for cross-platform GUI testing
+### E2E Testing (WebdriverIO + Tauri)
+- **Framework**: WebdriverIO with Tauri WebDriver support
 - **Environment**: Real Tauri application with backend server
 - **Test Coverage**: App launch, todo operations, keyboard shortcuts, window operations
 - **CI Support**: GitHub Actions with virtual display (Xvfb) for Linux
-- **Artifacts**: Screenshots, videos, and HTML reports on test failures
+- **Helper Functions**: Reusable test utilities in `e2e/helpers/tauri-helpers.js`
+- **Requirements**: `tauri-driver`, platform-specific WebDriver (webkit2gtk-driver for Linux, Edge WebDriver for Windows)
 
 ### Test Files Structure
 ```
 src/test/
 ├── setup.ts                    # Global test configuration and mocks
 ├── App.test.tsx                # Main application integration tests
-├── TodoItem.test.tsx           # TodoItem component behavior tests (37 tests)
-├── useSocket.test.ts           # WebSocket functionality tests (28 tests)
-├── useKeyboardShortcuts.test.ts # Keyboard shortcut system tests (40 tests)
-├── configManager.test.ts       # Configuration management tests (17 tests)
-├── utils.test.ts               # Utility function tests (16 tests)
-├── AddTodoForm.test.tsx        # Form component tests (14 tests)
-├── ConnectionStatus.test.tsx   # Connection status tests (8 tests)
-├── DarkMode.test.tsx           # Dark mode functionality tests (9 tests)
-├── DeleteConfirmDialog.test.tsx # Delete confirmation tests (9 tests)
-├── MenuBar.test.tsx            # Menu bar functionality tests (12 tests)
-├── ScheduleModal.test.tsx      # Schedule modal tests (14 tests)
-├── ScheduleView.test.tsx       # Schedule view tests (13 tests)
-├── SearchBar.test.tsx          # Search functionality tests (11 tests)
-├── ShortcutHelp.test.tsx       # Shortcut help modal tests (15 tests)
-└── TodoFilter.test.tsx         # Todo filtering tests (10 tests)
+├── TodoItem.test.tsx           # TodoItem component behavior tests
+├── useSocket.test.ts           # WebSocket functionality tests
+├── useKeyboardShortcuts.test.ts # Keyboard shortcut system tests
+├── configManager.test.ts       # Configuration management tests
+├── utils.test.ts               # Utility function tests
+├── AddTodoForm.test.tsx        # Form component tests
+├── ConnectionStatus.test.tsx   # Connection status tests
+├── DarkMode.test.tsx           # Dark mode functionality tests
+├── DeleteConfirmDialog.test.tsx # Delete confirmation tests
+├── MenuBar.test.tsx            # Menu bar functionality tests
+├── ScheduleModal.test.tsx      # Schedule modal tests
+├── ScheduleView.test.tsx       # Schedule view tests
+├── SearchBar.test.tsx          # Search functionality tests
+├── ShortcutHelp.test.tsx       # Shortcut help modal tests
+├── TodoFilter.test.tsx         # Todo filtering tests
+├── HeaderLayout.test.tsx       # Header layout behavior tests
+├── priorityUtils.test.ts       # Priority conversion utility tests
+└── CommandPalette.test.tsx     # Command palette functionality tests
 
 server/__tests__/
-├── setup.js                   # Backend test setup and teardown
-├── database.test.ts           # Database operations and migration tests
-├── socket.test.ts             # WebSocket event handling tests
-└── integration.test.ts        # End-to-end API integration tests
+├── setup.js                    # Backend test setup and teardown
+├── server.test.ts              # Main server integration tests
+├── socket.test.ts              # WebSocket event handling tests
+├── database-crud.test.ts       # Database CRUD operation tests
+├── database-migration.test.ts  # Database migration tests
+└── schedule-executor.test.ts   # Schedule execution engine tests
 
 e2e/
 ├── helpers/
-│   └── tauri-helpers.ts       # Tauri app launch/control utilities
+│   └── tauri-helpers.js        # Tauri app launch/control utilities
 ├── tests/
-│   ├── app-launch.spec.ts     # App initialization and UI tests
+│   ├── app-launch.spec.ts      # App initialization and UI tests
 │   ├── todo-operations.spec.ts # Todo CRUD operation tests
 │   ├── keyboard-shortcuts.spec.ts # Keyboard shortcut tests
 │   └── window-operations.spec.ts # Window management tests
-└── screenshots/               # Test failure screenshots
+└── screenshots/                # Test failure screenshots
 ```
 
 ### Testing Patterns
@@ -230,23 +242,10 @@ e2e/
 - **Priority Testing**: Comprehensive testing of priority type migration and conversion utilities
 - **Backward Compatibility**: Tests ensure both legacy numeric and new string priority formats work
 
-### E2E Testing with WebDriver (Tauri Official)
-- **Framework**: WebdriverIO with Tauri WebDriver support
-- **Test Coverage**: App launch, todo operations, keyboard shortcuts, window operations
-- **Platform Support**: Linux (with Xvfb) and Windows (Edge WebDriver)
-- **CI/CD Integration**: GitHub Actions workflow with virtual display for Linux
-- **Test Organization**:
-  - `e2e/tests/app-launch.spec.ts` - Application startup and UI component tests
-  - `e2e/tests/todo-operations.spec.ts` - CRUD operations, filtering, search
-  - `e2e/tests/keyboard-shortcuts.spec.ts` - Keyboard navigation and shortcuts
-  - `e2e/tests/window-operations.spec.ts` - Window controls and menu interactions
-- **Helper Functions**: Reusable test utilities in `e2e/helpers/tauri-helpers.ts`
-- **Requirements**: `tauri-driver`, platform-specific WebDriver (webkit2gtk-driver for Linux, Edge WebDriver for Windows)
-
 ### Running Tests
-- **Frontend**: All 336 tests pass with clean output, no warnings
+- **Frontend**: All 346+ tests pass with clean output, no warnings
 - **Backend**: Comprehensive coverage of database operations and WebSocket events  
-- **E2E**: WebDriver-based GUI tests for Tauri app with 4 test suites (30+ test cases)
+- **E2E**: WebDriver-based GUI tests for Tauri app with 4 test suites
 - **CI/CD Ready**: Tests designed for automated testing environments with Xvfb support
 - **Fast Execution**: Optimized test performance with proper mocking and cleanup
 - **100% Pass Rate**: Complete test coverage achieved with comprehensive component testing
@@ -264,9 +263,7 @@ sudo apt install webkit2gtk-driver
 # https://developer.microsoft.com/microsoft-edge/tools/webdriver/
 
 # Run E2E tests
-cd e2e
-npm install
-npm test
+npm run test:e2e
 ```
 
 ## Architecture Patterns
@@ -277,6 +274,7 @@ npm test
 - Dynamic command filtering with fuzzy search and scoring algorithm
 - Context-aware command visibility and enablement based on application state
 - Internationalization support for all command titles and descriptions
+- Categories: file, view, task, schedule, search, settings, navigation
 
 ### Centralized Keyboard Shortcut Management
 - Single source of truth in `src/utils/keyboardShortcuts.ts` for all keyboard shortcuts
@@ -288,6 +286,7 @@ npm test
 ### Real-time State Management
 - `useSocket.ts` manages WebSocket connection and synchronizes todos across all clients
 - Socket.IO events: `todo:add`, `todo:update`, `todo:delete`, `todo:toggle`, `todos:reorder`
+- Schedule events: `schedule:add`, `schedule:update`, `schedule:delete`, `schedule:toggle`
 - State flows from server → Socket.IO → useSocket → App.tsx → UI components
 
 ### Configuration System
@@ -346,7 +345,7 @@ YUTODO_ENABLE_DEBUG=true         # Debug mode
 - **Error Handling**: Graceful fallbacks when config files are invalid or missing
 - **Hot Configuration**: Live config updates without server restart
 - **Import/Export**: TOML format configuration export and import
-- **Testing**: 24 comprehensive tests covering all functionality
+- **Testing**: Comprehensive tests covering all functionality
 
 ### Theme and UI State
 - Dark/light/auto theme detection with system preference monitoring
@@ -358,10 +357,18 @@ YUTODO_ENABLE_DEBUG=true         # Debug mode
 - `App.tsx` orchestrates global state, settings, and real-time connections
 - Custom hooks abstract complex logic (WebSocket, keyboard shortcuts with OS detection)
 - Settings panel supports live configuration export/import/reset
-- All modals (Settings, ShortcutHelp, DeleteConfirmDialog) support Esc key and outside-click closing
+- All modals (Settings, ShortcutHelp, DeleteConfirmDialog, ScheduleModal, CommandPalette) support Esc key and outside-click closing
 - Delete confirmation dialogs with settings-controlled behavior
 - Overlay-based UI components (header auto-hide, bottom Add Todo form) that don't displace content
 - **Menu System**: Custom header-integrated MenuBar component with dropdown menus that prevent header auto-hide during interaction
+
+### Schedule System Architecture
+- **Frontend Components**: `ScheduleView.tsx` and `ScheduleModal.tsx` for UI
+- **Server-Side Engine**: `ScheduleExecutor` class checks and executes schedules at configured intervals
+- **Schedule Types**: once, daily, weekly, monthly, custom
+- **Active/Inactive Categorization**: Automatic categorization based on completion status and next execution
+- **Bulk Operations**: Delete all inactive schedules with confirmation dialog
+- **Real-time Sync**: Schedule changes synchronized across all clients via Socket.IO
 
 ### Window Drag Pattern
 - **Reusable Hook**: `useWindowDrag` hook provides consistent window dragging functionality across all modal components
@@ -419,9 +426,9 @@ YUTODO_ENABLE_DEBUG=true         # Debug mode
 - **Custom styling**: Support for custom CSS injection
 - **Configuration**: TOML settings file with export/import/reset functionality
 - **Theme system**: Auto/light/dark mode with system preference detection
-- **Slim mode**: Compact UI mode for desktop
-- **Priority system**: High (2), Medium (1), Low (0) priority levels
-- **Scheduling**: Optional due dates for todos
+- **Slim mode**: Compact UI mode for desktop with priority, date, and description display
+- **Priority system**: String-based priorities ('high', 'medium', 'low') with legacy numeric support
+- **Scheduling**: Comprehensive schedule system with execution engine and active/inactive categorization
 - **Delete confirmation**: Optional confirmation dialogs (configurable)
 - **Markdown rendering**: Full Markdown support in titles and descriptions
 - **URL handling**: Click links to open in browser, right-click to copy
@@ -432,6 +439,7 @@ YUTODO_ENABLE_DEBUG=true         # Debug mode
 - **Multi-selection**: Excel-like task selection with Shift+Click (range) and Ctrl+Click (individual) with visual feedback
 - **Completed task management**: Collapsible completed tasks section (HTML `<details>`-like functionality) with expand/collapse toggle
 - **Header Menu System**: Custom menu bar integrated into header with File/Edit/View/Help menus and keyboard shortcuts
+- **Schedule Management**: Active/inactive schedule categorization with bulk delete operations
 
 ## Database Architecture
 
@@ -443,6 +451,7 @@ YUTODO_ENABLE_DEBUG=true         # Debug mode
 - **Automatic Migration**: Server detects old database in git repository and migrates data to new location
 - **Directory Creation**: Automatically creates data directory structure if not present
 - **Git Exclusion**: Database files excluded from version control via `.gitignore`
+- **Configuration Control**: Database location can be overridden via server configuration
 
 ### Database Schema
 
@@ -451,11 +460,30 @@ SQLite table `todos`:
 - `title` (TEXT NOT NULL)
 - `description` (TEXT)
 - `completed` (BOOLEAN)
-- `priority` (INTEGER, 0-2)
+- `priority` (INTEGER, 0-2) - Legacy numeric format, converted to strings in application
 - `scheduledFor` (DATETIME)
 - `createdAt` (DATETIME)
 - `updatedAt` (DATETIME)
 - `order_index` (INTEGER) - Custom ordering for drag & drop
+
+SQLite table `schedules`:
+- `id` (TEXT PRIMARY KEY)
+- `title` (TEXT NOT NULL)
+- `description` (TEXT)
+- `type` (TEXT) - once, daily, weekly, monthly, custom
+- `startDate` (TEXT)
+- `endDate` (TEXT)
+- `time` (TEXT)
+- `priority` (TEXT) - high, medium, low
+- `excludeWeekends` (BOOLEAN)
+- `weeklyConfig` (TEXT) - JSON string
+- `monthlyConfig` (TEXT) - JSON string
+- `customConfig` (TEXT) - JSON string
+- `isActive` (BOOLEAN)
+- `lastExecuted` (TEXT)
+- `nextExecution` (TEXT)
+- `createdAt` (TEXT)
+- `updatedAt` (TEXT)
 
 ## Tauri v2 Plugin Configuration
 
@@ -512,7 +540,7 @@ The app detects WSLg environment and provides appropriate fallbacks:
 - **Accessibility**: Always visible and accessible via keyboard shortcuts
 
 ### Modal Dialog Patterns
-- **Consistent UX**: All modals (Settings, ShortcutHelp, DeleteConfirmDialog) follow same interaction patterns
+- **Consistent UX**: All modals (Settings, ShortcutHelp, DeleteConfirmDialog, ScheduleModal, CommandPalette) follow same interaction patterns
 - **Esc key**: Always closes modal with `preventDefault()` and `stopPropagation()`
 - **Outside click**: Closes modal when clicking outside dialog content area
 - **Conflict resolution**: Main keyboard shortcuts disabled when modals are open
@@ -557,6 +585,7 @@ To add a new language (e.g., French):
 - **Settings migration**: Check for localStorage key changes (`todoAppSettings` → `yutodoAppSettings`)
 - **Modal state tracking**: Include all modal states in `isModalOpen` calculation for keyboard shortcut system
 - **Real-time updates**: Language and theme changes apply immediately without restart
+- **Priority conversion**: Automatic conversion between legacy numeric (0,1,2) and string ('low','medium','high') formats
 
 ### Multi-Selection System
 - **Excel-like interaction**: Shift+Click for range selection, Ctrl/Cmd+Click for individual toggle
@@ -571,6 +600,14 @@ To add a new language (e.g., French):
 - **Event isolation**: `preventDefault()` and `stopPropagation()` prevent conflicts between selection and editing
 - **Auto-deselection**: Starting edit mode automatically clears selection state
 - **Canvas-based positioning**: Uses 2D canvas context to calculate precise cursor position from click coordinates
+
+### Schedule System
+- **Schedule Execution Engine**: Server-side engine checks schedules every interval (configurable)
+- **Active/Inactive Categorization**: Automatic categorization based on completion status and next execution
+- **Bulk Operations**: Delete all inactive schedules with confirmation dialog
+- **Configuration**: Server-side schedule check interval configurable via TOML
+- **Completion Status**: Completed schedules show "Completed" status and move to inactive section
+- **Visual Separation**: Clear distinction between active and inactive schedules with collapsible sections
 
 ### Cross-platform Considerations
 - **Mouse tracking in Tauri**: Implement multiple event listeners (document, body, window) for reliable mouse leave detection
@@ -590,19 +627,19 @@ To add a new language (e.g., French):
 # Frontend validation (run from root directory)
 npm run lint          # ESLint check - must pass with no errors
 npm run build         # TypeScript compilation and Vite build - must succeed
-npm test -- --run     # All frontend tests - must pass (291 tests)
+npm test -- --run     # All frontend tests - must pass (346+ tests)
 
 # Backend validation (run from server directory)  
 cd server
 npm run build         # TypeScript compilation - must succeed
-npm test              # All backend tests - must pass (34 tests)
+npm test              # All backend tests - must pass (58 tests)
 ```
 
 **Required checks before every commit:**
 1. **Lint Check**: `npm run lint` must pass without errors
 2. **Type Check**: `npm run build` must complete successfully
-3. **Frontend Tests**: All 291 tests must pass
-4. **Backend Tests**: All 34 tests must pass  
+3. **Frontend Tests**: All 346+ tests must pass
+4. **Backend Tests**: All 58 tests must pass  
 5. **Build Verification**: Vite build must succeed
 
 ### When Adding New Features
@@ -619,7 +656,7 @@ npm test              # All backend tests - must pass (34 tests)
 1. **Update Existing Tests**: Modify test cases to match changes
 2. **Add New Test Cases**: Test newly added behavior
 3. **Edge Case Testing**: Add tests to prevent regression, especially for bug fixes
-4. **Maintain 100% Pass Rate**: Ensure all 291 tests continue to pass
+4. **Maintain 100% Pass Rate**: Ensure all tests continue to pass
 
 ### Test File Naming and Structure
 - Component tests: `ComponentName.test.tsx`
@@ -689,6 +726,11 @@ npm test -- --coverage
 - **Header Accessibility**: Increased header z-index to 10000 to ensure window dragging works even with modals open
 - **Modal Window Dragging**: Fixed pointer-events on command palette overlay to enable window dragging with modal open
 - **Header Window Dragging**: Fixed event propagation in MenuBar to allow window dragging through header/menu bar
+- **Schedule Completion Display**: Fixed schedules to show "Completed" status and move to inactive section when finished
+- **Schedule Modal Layout**: Improved UI by grouping daily schedule time and exclude weekends options together
+- **Bulk Delete Schedules**: Added command to delete all inactive schedules with confirmation dialog
+- **Test Coverage**: Achieved 100% E2E test pass rate with WebdriverIO
+- **Server Configuration**: Added comprehensive server-side configuration management system
 
 ## Logging Best Practices
 
@@ -829,7 +871,7 @@ The project includes comprehensive CI/CD automation:
 #### **e2e-tests.yml** - GUI End-to-End Tests
 - **Triggers**: Push/PR to `main` and `develop` branches
 - **Jobs**:
-  - **E2E Tests**: Playwright tests on Windows/macOS/Linux
+  - **E2E Tests**: WebdriverIO tests on Windows/macOS/Linux
   - **Virtual Display**: Xvfb for headless Linux GUI testing
   - **Artifacts**: Screenshots and videos on test failures
   - **Test Report**: Consolidated results across all platforms
@@ -976,3 +1018,11 @@ memory_limit = 1024  # MB
 enable_compression = true
 enable_keep_alive = true
 ```
+
+# important-instruction-reminders
+Do what has been asked; nothing more, nothing less.
+NEVER create files unless they're absolutely necessary for achieving your goal.
+ALWAYS prefer editing an existing file to creating a new one.
+NEVER proactively create documentation files (*.md) or README files. Only create documentation files if explicitly requested by the User.
+
+IMPORTANT: this context may or may not be relevant to your tasks. You should not respond to this context or otherwise consider it in your response unless it is highly relevant to your task. Most of the time, it is not relevant.
