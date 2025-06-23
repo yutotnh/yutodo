@@ -1,5 +1,5 @@
 import { AppSettingsFile, Keybinding, SettingsPaths, SettingsChangeEvent, DEFAULT_APP_SETTINGS, DEFAULT_KEYBINDINGS, SettingsError } from '../types/settings';
-import { exists, readTextFile, writeTextFile, mkdir, watch, BaseDirectory } from '@tauri-apps/plugin-fs';
+import { exists, readTextFile, writeTextFile, mkdir, watch } from '@tauri-apps/plugin-fs';
 import { appDataDir, join, configDir, homeDir } from '@tauri-apps/api/path';
 import { parse as parseToml } from '@ltd/j-toml';
 import logger from '../utils/logger';
@@ -374,21 +374,9 @@ export class SettingsManager {
     try {
       if (await exists(this.paths.settingsFile)) {
         this.settingsFileContent = await readTextFile(this.paths.settingsFile);
-        logger.debug('Settings file content length:', this.settingsFileContent.length);
-        logger.debug('Settings file last 100 chars:', JSON.stringify(this.settingsFileContent.slice(-100)));
-        logger.debug('About to parse TOML with joiner option...');
-        
-        let parsed: any;
-        try {
-          parsed = parseToml(this.settingsFileContent, { 
-            joiner: '\n'
-          }) as any;
-          logger.debug('TOML parsing successful in SettingsManager');
-        } catch (parseError) {
-          logger.error('TOML parsing failed in SettingsManager:', parseError);
-          logger.error('Problematic content around error:', this.settingsFileContent.split('\n').slice(45, 52));
-          throw parseError;
-        }
+        const parsed = parseToml(this.settingsFileContent, { 
+          joiner: '\n'
+        }) as any;
         this.settings = this.mergeWithDefaults(parsed, DEFAULT_APP_SETTINGS);
         logger.info('Settings loaded from file');
       } else {
@@ -675,7 +663,7 @@ command = "showHelp"
           this.handleFileChange('settings');
         },
         {
-          baseDir: BaseDirectory.AppData,
+          // Don't specify baseDir when using absolute paths
           delayMs: 300
         }
       );
@@ -701,7 +689,7 @@ command = "showHelp"
               this.handleFileChange('keybindings');
             },
             {
-              baseDir: BaseDirectory.AppData,
+              // Don't specify baseDir when using absolute paths
               delayMs: 300
             }
           );
@@ -774,7 +762,7 @@ command = "showHelp"
             this.handleFileChange('settings');
           },
           {
-            baseDir: BaseDirectory.AppData,
+            // Don't specify baseDir when using absolute paths
             delayMs: 300
           }
         );
@@ -813,7 +801,7 @@ command = "showHelp"
               this.handleFileChange('keybindings');
             },
             {
-              baseDir: BaseDirectory.AppData,
+              // Don't specify baseDir when using absolute paths
               delayMs: 300
             }
           );
