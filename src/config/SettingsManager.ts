@@ -1,6 +1,6 @@
 import { AppSettingsFile, Keybinding, SettingsPaths, SettingsChangeEvent, DEFAULT_APP_SETTINGS, DEFAULT_KEYBINDINGS, SettingsError } from '../types/settings';
 import { exists, readTextFile, writeTextFile, mkdir, watch, BaseDirectory } from '@tauri-apps/plugin-fs';
-import { appDataDir, join } from '@tauri-apps/api/path';
+import { appDataDir, join, configDir, homeDir } from '@tauri-apps/api/path';
 import { parse as parseToml } from '@ltd/j-toml';
 import logger from '../utils/logger';
 
@@ -80,11 +80,12 @@ export class SettingsManager {
     }
     
     if (this.initializationError) {
-      logger.warn('SettingsManager previously failed to initialize:', this.initializationError);
-      throw this.initializationError;
+      logger.warn('SettingsManager previously failed to initialize, attempting retry:', this.initializationError);
+      // Allow retry by clearing the error
+      this.initializationError = null;
     }
     
-    logger.info('Initializing SettingsManager...');
+    logger.info('🚀 Initializing SettingsManager...');
     
     // Wait for Tauri APIs to be ready
     logger.info('🔄 Waiting for Tauri APIs to be ready...');
@@ -145,7 +146,12 @@ export class SettingsManager {
       this.initializationError = error as Error;
       logger.error('Failed to initialize SettingsManager:', error);
       logger.error('Current paths state:', this.paths);
+      logger.error('Is initialized:', this.isInitialized);
       logger.error('Will not retry initialization until restart');
+      
+      // Reset state to prevent partially initialized state
+      this.isInitialized = false;
+      this.paths = null;
       
       throw new SettingsError(
         'Failed to initialize settings manager',
@@ -161,28 +167,33 @@ export class SettingsManager {
    */
   private async getConfigDirectory(): Promise<string> {
     const platform = await this.getPlatform();
-    const homeDir = await this.getHomeDirectory();
     
     switch (platform) {
-      case 'linux':
+      case 'linux': {
         // Linux: ~/.config/yutodo (lowercase)
-        const xdgConfig = process.env.XDG_CONFIG_HOME || await join(homeDir, '.config');
-        return await join(xdgConfig, 'yutodo');
+        // Use Tauri's configDir() which respects XDG_CONFIG_HOME
+        const userConfigDir = await configDir();
+        return await join(userConfigDir, 'yutodo');
+      }
         
-      case 'windows':
+      case 'windows': {
         // Windows: %APPDATA%\YuToDo
         const appData = await appDataDir();
         return await join(appData, 'YuToDo');
+      }
         
-      case 'darwin':
+      case 'darwin': {
         // macOS: ~/Library/Application Support/YuToDo
-        const appSupport = await join(homeDir, 'Library', 'Application Support');
+        const home = await homeDir();
+        const appSupport = await join(home, 'Library', 'Application Support');
         return await join(appSupport, 'YuToDo');
+      }
         
-      default:
+      default: {
         // Fallback to Linux behavior
-        const fallbackConfig = process.env.XDG_CONFIG_HOME || await join(homeDir, '.config');
-        return await join(fallbackConfig, 'yutodo');
+        const fallbackConfigDir = await configDir();
+        return await join(fallbackConfigDir, 'yutodo');
+      }
     }
   }
   
@@ -203,13 +214,8 @@ export class SettingsManager {
    * Get home directory
    */
   private async getHomeDirectory(): Promise<string> {
-    try {
-      const { homeDir } = await import('@tauri-apps/api/path');
-      return await homeDir();
-    } catch {
-      // Fallback to environment variable
-      return process.env.HOME || process.env.USERPROFILE || '';
-    }
+    // Use the already imported homeDir function
+    return await homeDir();
   }
 
   /**
@@ -302,12 +308,13 @@ export class SettingsManager {
     let oldKeybindingsPath: string | null = null;
     
     switch (platform) {
-      case 'linux':
+      case 'linux': {
         // Old path: ~/.local/share/yutotnh/YuToDo/
         const oldLinuxDir = await join(homeDir, '.local', 'share', 'yutotnh', 'YuToDo');
         oldSettingsPath = await join(oldLinuxDir, 'settings.toml');
         oldKeybindingsPath = await join(oldLinuxDir, 'keybindings.toml');
         break;
+      }
         
       case 'windows':
         // Old path was already in %APPDATA%/YuToDo, so no migration needed
@@ -650,9 +657,9 @@ command = "showHelp"
     }
     
     try {
-      // Watch settings file using BaseDirectory.AppData and relative path
+      // Watch settings file using the actual path
       this.settingsWatcher = await watch(
-        'YuToDo/settings.toml',
+        this.paths.settingsFile,
         (event) => {
           // Filter to only process write events
           if (event.type && typeof event.type === 'object') {
@@ -678,7 +685,7 @@ command = "showHelp"
       if (keybindingsExists) {
         try {
           this.keybindingsWatcher = await watch(
-            'YuToDo/keybindings.toml',
+            this.paths.keybindingsFile,
             (event) => {
               // Filter to only process write events
               if (event.type && typeof event.type === 'object') {
@@ -749,7 +756,7 @@ command = "showHelp"
         // Restart settings watcher with event filtering
         logger.debug('👀 Restarting settings file watcher...');
         this.settingsWatcher = await watch(
-          'YuToDo/settings.toml',
+          this.paths.settingsFile,
           (event) => {
             // 🔧 書き込みイベントのみを処理（読み込みイベントは無視）
             if (event.type && typeof event.type === 'object') {
@@ -790,7 +797,7 @@ command = "showHelp"
         if (keybindingsExists) {
           logger.debug('👀 Restarting keybindings file watcher...');
           this.keybindingsWatcher = await watch(
-            'YuToDo/keybindings.toml',
+            this.paths.keybindingsFile,
             (event) => {
               // Filter to only process write events
               if (event.type && typeof event.type === 'object') {
@@ -1003,20 +1010,15 @@ command = "showHelp"
    * Update settings preserving comments
    */
   async updateSettings(updates: Partial<AppSettingsFile>): Promise<void> {
-    logger.info('⚙️ SettingsManager.updateSettings called with:', {
-      updates,
-      currentSettings: this.settings,
-      hasSettingsFile: !!this.paths?.settingsFile
-    });
+    
+    if (!this.isInitialized) {
+      throw new Error('SettingsManager not initialized. Call initialize() first.');
+    }
     
     const previous = { ...this.settings };
     
     // Merge updates
     this.settings = this.mergeWithDefaults(updates, this.settings);
-    logger.info('🔄 Settings merged:', {
-      previous,
-      updated: this.settings
-    });
     
     // Temporarily disable file watcher to prevent feedback loop
     const wasWatcherActive = !!this.settingsWatcher;
@@ -1057,6 +1059,7 @@ command = "showHelp"
     if (!this.paths) {
       throw new Error('Cannot update settings file: paths not initialized');
     }
+    
     
     // Parse current file to preserve structure
     const lines = this.settingsFileContent.split('\n');
@@ -1377,7 +1380,7 @@ command = "showHelp"
     
     logger.debug('👀 Starting settings file watcher...');
     this.settingsWatcher = await watch(
-      'YuToDo/settings.toml',
+      this.paths.settingsFile,
       (event) => {
         // 🔧 書き込みイベントのみを処理（読み込みイベントは無視）
         if (event.type && typeof event.type === 'object') {
@@ -1424,7 +1427,7 @@ command = "showHelp"
     
     logger.debug('👀 Starting keybindings file watcher...');
     this.keybindingsWatcher = await watch(
-      'YuToDo/keybindings.toml',
+      this.paths.keybindingsFile,
       (event) => {
         // 🔧 書き込みイベントのみを処理（読み込みイベントは無視）
         if (event.type && typeof event.type === 'object') {

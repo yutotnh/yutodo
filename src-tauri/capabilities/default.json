@@ -24,6 +24,23 @@
     "fs:allow-appdata-read",
     "fs:allow-appdata-read-recursive",
     "fs:allow-watch",
+    "fs:allow-config-write",
+    "fs:allow-config-write-recursive",
+    "fs:allow-config-read",
+    "fs:allow-config-read-recursive",
+    "fs:allow-config-meta",
+    "fs:allow-config-meta-recursive",
+    {
+      "identifier": "fs:scope-config",
+      "allow": [
+        {
+          "path": "$CONFIG/yutodo/**"
+        },
+        {
+          "path": "$CONFIG/YuToDo/**"
+        }
+      ]
+    },
     {
       "identifier": "fs:scope-appdata",
       "allow": [

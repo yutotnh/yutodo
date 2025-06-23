@@ -551,6 +551,11 @@ function App() {
         await updateFileSettings(updates);
       } catch (error) {
         logger.error('Failed to update file-based settings:', error);
+        if (error instanceof Error && error.message.includes('still initializing')) {
+          logger.warn('Settings manager still initializing, settings will be applied when ready');
+          // Don't fallback to localStorage in this case, just wait
+          return;
+        }
         // フォールバック: localStorage
         localStorage.setItem('yutodoAppSettings', JSON.stringify(newSettings));
       }

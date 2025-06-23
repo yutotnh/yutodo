@@ -52,6 +52,7 @@ describe('SettingsManager', () => {
     vi.mocked(path.appDataDir).mockResolvedValue(mockAppDataDir);
     vi.mocked(path.join).mockImplementation((...paths) => Promise.resolve(paths.join('/')));
     vi.mocked(path.homeDir).mockResolvedValue('/home/user');
+    vi.mocked(path.configDir).mockResolvedValue('/home/user/.config');
     
     // Mock file system functions
     vi.mocked(fs.exists).mockResolvedValue(false);

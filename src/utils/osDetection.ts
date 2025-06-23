@@ -22,3 +22,19 @@ export const detectOS = () => {
   }
   return 'unknown';
 };
+
+// Individual OS detection functions
+export const isWindows = (): boolean => {
+  const os = detectOS();
+  return os === 'windows';
+};
+
+export const isMac = (): boolean => {
+  const os = detectOS();
+  return os === 'mac';
+};
+
+export const isLinux = (): boolean => {
+  const os = detectOS();
+  return os === 'linux';
+};

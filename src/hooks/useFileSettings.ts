@@ -85,8 +85,12 @@ export function useFileSettings(): UseFileSettingsReturn {
         if (!mounted) return;
         
         // Get initial values
-        setSettings(settingsManager.getSettings());
-        setKeybindings(settingsManager.getKeybindings());
+        const initialSettings = settingsManager.getSettings();
+        const initialKeybindings = settingsManager.getKeybindings();
+        
+        
+        setSettings(initialSettings);
+        setKeybindings(initialKeybindings);
         
         // Subscribe to changes
         unsubscribe = settingsManager.onChange((event: SettingsChangeEvent) => {
@@ -125,13 +129,18 @@ export function useFileSettings(): UseFileSettingsReturn {
   
   // Update settings
   const updateSettings = useCallback(async (updates: Partial<AppSettingsFile>) => {
+    if (isLoading) {
+      logger.warn('SettingsManager still loading, queueing settings update');
+      throw new Error('Settings manager is still initializing. Please wait and try again.');
+    }
+    
     try {
       await settingsManager.updateSettings(updates);
     } catch (err) {
       logger.error('Failed to update settings:', err);
       throw err;
     }
-  }, []);
+  }, [isLoading]);
   
   // Add keybinding
   const addKeybinding = useCallback(async (keybinding: Keybinding) => {
