@@ -10,11 +10,11 @@ function getDataDir(): string {
   
   switch (process.platform) {
     case 'win32':
-      return path.join(process.env.APPDATA || path.join(home, 'AppData', 'Roaming'), 'YuToDo');
+      return path.join(process.env.APPDATA || path.join(home, 'AppData', 'Roaming'), 'YuToDo Server', 'Data');
     case 'darwin':
-      return path.join(home, 'Library', 'Application Support', 'YuToDo');
-    default: // Linux, etc.
-      return path.join(process.env.XDG_DATA_HOME || path.join(home, '.local', 'share'), 'YuToDo');
+      return path.join(home, 'Library', 'Application Support', 'YuToDo Server', 'Data');
+    default: // Linux
+      return path.join(process.env.XDG_DATA_HOME || path.join(home, '.local', 'share'), 'yutodo-server');
   }
 }
 
@@ -268,13 +268,13 @@ describe('Database Migration', () => {
     
     switch (process.platform) {
       case 'win32':
-        expect(dataDir).toBe(path.join(process.env.APPDATA || path.join(home, 'AppData', 'Roaming'), 'YuToDo'));
+        expect(dataDir).toBe(path.join(process.env.APPDATA || path.join(home, 'AppData', 'Roaming'), 'YuToDo Server', 'Data'));
         break;
       case 'darwin':
-        expect(dataDir).toBe(path.join(home, 'Library', 'Application Support', 'YuToDo'));
+        expect(dataDir).toBe(path.join(home, 'Library', 'Application Support', 'YuToDo Server', 'Data'));
         break;
       default:
-        expect(dataDir).toBe(path.join(process.env.XDG_DATA_HOME || path.join(home, '.local', 'share'), 'YuToDo'));
+        expect(dataDir).toBe(path.join(process.env.XDG_DATA_HOME || path.join(home, '.local', 'share'), 'yutodo-server'));
         break;
     }
   });

@@ -97,18 +97,18 @@ export class ServerConfigManager {
 
     switch (platform) {
       case 'win32':
-        // Windows: %APPDATA%/YuToDo
-        return path.join(process.env.APPDATA || path.join(home, 'AppData', 'Roaming'), 'YuToDo');
+        // Windows: %APPDATA%/YuToDo Server
+        return path.join(process.env.APPDATA || path.join(home, 'AppData', 'Roaming'), 'YuToDo Server');
       
       case 'darwin':
-        // macOS: ~/Library/Application Support/YuToDo
-        return path.join(home, 'Library', 'Application Support', 'YuToDo');
+        // macOS: ~/Library/Application Support/YuToDo Server
+        return path.join(home, 'Library', 'Application Support', 'YuToDo Server');
       
       default:
-        // Linux: ~/.config/YuToDo
+        // Linux: ~/.config/yutodo-server (lowercase with hyphen)
         return path.join(
           process.env.XDG_CONFIG_HOME || path.join(home, '.config'),
-          'YuToDo'
+          'yutodo-server'
         );
     }
   }

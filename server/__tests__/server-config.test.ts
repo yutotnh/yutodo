@@ -203,7 +203,11 @@ request_timeout = 15000
       const defaultPath = customConfigManager.getConfigFilePath();
       
       // OS標準パスの確認
-      expect(defaultPath).toContain('YuToDo');
+      if (process.platform === 'linux') {
+        expect(defaultPath).toContain('yutodo-server');
+      } else {
+        expect(defaultPath).toContain('YuToDo Server');
+      }
       expect(defaultPath).toContain('server-config.toml');
     });
   });
@@ -361,7 +365,12 @@ check_interval = 300
         expect(configPath).toContain('.config');
       }
       
-      expect(configPath).toContain('YuToDo');
+      // OS別の標準パスであることを確認
+      if (process.platform === 'linux') {
+        expect(configPath).toContain('yutodo-server');
+      } else {
+        expect(configPath).toContain('YuToDo Server');
+      }
       expect(configPath).toContain('server-config.toml');
     });
   });

@@ -6,6 +6,13 @@ import * as path from '@tauri-apps/api/path';
 // Mock the Tauri APIs
 vi.mock('@tauri-apps/plugin-fs');
 vi.mock('@tauri-apps/api/path');
+vi.mock('../utils/osDetection', () => ({
+  isWindows: vi.fn(() => false),
+  isMac: vi.fn(() => false),
+  isLinux: vi.fn(() => true),
+  getOsCtrlKey: vi.fn(() => 'Ctrl'),
+  getOsCmdKey: vi.fn(() => 'Ctrl')
+}));
 vi.mock('@ltd/j-toml', () => ({
   parse: vi.fn((content: string) => {
     // Simple mock TOML parser
@@ -29,8 +36,8 @@ vi.mock('@ltd/j-toml', () => ({
 
 describe('SettingsManager', () => {
   const mockAppDataDir = '/home/user/.config';
-  const mockSettingsPath = '/home/user/.config/YuToDo/settings.toml';
-  const mockKeybindingsPath = '/home/user/.config/YuToDo/keybindings.toml';
+  const mockSettingsPath = '/home/user/.config/yutodo/settings.toml';
+  const mockKeybindingsPath = '/home/user/.config/yutodo/keybindings.toml';
   let settingsManager: SettingsManager;
   
   beforeEach(() => {
@@ -44,6 +51,7 @@ describe('SettingsManager', () => {
     // Mock path functions
     vi.mocked(path.appDataDir).mockResolvedValue(mockAppDataDir);
     vi.mocked(path.join).mockImplementation((...paths) => Promise.resolve(paths.join('/')));
+    vi.mocked(path.homeDir).mockResolvedValue('/home/user');
     
     // Mock file system functions
     vi.mocked(fs.exists).mockResolvedValue(false);
@@ -74,7 +82,7 @@ describe('SettingsManager', () => {
       await settingsManager.initialize();
       
       expect(fs.mkdir).toHaveBeenCalledWith(
-        expect.stringContaining('YuToDo'),
+        expect.stringContaining('yutodo'),
         { recursive: true }
       );
       expect(fs.mkdir).toHaveBeenCalledWith(
@@ -323,7 +331,12 @@ theme = "light"
       vi.mocked(fs.exists).mockResolvedValue(true);
       vi.mocked(fs.readTextFile).mockRejectedValue(new Error('Failed to read file'));
       
-      await expect(settingsManager.initialize()).rejects.toThrow('Failed to initialize settings manager');
+      // SettingsManager now handles errors gracefully and doesn't throw
+      await settingsManager.initialize();
+      const settings = settingsManager.getSettings();
+      
+      // Should use default settings when error occurs
+      expect(settings.app.theme).toBe('auto');
     });
   });
 

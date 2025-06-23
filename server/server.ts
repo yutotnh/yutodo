@@ -62,17 +62,20 @@ async function initializeServer() {
 
 // app.use moved to startServer function
 
-// OS別のデータディレクトリを取得（設定システムと共通化）
+// OS別のデータディレクトリを取得（サーバー専用）
 function getDataDir(): string {
   const home = homedir();
   
   switch (process.platform) {
     case 'win32':
-      return path.join(process.env.APPDATA || path.join(home, 'AppData', 'Roaming'), 'YuToDo');
+      // Windows: %APPDATA%/YuToDo Server/Data
+      return path.join(process.env.APPDATA || path.join(home, 'AppData', 'Roaming'), 'YuToDo Server', 'Data');
     case 'darwin':
-      return path.join(home, 'Library', 'Application Support', 'YuToDo');
+      // macOS: ~/Library/Application Support/YuToDo Server/Data
+      return path.join(home, 'Library', 'Application Support', 'YuToDo Server', 'Data');
     default: // Linux, etc.
-      return path.join(process.env.XDG_DATA_HOME || path.join(home, '.local', 'share'), 'YuToDo');
+      // Linux: ~/.local/share/yutodo-server
+      return path.join(process.env.XDG_DATA_HOME || path.join(home, '.local', 'share'), 'yutodo-server');
   }
 }
 
@@ -114,9 +117,27 @@ function initializeDataDirectory(): string {
 
 // 旧データベースからのマイグレーション処理
 function migrateFromOldDatabase(newDbPath: string): void {
-  const oldDbPath = path.join(__dirname, 'todos.db');
+  // 複数の旧パスをチェック
+  const oldPaths = [
+    path.join(__dirname, 'todos.db'), // リポジトリ内
+    // 旧クライアント/サーバー共有パス
+    process.platform === 'win32' 
+      ? path.join(homedir(), 'AppData', 'Roaming', 'YuToDo', 'todos.db')
+      : process.platform === 'darwin'
+      ? path.join(homedir(), 'Library', 'Application Support', 'YuToDo', 'todos.db')
+      : path.join(homedir(), '.local', 'share', 'YuToDo', 'todos.db')
+  ];
   
-  if (existsSync(oldDbPath) && !existsSync(newDbPath)) {
+  // 存在する旧DBを探す
+  let oldDbPath: string | null = null;
+  for (const path of oldPaths) {
+    if (existsSync(path)) {
+      oldDbPath = path;
+      break;
+    }
+  }
+  
+  if (oldDbPath && existsSync(oldDbPath) && !existsSync(newDbPath)) {
     console.log(`🔄 Migrating data from old database: ${oldDbPath}`);
     
     try {

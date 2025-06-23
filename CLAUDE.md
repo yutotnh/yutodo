@@ -292,18 +292,21 @@ npm run test:e2e
 ### Configuration System
 
 #### Client-Side Configuration
-- TOML-based configuration with JSON Schema validation (`config.schema.json`)
-- `configManager.ts` handles file operations with localStorage fallback
-- Settings persist both in memory and configuration file
-- Conversion functions between `AppSettings` and `TodoAppConfig` interfaces
+- **Architecture**: File-based VS Code-style configuration with TOML format
+- **Location**: `src/config/SettingsManager.ts` handles settings and keybindings files
+- **OS-Standard Paths**: Automatically uses platform-appropriate config directories:
+  - **Windows**: `%APPDATA%/YuToDo/` (settings.toml, keybindings.toml)
+  - **macOS**: `~/Library/Application Support/YuToDo/` (settings.toml, keybindings.toml)
+  - **Linux**: `~/.config/yutodo/` (settings.toml, keybindings.toml)
+- **Auto-Migration**: Automatically migrates from old paths (e.g., `~/.local/share/yutotnh/YuToDo/` on Linux)
 
 #### Server-Side Configuration System
 - **Architecture**: Comprehensive TOML-based server configuration with Zod schema validation
 - **Location**: `server/src/config/ServerConfigManager.ts` and `server/src/types/config.ts`
 - **OS-Standard Paths**: Automatically uses platform-appropriate directories:
-  - **Windows**: `%APPDATA%/YuToDo/server-config.toml`
-  - **macOS**: `~/Library/Application Support/YuToDo/server-config.toml`
-  - **Linux**: `~/.config/YuToDo/server-config.toml`
+  - **Windows**: `%APPDATA%/YuToDo Server/server-config.toml`
+  - **macOS**: `~/Library/Application Support/YuToDo Server/server-config.toml`
+  - **Linux**: `~/.config/yutodo-server/server-config.toml`
 
 #### Environment Variable Support
 **Configuration Path Resolution** (priority order):
@@ -444,11 +447,13 @@ YUTODO_ENABLE_DEBUG=true         # Debug mode
 ## Database Architecture
 
 ### Database Location & Storage
-- **OS-Standard Paths**: Database stored in OS-appropriate application data directories
-  - **Linux**: `~/.local/share/YuToDo/todos.db`
-  - **Windows**: `%APPDATA%/YuToDo/todos.db`
-  - **macOS**: `~/Library/Application Support/YuToDo/todos.db`
-- **Automatic Migration**: Server detects old database in git repository and migrates data to new location
+- **OS-Standard Paths**: Database stored in OS-appropriate server data directories
+  - **Linux**: `~/.local/share/yutodo-server/todos.db`
+  - **Windows**: `%APPDATA%/YuToDo Server/Data/todos.db`
+  - **macOS**: `~/Library/Application Support/YuToDo Server/Data/todos.db`
+- **Automatic Migration**: Server detects old database locations and migrates data to new location
+  - From git repository (`./todos.db`)
+  - From old client directories (e.g., `~/.local/share/YuToDo/todos.db`)
 - **Directory Creation**: Automatically creates data directory structure if not present
 - **Git Exclusion**: Database files excluded from version control via `.gitignore`
 - **Configuration Control**: Database location can be overridden via server configuration
@@ -731,6 +736,12 @@ npm test -- --coverage
 - **Bulk Delete Schedules**: Added command to delete all inactive schedules with confirmation dialog
 - **Test Coverage**: Achieved 100% E2E test pass rate with WebdriverIO
 - **Server Configuration**: Added comprehensive server-side configuration management system
+- **Directory Structure Refactoring**: 
+  - **Client settings** moved from data to config directories following XDG standards
+  - **Server configuration** separated into dedicated server directories
+  - **Database** moved to server-specific data directories
+  - **Automatic migration** from old paths to new locations
+  - **Linux lowercase naming**: `yutodo` for client, `yutodo-server` for server
 
 ## Logging Best Practices
 

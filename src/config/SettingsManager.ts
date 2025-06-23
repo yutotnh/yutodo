@@ -111,12 +111,16 @@ export class SettingsManager {
       await this.ensureDirectories();
       logger.info('Directories ensured');
       
+      // Check for and migrate old settings
+      logger.info('Step 3: Checking for old settings to migrate...');
+      await this.migrateOldSettings();
+      
       // Load or create default files
-      logger.info('Step 3: Loading or creating settings...');
+      logger.info('Step 4: Loading or creating settings...');
       await this.loadOrCreateSettings();
       logger.info('Settings loaded/created');
       
-      logger.info('Step 4: Loading or creating keybindings...');
+      logger.info('Step 5: Loading or creating keybindings...');
       await this.loadOrCreateKeybindings();
       logger.info('Keybindings loaded/created');
       
@@ -153,6 +157,62 @@ export class SettingsManager {
   }
   
   /**
+   * Get the appropriate config directory based on OS
+   */
+  private async getConfigDirectory(): Promise<string> {
+    const platform = await this.getPlatform();
+    const homeDir = await this.getHomeDirectory();
+    
+    switch (platform) {
+      case 'linux':
+        // Linux: ~/.config/yutodo (lowercase)
+        const xdgConfig = process.env.XDG_CONFIG_HOME || await join(homeDir, '.config');
+        return await join(xdgConfig, 'yutodo');
+        
+      case 'windows':
+        // Windows: %APPDATA%\YuToDo
+        const appData = await appDataDir();
+        return await join(appData, 'YuToDo');
+        
+      case 'darwin':
+        // macOS: ~/Library/Application Support/YuToDo
+        const appSupport = await join(homeDir, 'Library', 'Application Support');
+        return await join(appSupport, 'YuToDo');
+        
+      default:
+        // Fallback to Linux behavior
+        const fallbackConfig = process.env.XDG_CONFIG_HOME || await join(homeDir, '.config');
+        return await join(fallbackConfig, 'yutodo');
+    }
+  }
+  
+  /**
+   * Get platform identifier
+   */
+  private async getPlatform(): Promise<string> {
+    // Use existing OS detection utility
+    const { isWindows, isMac } = await import('../utils/osDetection');
+    
+    if (isWindows()) return 'windows';
+    if (isMac()) return 'darwin';
+    // Default to Linux for everything else
+    return 'linux';
+  }
+  
+  /**
+   * Get home directory
+   */
+  private async getHomeDirectory(): Promise<string> {
+    try {
+      const { homeDir } = await import('@tauri-apps/api/path');
+      return await homeDir();
+    } catch {
+      // Fallback to environment variable
+      return process.env.HOME || process.env.USERPROFILE || '';
+    }
+  }
+
+  /**
    * Setup file paths based on OS
    */
   private async setupPaths(): Promise<void> {
@@ -164,34 +224,15 @@ export class SettingsManager {
         throw new Error('Not running in Tauri environment - cannot access file system APIs');
       }
       
-      logger.info('Tauri environment confirmed, getting app data directory...');
+      logger.info('Tauri environment confirmed, getting config directory...');
       
-      let dataDir: string;
-      try {
-        dataDir = await appDataDir();
-        logger.info('App data directory retrieved successfully:', dataDir);
-      } catch (error) {
-        logger.error('Failed to get app data directory:', error);
-        logger.error('Error details:', {
-          message: (error as Error).message,
-          stack: (error as Error).stack,
-          name: (error as Error).name
-        });
-        throw new Error(`Failed to access app data directory: ${(error as Error).message}`);
-      }
-      
-      if (!dataDir || typeof dataDir !== 'string') {
-        throw new Error(`Invalid app data directory received: ${dataDir}`);
-      }
-      
-      logger.info('Creating config directory path...');
       let configDir: string;
       try {
-        configDir = await join(dataDir, 'YuToDo');
-        logger.info('Config directory path created:', configDir);
+        configDir = await this.getConfigDirectory();
+        logger.info('Config directory path:', configDir);
       } catch (error) {
-        logger.error('Failed to create config directory path:', error);
-        throw new Error(`Failed to join paths: ${(error as Error).message}`);
+        logger.error('Failed to get config directory:', error);
+        throw new Error(`Failed to get config directory: ${(error as Error).message}`);
       }
       
       logger.info('Setting up all file paths...');
@@ -239,6 +280,76 @@ export class SettingsManager {
       if (!await exists(dir)) {
         await mkdir(dir, { recursive: true });
         logger.debug(`Created directory: ${dir}`);
+      }
+    }
+  }
+  
+  /**
+   * Migrate settings from old paths to new paths
+   */
+  private async migrateOldSettings(): Promise<void> {
+    if (!this.paths) {
+      throw new Error('Cannot migrate settings: paths not initialized');
+    }
+    
+    const platform = await this.getPlatform();
+    const homeDir = await this.getHomeDirectory();
+    
+    // Define old paths based on platform
+    let oldSettingsPath: string | null = null;
+    let oldKeybindingsPath: string | null = null;
+    
+    switch (platform) {
+      case 'linux':
+        // Old path: ~/.local/share/yutotnh/YuToDo/
+        const oldLinuxDir = await join(homeDir, '.local', 'share', 'yutotnh', 'YuToDo');
+        oldSettingsPath = await join(oldLinuxDir, 'settings.toml');
+        oldKeybindingsPath = await join(oldLinuxDir, 'keybindings.toml');
+        break;
+        
+      case 'windows':
+        // Old path was already in %APPDATA%/YuToDo, so no migration needed
+        break;
+        
+      case 'darwin':
+        // Old path was already in ~/Library/Application Support/YuToDo, so no migration needed
+        break;
+    }
+    
+    // Perform migration if old files exist
+    if (oldSettingsPath && await exists(oldSettingsPath)) {
+      logger.info('🔄 Found old settings file, migrating to new location...');
+      try {
+        // Read old file
+        const oldContent = await readTextFile(oldSettingsPath);
+        
+        // Write to new location if it doesn't exist
+        if (!await exists(this.paths.settingsFile)) {
+          await writeTextFile(this.paths.settingsFile, oldContent);
+          logger.info('✅ Settings migrated successfully');
+        } else {
+          logger.info('⚠️ New settings file already exists, skipping migration');
+        }
+      } catch (error) {
+        logger.error('❌ Failed to migrate settings:', error);
+      }
+    }
+    
+    if (oldKeybindingsPath && await exists(oldKeybindingsPath)) {
+      logger.info('🔄 Found old keybindings file, migrating to new location...');
+      try {
+        // Read old file
+        const oldContent = await readTextFile(oldKeybindingsPath);
+        
+        // Write to new location if it doesn't exist
+        if (!await exists(this.paths.keybindingsFile)) {
+          await writeTextFile(this.paths.keybindingsFile, oldContent);
+          logger.info('✅ Keybindings migrated successfully');
+        } else {
+          logger.info('⚠️ New keybindings file already exists, skipping migration');
+        }
+      } catch (error) {
+        logger.error('❌ Failed to migrate keybindings:', error);
       }
     }
   }
