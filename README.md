@@ -46,7 +46,9 @@ A modern, feature-rich todo list application built with Tauri, React, and TypeSc
   - **Linux**: `~/.local/share/yutodo-server/todos.db`
   - **Windows**: `%APPDATA%/YuToDo Server/Data/todos.db` 
   - **macOS**: `~/Library/Application Support/YuToDo Server/Data/todos.db`
+- 🔄 **Automatic initialization** - Database and tables created automatically on first run
 - 🔄 **Automatic migration** - Seamless migration from old database location
+- 📁 **Directory creation** - Data directories automatically created if they don't exist
 - 📤 **Native file operations** - Full Tauri-native file dialogs for export/import
 - 📄 **TOML export/import** - Unified format for tasks using standard `[[tasks]]` table syntax
 - ⚙️ **TOML configuration** - Human-readable settings file with JSON Schema validation
@@ -304,6 +306,25 @@ To contribute translations:
 
 ## Database Architecture
 
+### Database Initialization
+
+The application automatically handles database setup with no manual configuration required:
+
+1. **First Run Setup**
+   - Server automatically creates data directories if they don't exist
+   - SQLite database file is created with proper schema on first startup
+   - All required tables (`todos`, `schedules`) are initialized automatically
+
+2. **Migration Handling**
+   - Automatically detects existing databases in old locations
+   - Migrates data seamlessly to new OS-standard locations
+   - Preserves all existing todos and schedules during migration
+
+3. **Error Recovery**
+   - Handles corrupted database files gracefully
+   - Recreates tables if schema issues are detected
+   - Logs migration and initialization process for troubleshooting
+
 ### Database Schema
 
 **Table `todos`:**
@@ -496,10 +517,14 @@ Suppress with: `export LIBGL_ALWAYS_SOFTWARE=1`
 ### Common Issues
 
 1. **Server Connection**: Ensure server running on port 3001
-2. **File Operations**: Check Tauri permissions in `capabilities/default.json`
-3. **Build Failures**: Update Rust toolchain: `rustup update`
-4. **Test Failures**: Run full test suite to identify issues
-5. **WSLg Limitations**: Use clipboard fallbacks for file/URL operations
+2. **Database Issues**: Database is automatically created - no manual setup needed
+   - Data directories are created automatically on first run
+   - Old databases are migrated automatically to new locations
+   - Check server logs if migration fails
+3. **File Operations**: Check Tauri permissions in `capabilities/default.json`
+4. **Build Failures**: Update Rust toolchain: `rustup update`
+5. **Test Failures**: Run full test suite to identify issues
+6. **WSLg Limitations**: Use clipboard fallbacks for file/URL operations
 
 ### Debug Mode
 ```bash
