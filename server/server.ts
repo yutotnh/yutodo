@@ -1391,7 +1391,7 @@ async function startServer() {
 
 // データベースを設定で初期化
 function initializeDatabaseWithConfig(dbPath: string): void {
-    // 既存のマイグレーション処理を実行
+  // 既存のマイグレーション処理を実行
   migrateFromOldDatabase(dbPath);
   
   // グローバルデータベース接続を設定に基づいて初期化
@@ -1412,6 +1412,7 @@ function initializeDatabaseWithConfig(dbPath: string): void {
     ];
     
     db.serialize(() => {
+      // プラグマを適用
       pragmas.forEach(pragma => {
         db.run(pragma, (err) => {
           if (err) {
@@ -1420,6 +1421,58 @@ function initializeDatabaseWithConfig(dbPath: string): void {
             console.log(`✅ Applied: ${pragma}`);
           }
         });
+      });
+      
+      // テーブルを作成（存在しない場合）
+      console.log('🔧 Ensuring database tables exist...');
+      
+      db.run(`
+        CREATE TABLE IF NOT EXISTS todos (
+          id TEXT PRIMARY KEY,
+          title TEXT NOT NULL,
+          description TEXT,
+          completed BOOLEAN DEFAULT FALSE,
+          priority INTEGER DEFAULT 0,
+          scheduledFor DATETIME,
+          createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+          order_index INTEGER DEFAULT 0
+        )
+      `, (err) => {
+        if (err) {
+          console.error('❌ Failed to create todos table:', err);
+        } else {
+          console.log('✅ Todos table ready');
+        }
+      });
+      
+      db.run(`
+        CREATE TABLE IF NOT EXISTS schedules (
+          id TEXT PRIMARY KEY,
+          title TEXT NOT NULL,
+          description TEXT,
+          priority INTEGER DEFAULT 0,
+          type TEXT NOT NULL,
+          startDate TEXT NOT NULL,
+          endDate TEXT,
+          time TEXT,
+          weeklyConfig TEXT,
+          monthlyConfig TEXT,
+          customConfig TEXT,
+          excludeWeekends BOOLEAN DEFAULT FALSE,
+          excludeDates TEXT,
+          isActive BOOLEAN DEFAULT TRUE,
+          createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+          lastExecuted DATETIME,
+          nextExecution DATETIME
+        )
+      `, (err) => {
+        if (err) {
+          console.error('❌ Failed to create schedules table:', err);
+        } else {
+          console.log('✅ Schedules table ready');
+        }
       });
     });
   });
