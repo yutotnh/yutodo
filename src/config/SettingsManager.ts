@@ -270,14 +270,16 @@ export class SettingsManager {
       throw new Error('Cannot ensure directories: paths not initialized');
     }
     
+    // 設定ディレクトリとバックアップディレクトリを作成
+    const configDir = await this.getConfigDirectory();
     const dirs = [
-      await appDataDir(),
-      await join(await appDataDir(), 'YuToDo'),
+      configDir,
       this.paths.backupDir
     ];
     
     for (const dir of dirs) {
       if (!await exists(dir)) {
+        logger.info(`📁 Creating directory: ${dir}`);
         await mkdir(dir, { recursive: true });
         logger.debug(`Created directory: ${dir}`);
       }

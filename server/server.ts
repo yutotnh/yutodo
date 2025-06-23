@@ -108,7 +108,15 @@ function initializeDataDirectory(): string {
   // ディレクトリが存在しない場合は作成
   if (!existsSync(dataDir)) {
     console.log(`📁 Creating data directory: ${dataDir}`);
-    mkdirSync(dataDir, { recursive: true });
+    try {
+      mkdirSync(dataDir, { recursive: true });
+      console.log(`✅ Data directory created successfully: ${dataDir}`);
+    } catch (error) {
+      console.error(`❌ Failed to create data directory: ${dataDir}`, error);
+      throw new Error(`Failed to create data directory: ${(error as Error).message}`);
+    }
+  } else {
+    console.log(`📁 Data directory already exists: ${dataDir}`);
   }
   
   console.log(`💾 Database location: ${dbPath}`);

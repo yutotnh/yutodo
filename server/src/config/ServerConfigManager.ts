@@ -162,6 +162,13 @@ export class ServerConfigManager {
    * デフォルト設定ファイルを作成
    */
   private async createDefaultConfigFile(): Promise<void> {
+    // 設定ディレクトリが存在しない場合は作成
+    const configDir = path.dirname(this.configFilePath);
+    if (!fs.existsSync(configDir)) {
+      console.log(`📁 Creating config directory: ${configDir}`);
+      await fs.promises.mkdir(configDir, { recursive: true });
+    }
+    
     const tomlContent = this.configToTOML(DEFAULT_SERVER_CONFIG);
     await fs.promises.writeFile(this.configFilePath, tomlContent, 'utf-8');
     console.log('✅ Default config file created');
@@ -388,6 +395,13 @@ export class ServerConfigManager {
     ServerConfigSchema.parse(newConfig);
     
     this.config = newConfig;
+    
+    // 設定ディレクトリが存在しない場合は作成
+    const configDir = path.dirname(this.configFilePath);
+    if (!fs.existsSync(configDir)) {
+      console.log(`📁 Creating config directory: ${configDir}`);
+      await fs.promises.mkdir(configDir, { recursive: true });
+    }
     
     // ファイルに保存
     const tomlContent = this.configToTOML(this.config);
