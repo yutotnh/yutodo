@@ -3,6 +3,7 @@ import { exists, readTextFile, writeTextFile, mkdir, watch } from '@tauri-apps/p
 import { appDataDir, join, configDir, homeDir } from '@tauri-apps/api/path';
 import { parse as parseToml } from '@ltd/j-toml';
 import logger from '../utils/logger';
+import { checkTauriWatchAPI } from '../utils/checkTauriApis';
 
 /**
  * Settings Manager for VS Code-style configuration
@@ -21,6 +22,15 @@ export class SettingsManager {
   // Tauri v2 file watchers (UnwatchFn type)
   private settingsWatcher: (() => void) | null = null;
   private keybindingsWatcher: (() => void) | null = null;
+  
+  // Track watcher initialization to prevent multiple attempts
+  private watchersInitialized: boolean = false;
+  private watcherInitializationInProgress: boolean = false;
+  
+  // Track watcher restart attempts to prevent runaway restarts
+  // Commented out as restart functionality is currently disabled
+  // private watcherRestartCount = new Map<string, number>();
+  // private readonly MAX_WATCHER_RESTARTS = 3;
   
   private listeners = new Set<(event: SettingsChangeEvent) => void>();
   private debounceTimers = new Map<string, NodeJS.Timeout>();
@@ -57,7 +67,7 @@ export class SettingsManager {
         logger.info(`✅ Tauri APIs ready after ${attempt} attempts`);
         return;
       } catch (error) {
-        logger.debug(`⏳ Tauri APIs not ready (attempt ${attempt}/${maxAttempts}):`, error);
+        // Tauri APIs not ready yet
         
         if (attempt === maxAttempts) {
           throw new Error(`Tauri APIs not available after ${maxAttempts} attempts: ${error}`);
@@ -83,6 +93,9 @@ export class SettingsManager {
       logger.warn('SettingsManager previously failed to initialize, attempting retry:', this.initializationError);
       // Allow retry by clearing the error
       this.initializationError = null;
+      // Reset watcher states on retry
+      this.watchersInitialized = false;
+      this.watcherInitializationInProgress = false;
     }
     
     logger.info('🚀 Initializing SettingsManager...');
@@ -105,12 +118,12 @@ export class SettingsManager {
         throw new Error('Failed to setup paths - paths is null after setupPaths()');
       }
       
-      logger.info('Paths setup completed:', this.paths);
+      // Paths setup completed
       
       // Ensure directories exist
       logger.info('Step 2: Ensuring directories exist...');
       await this.ensureDirectories();
-      logger.info('Directories ensured');
+      // Directories ensured
       
       // Check for and migrate old settings
       logger.info('Step 3: Checking for old settings to migrate...');
@@ -130,23 +143,26 @@ export class SettingsManager {
       logger.info('🎉 SettingsManager core initialization completed successfully');
       
       // Start file watchers with delay for Tauri API stabilization
-      logger.info('Step 5: Scheduling file watchers initialization...');
+      // Schedule file watchers initialization
       setTimeout(async () => {
-        try {
-          logger.info('🔄 Starting Tauri v2 file watchers for real-time changes...');
-          await this.startWatching();
-          logger.info('✅ File watchers initialization completed successfully');
-          logger.info('👁️ File watching now active - Settings:', !!this.settingsWatcher, 'Keybindings:', !!this.keybindingsWatcher);
-        } catch (watchError) {
-          logger.error('❌ File watchers initialization failed:', watchError);
-          logger.warn('File watching disabled - changes will not be auto-detected');
+        if (!this.watchersInitialized && !this.watcherInitializationInProgress) {
+          try {
+            logger.info('🔄 Starting Tauri v2 file watchers for real-time changes...');
+            await this.startWatching();
+            logger.info('✅ File watchers initialization completed successfully');
+            logger.info('👁️ File watching now active - Settings:', !!this.settingsWatcher, 'Keybindings:', !!this.keybindingsWatcher);
+          } catch (watchError) {
+            logger.error('❌ File watchers initialization failed:', watchError);
+            logger.warn('File watching disabled - changes will not be auto-detected');
+          }
+        } else {
+          // Watchers already initialized or initialization in progress
         }
       }, 2000); // 2 second delay
     } catch (error) {
       this.initializationError = error as Error;
       logger.error('Failed to initialize SettingsManager:', error);
-      logger.error('Current paths state:', this.paths);
-      logger.error('Is initialized:', this.isInitialized);
+      // Initialization failed
       logger.error('Will not retry initialization until restart');
       
       // Reset state to prevent partially initialized state
@@ -223,14 +239,14 @@ export class SettingsManager {
    */
   private async setupPaths(): Promise<void> {
     try {
-      logger.info('Checking Tauri API availability...');
+      // Check Tauri API availability
       
       // Check if we're in Tauri environment
       if (typeof window === 'undefined' || !(window as any).__TAURI_INTERNALS__) {
         throw new Error('Not running in Tauri environment - cannot access file system APIs');
       }
       
-      logger.info('Tauri environment confirmed, getting config directory...');
+      // Get config directory
       
       let configDir: string;
       try {
@@ -287,7 +303,7 @@ export class SettingsManager {
       if (!await exists(dir)) {
         logger.info(`📁 Creating directory: ${dir}`);
         await mkdir(dir, { recursive: true });
-        logger.debug(`Created directory: ${dir}`);
+        // Directory created
       }
     }
   }
@@ -634,7 +650,27 @@ command = "showHelp"
       throw new Error('Cannot start watching: paths not initialized');
     }
     
+    // Prevent multiple simultaneous initialization attempts
+    if (this.watchersInitialized) {
+      logger.info('File watchers already initialized, skipping');
+      return;
+    }
+    
+    if (this.watcherInitializationInProgress) {
+      logger.info('File watcher initialization already in progress, skipping');
+      return;
+    }
+    
+    this.watcherInitializationInProgress = true;
     logger.info('Starting file watchers...');
+    
+    // Check if Tauri watch API is available
+    const watchAPIAvailable = await checkTauriWatchAPI();
+    if (!watchAPIAvailable) {
+      logger.warn('⚠️ Tauri watch API not available in current environment - file watching disabled');
+      this.watchersInitialized = true; // Mark as "initialized" even though watchers are not active
+      return;
+    }
     
     // Check if files exist before watching
     const settingsExists = await exists(this.paths.settingsFile);
@@ -644,33 +680,69 @@ command = "showHelp"
       throw new Error('Settings file does not exist - cannot watch');
     }
     
+    // Clean up any existing watchers before creating new ones
+    if (this.settingsWatcher) {
+      try {
+        // Clean up existing settings watcher
+        this.settingsWatcher();
+        this.settingsWatcher = null;
+      } catch (cleanupError) {
+        // Error cleaning up watcher
+      }
+    }
+    
     try {
       // Watch settings file using the actual path
-      this.settingsWatcher = await watch(
-        this.paths.settingsFile,
-        (event) => {
-          // Filter to only process write events
-          if (event.type && typeof event.type === 'object') {
-            const eventType = event.type;
-            if ('access' in eventType || 
-                ('modify' in eventType && eventType.modify?.kind === 'metadata')) {
-              logger.debug('Ignoring non-write file event:', event);
-              return;
+      try {
+        this.settingsWatcher = await watch(
+          this.paths.settingsFile,
+          (event) => {
+            // Filter to only process write events
+            if (event.type && typeof event.type === 'object') {
+              const eventType = event.type;
+              if ('access' in eventType || 
+                  ('modify' in eventType && eventType.modify?.kind === 'metadata')) {
+                // Ignore non-write events
+                return;
+              }
             }
+            
+            logger.info('Settings file changed, reloading...');
+            this.handleFileChange('settings');
+          },
+          {
+            // Don't specify baseDir when using absolute paths
+            delayMs: 300
           }
-          
-          logger.info('Settings file changed, reloading...');
-          this.handleFileChange('settings');
-        },
-        {
-          // Don't specify baseDir when using absolute paths
-          delayMs: 300
+        );
+        // Settings file watcher started
+      } catch (watchError: any) {
+        // Handle specific Tauri watch errors
+        if (watchError?.message?.includes('window[') || watchError?.message?.includes('is not a function')) {
+          logger.error('Tauri watch API error - file watching may not be available:', watchError.message);
+          throw new Error('File watching not available in current environment');
         }
-      );
-      logger.debug('Settings file watcher started');
+        // Handle "too many open files" error
+        if (watchError?.message?.includes('os error 24') || watchError?.message?.includes('ファイルを開きすぎです')) {
+          logger.error('Too many open files error - system file handle limit reached');
+          throw new Error('System file handle limit reached. Please restart the application.');
+        }
+        throw watchError;
+      }
       
       // Watch keybindings file (optional)
       if (keybindingsExists) {
+        // Clean up any existing keybindings watcher before creating new one
+        if (this.keybindingsWatcher) {
+          try {
+            // Clean up existing keybindings watcher
+            this.keybindingsWatcher();
+            this.keybindingsWatcher = null;
+          } catch (cleanupError) {
+            // Error cleaning up watcher
+          }
+        }
+        
         try {
           this.keybindingsWatcher = await watch(
             this.paths.keybindingsFile,
@@ -680,7 +752,7 @@ command = "showHelp"
                 const eventType = event.type;
                 if ('access' in eventType || 
                     ('modify' in eventType && eventType.modify?.kind === 'metadata')) {
-                  logger.debug('Ignoring non-write keybindings event:', event);
+                  // Ignore non-write events
                   return;
                 }
               }
@@ -694,8 +766,15 @@ command = "showHelp"
             }
           );
           logger.info('✅ Keybindings file watcher started successfully');
-        } catch (error) {
-          logger.warn('⚠️ Failed to start keybindings file watcher:', error);
+        } catch (error: any) {
+          // Handle specific Tauri watch errors
+          if (error?.message?.includes('window[') || error?.message?.includes('is not a function')) {
+            logger.warn('⚠️ Tauri watch API error for keybindings - continuing without keybindings watcher:', error.message);
+          } else if (error?.message?.includes('os error 24') || error?.message?.includes('ファイルを開きすぎです')) {
+            logger.error('⚠️ Too many open files error for keybindings watcher - system file handle limit reached');
+          } else {
+            logger.warn('⚠️ Failed to start keybindings file watcher:', error);
+          }
           logger.warn('Continuing with settings watching only');
         }
       } else {
@@ -704,22 +783,65 @@ command = "showHelp"
       
       logger.info('🎉 File watchers initialization completed!');
       logger.info('👁️ Active watchers - Settings:', !!this.settingsWatcher, 'Keybindings:', !!this.keybindingsWatcher);
+      
+      // Mark watchers as initialized
+      this.watchersInitialized = true;
     } catch (error) {
       logger.error('❌ Failed to start file watchers:', error);
+      
+      // Clean up any partially created watchers
+      if (this.settingsWatcher) {
+        try {
+          this.settingsWatcher();
+          this.settingsWatcher = null;
+        } catch (cleanupError) {
+          logger.error('Error cleaning up settings watcher:', cleanupError);
+        }
+      }
+      
+      if (this.keybindingsWatcher) {
+        try {
+          this.keybindingsWatcher();
+          this.keybindingsWatcher = null;
+        } catch (cleanupError) {
+          logger.error('Error cleaning up keybindings watcher:', cleanupError);
+        }
+      }
+      
       throw error;
+    } finally {
+      this.watcherInitializationInProgress = false;
     }
   }
 
   /**
    * Restart a specific watcher to address one-shot behavior
    * 🔧 Re-enabled with proper event filtering to prevent infinite loop
+   * NOTE: Currently disabled to prevent restart loops
    */
+  /*
   private async restartWatcher(type: 'settings' | 'keybindings'): Promise<void> {
     if (!this.paths) {
       throw new Error('Cannot restart watcher: paths not initialized');
     }
 
-    logger.debug(`🔄 Restarting ${type} watcher...`);
+    // Don't restart if watchers are not initialized yet
+    if (!this.watchersInitialized) {
+      logger.debug(`Watchers not yet initialized, skipping restart for ${type}`);
+      return;
+    }
+
+    // Check restart count to prevent runaway restarts
+    const restartKey = `${type}_watcher`;
+    const currentCount = this.watcherRestartCount.get(restartKey) || 0;
+    
+    if (currentCount >= this.MAX_WATCHER_RESTARTS) {
+      logger.error(`❌ Maximum restart attempts (${this.MAX_WATCHER_RESTARTS}) reached for ${type} watcher. Disabling watcher.`);
+      return;
+    }
+
+    this.watcherRestartCount.set(restartKey, currentCount + 1);
+    logger.debug(`🔄 Restarting ${type} watcher... (attempt ${currentCount + 1}/${this.MAX_WATCHER_RESTARTS})`);
 
     try {
       if (type === 'settings') {
@@ -792,7 +914,7 @@ command = "showHelp"
                 const eventType = event.type;
                 if ('access' in eventType || 
                     ('modify' in eventType && eventType.modify?.kind === 'metadata')) {
-                  logger.debug('Ignoring non-write keybindings event:', event);
+                  // Ignore non-write events
                   return;
                 }
               }
@@ -815,6 +937,7 @@ command = "showHelp"
       throw error;
     }
   }
+  */
   
   /**
    * Handle file change events
@@ -842,17 +965,18 @@ command = "showHelp"
           logger.info('✅ Keybindings reload completed');
         }
         
-        // Restart file watcher to ensure continued monitoring
-        await this.restartWatcher(type);
+        // Commenting out automatic restart to prevent restart loops
+        // The watcher should continue working after a file change
+        // await this.restartWatcher(type);
       } catch (error) {
         logger.error(`❌ Error reloading ${type}:`, error);
         
-        // Try to restart watcher even on error
-        try {
-          await this.restartWatcher(type);
-        } catch (restartError) {
-          logger.error('❌ Failed to restart watcher after error:', restartError);
-        }
+        // Commenting out restart on error to prevent restart loops
+        // try {
+        //   await this.restartWatcher(type);
+        // } catch (restartError) {
+        //   logger.error('❌ Failed to restart watcher after error:', restartError);
+        // }
       }
       
       this.debounceTimers.delete(type);
@@ -1385,7 +1509,7 @@ command = "showHelp"
         this.handleFileChange('settings');
       },
       {
-        baseDir: BaseDirectory.AppData,
+        // Don't specify baseDir when using absolute paths
         delayMs: 300
       }
     );
@@ -1432,7 +1556,7 @@ command = "showHelp"
         this.handleFileChange('keybindings');
       },
       {
-        baseDir: BaseDirectory.AppData,
+        // Don't specify baseDir when using absolute paths
         delayMs: 300
       }
     );
@@ -1472,9 +1596,24 @@ command = "showHelp"
     this.debounceTimers.clear();
     this.listeners.clear();
     
+    // Reset initialization states
+    this.watchersInitialized = false;
+    this.watcherInitializationInProgress = false;
+    // this.watcherRestartCount.clear();
+    
     logger.info('✅ SettingsManager disposed');
   }
 }
 
 // Export singleton instance
 export const settingsManager = SettingsManager.getInstance();
+
+// Cleanup on window unload to prevent file handle leaks
+if (typeof window !== 'undefined') {
+  window.addEventListener('beforeunload', () => {
+    logger.info('Window unloading, disposing SettingsManager...');
+    settingsManager.dispose().catch(error => {
+      logger.error('Error disposing SettingsManager on unload:', error);
+    });
+  });
+}
