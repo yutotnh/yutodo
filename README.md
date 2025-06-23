@@ -43,9 +43,9 @@ A modern, feature-rich todo list application built with Tauri, React, and TypeSc
 
 ### Data Management & Export/Import
 - 💾 **SQLite database** - Reliable local data storage with OS-standard location
-  - **Linux**: `~/.local/share/YuToDo/todos.db`
-  - **Windows**: `%APPDATA%/YuToDo/todos.db` 
-  - **macOS**: `~/Library/Application Support/YuToDo/todos.db`
+  - **Linux**: `~/.local/share/yutodo-server/todos.db`
+  - **Windows**: `%APPDATA%/YuToDo Server/Data/todos.db` 
+  - **macOS**: `~/Library/Application Support/YuToDo Server/Data/todos.db`
 - 🔄 **Automatic migration** - Seamless migration from old database location
 - 📤 **Native file operations** - Full Tauri-native file dialogs for export/import
 - 📄 **TOML export/import** - Unified format for tasks using standard `[[tasks]]` table syntax
