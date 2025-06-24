@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { SettingsManager } from '../config/SettingsManager';
+import { DEFAULT_APP_SETTINGS, DEFAULT_KEYBINDINGS } from '../types/settings';
 import * as fs from '@tauri-apps/plugin-fs';
 import * as path from '@tauri-apps/api/path';
 
@@ -15,13 +16,14 @@ vi.mock('../utils/osDetection', () => ({
 }));
 vi.mock('@ltd/j-toml', () => ({
   parse: vi.fn((content: string) => {
-    // Simple mock TOML parser
-    if (content.includes('[app]')) {
-      return {
-        app: { theme: 'dark', language: 'en' },
-        server: { url: 'http://localhost:3001' }
-      };
+    // Simple mock TOML parser - order matters!
+    
+    // Empty content returns empty object
+    if (!content || content.trim() === '') {
+      return {};
     }
+    
+    // Keybindings file
     if (content.includes('[[keybindings]]')) {
       return {
         keybindings: [
@@ -30,6 +32,44 @@ vi.mock('@ltd/j-toml', () => ({
         ]
       };
     }
+    
+    // Check for specific theme values first before generic [app] check
+    if (content.includes('theme = "dark"')) {
+      // Also check for language if present
+      const hasJapanese = content.includes('language = "ja"');
+      return {
+        app: { 
+          theme: 'dark', 
+          language: hasJapanese ? 'ja' : 'en' 
+        },
+        server: { url: 'http://localhost:3001' }
+      };
+    }
+    
+    // Check for theme = "light" 
+    if (content.includes('theme = "light"')) {
+      return {
+        app: { theme: 'light', language: 'en' },
+        server: { url: 'http://localhost:3001' }
+      };
+    }
+    
+    // Preserve comments test - theme = "auto"
+    if (content.includes('theme = "auto"')) {
+      return {
+        app: { theme: 'auto', language: 'en' },
+        server: { url: 'http://localhost:3001' }
+      };
+    }
+    
+    // Default app config - only if [app] section exists but no theme specified
+    if (content.includes('[app]')) {
+      return {
+        app: { theme: 'auto', language: 'en' },
+        server: { url: 'http://localhost:3001' }
+      };
+    }
+    
     return {};
   })
 }));
@@ -41,7 +81,22 @@ describe('SettingsManager', () => {
   let settingsManager: SettingsManager;
   
   beforeEach(() => {
+    // Use fake timers
+    vi.useFakeTimers();
+    
+    // Reset singleton instance
+    (SettingsManager as any).instance = null;
     settingsManager = SettingsManager.getInstance();
+    
+    // Reset instance state
+    (settingsManager as any).isInitialized = false;
+    (settingsManager as any).initializationError = null;
+    (settingsManager as any).watchersInitialized = false;
+    (settingsManager as any).watcherInitializationInProgress = false;
+    (settingsManager as any).settings = DEFAULT_APP_SETTINGS;
+    (settingsManager as any).keybindings = DEFAULT_KEYBINDINGS;
+    (settingsManager as any).paths = null;
+    
     // Reset all mocks
     vi.clearAllMocks();
     
@@ -66,6 +121,7 @@ describe('SettingsManager', () => {
     // Clean up
     delete (window as any).__TAURI_INTERNALS__;
     vi.restoreAllMocks();
+    vi.useRealTimers();
   });
 
   describe('Singleton pattern', () => {
@@ -94,9 +150,10 @@ describe('SettingsManager', () => {
 
     it('should create default settings file if it does not exist', async () => {
       vi.mocked(fs.exists)
-        .mockResolvedValueOnce(true) // app data dir exists
-        .mockResolvedValueOnce(true) // YuToDo dir exists
+        .mockResolvedValueOnce(true) // config dir exists
         .mockResolvedValueOnce(true) // backups dir exists
+        .mockResolvedValueOnce(false) // old settings path does not exist
+        .mockResolvedValueOnce(false) // old keybindings path does not exist
         .mockResolvedValueOnce(false) // settings.toml does not exist
         .mockResolvedValueOnce(false); // keybindings.toml does not exist
       
@@ -109,13 +166,18 @@ describe('SettingsManager', () => {
     });
 
     it('should load existing settings from file', async () => {
-      const mockSettingsContent = `
-[app]
+      const mockSettingsContent = `[app]
 theme = "dark"
-language = "ja"
-      `;
+language = "ja"`;
       
-      vi.mocked(fs.exists).mockResolvedValue(true);
+      vi.mocked(fs.exists)
+        .mockResolvedValueOnce(true) // config dir exists
+        .mockResolvedValueOnce(true) // backups dir exists
+        .mockResolvedValueOnce(false) // old settings path does not exist
+        .mockResolvedValueOnce(false) // old keybindings path does not exist
+        .mockResolvedValueOnce(true) // settings.toml exists
+        .mockResolvedValueOnce(true); // keybindings.toml exists
+        
       vi.mocked(fs.readTextFile)
         .mockResolvedValueOnce(mockSettingsContent)
         .mockResolvedValueOnce('[[keybindings]]');
@@ -124,13 +186,21 @@ language = "ja"
       
       const settings = settingsManager.getSettings();
       expect(settings.app.theme).toBe('dark');
-      expect(settings.app.language).toBe('en'); // Mock parser returns 'en'
+      expect(settings.app.language).toBe('ja'); // Mock parser returns 'ja' for this content
     });
 
-    it('should start file watchers', async () => {
+    it('should start file watchers after delay', async () => {
       vi.mocked(fs.exists).mockResolvedValue(true);
+      vi.mocked(fs.readTextFile).mockResolvedValue('');
       
       await settingsManager.initialize();
+      
+      // File watchers are started after a delay
+      expect(fs.watch).not.toHaveBeenCalled();
+      
+      // Fast-forward timers to trigger file watcher initialization
+      vi.advanceTimersByTime(2000);
+      await vi.runAllTimersAsync();
       
       expect(fs.watch).toHaveBeenCalledTimes(2); // settings and keybindings
       expect(fs.watch).toHaveBeenCalledWith(
@@ -285,6 +355,7 @@ command = "save"
   describe('File watching', () => {
     it('should reload settings when file changes', async () => {
       vi.mocked(fs.exists).mockResolvedValue(true);
+      vi.mocked(fs.readTextFile).mockResolvedValue('');
       
       let settingsWatchCallback: ((event: any) => void) | null = null;
       
@@ -296,6 +367,10 @@ command = "save"
       });
       
       await settingsManager.initialize();
+      
+      // Wait for file watchers to initialize
+      vi.advanceTimersByTime(2000);
+      await vi.runAllTimersAsync();
       
       const listener = vi.fn();
       settingsManager.onChange(listener);
@@ -315,7 +390,8 @@ theme = "light"
       }
       
       // Wait for debounce
-      await new Promise(resolve => setTimeout(resolve, 150));
+      vi.advanceTimersByTime(150);
+      await vi.runAllTimersAsync();
       
       expect(listener).toHaveBeenCalledWith({
         type: 'settings',
@@ -332,12 +408,8 @@ theme = "light"
       vi.mocked(fs.exists).mockResolvedValue(true);
       vi.mocked(fs.readTextFile).mockRejectedValue(new Error('Failed to read file'));
       
-      // SettingsManager now handles errors gracefully and doesn't throw
-      await settingsManager.initialize();
-      const settings = settingsManager.getSettings();
-      
-      // Should use default settings when error occurs
-      expect(settings.app.theme).toBe('auto');
+      // SettingsManager should throw when initialization fails
+      await expect(settingsManager.initialize()).rejects.toThrow('Failed to initialize settings manager');
     });
   });
 
