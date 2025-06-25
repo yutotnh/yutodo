@@ -37,6 +37,45 @@ export async function waitForAppReady() {
         };
     });
     console.log('React status:', reactStatus);
+    
+    // Get detailed error information
+    try {
+        const errorInfo = await browser.execute(() => {
+            const info = {
+                hasErrors: window.__errors ? window.__errors.length > 0 : false,
+                errors: window.__errors || [],
+                reactRoot: document.getElementById('root'),
+                rootHTML: document.getElementById('root') ? document.getElementById('root').innerHTML : 'no root',
+                scripts: Array.from(document.scripts).map(s => ({
+                    src: s.src,
+                    type: s.type,
+                    innerHTML: s.innerHTML ? s.innerHTML.substring(0, 100) : ''
+                })),
+                readyState: document.readyState,
+                location: window.location.href,
+                bodyHTML: document.body ? document.body.innerHTML.substring(0, 200) : 'no body'
+            };
+            
+            // Check if React is loaded
+            info.reactLoaded = typeof React !== 'undefined';
+            info.reactDOMLoaded = typeof ReactDOM !== 'undefined';
+            
+            // Check for any console errors
+            if (window.console && window.console._errors) {
+                info.consoleErrors = window.console._errors;
+            }
+            
+            // Check if there's a script tag for main.tsx
+            info.hasMainScript = Array.from(document.scripts).some(s => 
+                s.src && s.src.includes('main')
+            );
+            
+            return info;
+        });
+        console.log('Page error info:', JSON.stringify(errorInfo, null, 2));
+    } catch (e) {
+        console.log('Could not get error info:', e.message);
+    }
 
     // Wait for React app to mount - try multiple selectors
     await browser.waitUntil(
