@@ -38,6 +38,8 @@ export interface CommandContext {
   onNewTask: () => void;
   onToggleSettings: () => void;
   onFocusSearch: () => void;
+  onToggleSearch: () => void;
+  onToggleFilter: () => void;
   onSelectAll: () => void;
   onDeleteSelected: () => void;
   onClearSelection: () => void;

@@ -127,6 +127,8 @@ function App() {
   const [isCompletedExpanded, setIsCompletedExpanded] = useState(true);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [editingSchedule, setEditingSchedule] = useState<Schedule | null>(null);
+  const [showSearch, setShowSearch] = useState(false);
+  const [showFilter, setShowFilter] = useState(false);
   const addTodoFormRef = useRef<AddTodoFormRef>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -1178,8 +1180,27 @@ function App() {
     onToggleSettings: () => {
       setShowSettings(prev => !prev);
     },
+    onToggleSearch: () => {
+      setShowSearch(prev => !prev);
+      if (!showSearch) {
+        // 検索を表示する場合は、少し遅延してフォーカス
+        setTimeout(() => {
+          searchInputRef.current?.focus();
+        }, 100);
+      } else {
+        // 検索を非表示にする場合は、検索クエリをクリア
+        setSearchQuery('');
+      }
+    },
+    onToggleFilter: () => {
+      setShowFilter(prev => !prev);
+    },
     onFocusSearch: () => {
-      searchInputRef.current?.focus();
+      // 後方互換性のため残す
+      setShowSearch(true);
+      setTimeout(() => {
+        searchInputRef.current?.focus();
+      }, 100);
     },
     onSelectAll: () => {
       // フィルター結果のみを選択
@@ -1334,6 +1355,8 @@ function App() {
     onNewTask: keyboardHandlers.onNewTask,
     onToggleSettings: keyboardHandlers.onToggleSettings,
     onFocusSearch: keyboardHandlers.onFocusSearch,
+    onToggleSearch: keyboardHandlers.onToggleSearch,
+    onToggleFilter: keyboardHandlers.onToggleFilter,
     onSelectAll: keyboardHandlers.onSelectAll,
     onDeleteSelected: keyboardHandlers.onDeleteSelected,
     onClearSelection: keyboardHandlers.onClearSelection,
@@ -1407,20 +1430,20 @@ function App() {
       <main className="app-main">
         {settings.currentView === 'tasks' ? (
           <>
-            {settings.detailedMode && (
-              <>
-                <SearchBar
-                  ref={searchInputRef}
-                  searchQuery={searchQuery}
-                  onSearchChange={setSearchQuery}
-                />
+            {showSearch && (
+              <SearchBar
+                ref={searchInputRef}
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+              />
+            )}
 
-                <TodoFilter
-                  currentFilter={currentFilter}
-                  onFilterChange={setCurrentFilter}
-                  counts={filterCounts}
-                />
-              </>
+            {showFilter && (
+              <TodoFilter
+                currentFilter={currentFilter}
+                onFilterChange={setCurrentFilter}
+                counts={filterCounts}
+              />
             )}
 
             {/* 選択カウンター */}

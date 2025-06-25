@@ -61,6 +61,8 @@
     "new-task": "新しいタスクを追加",
     "command-palette": "コマンドパレットを開く",
     "open-settings": "設定を開く",
+    "toggle-search": "検索の表示切替",
+    "toggle-filter": "フィルターの表示切替",
     "focus-search": "検索",
     "select-all": "全選択",
     "delete-selected": "選択されたタスクを削除",
@@ -378,6 +380,14 @@
         }
       },
       "search": {
+        "toggleSearch": {
+          "title": "検索の表示/非表示",
+          "description": "検索バーの表示を切り替える"
+        },
+        "toggleFilter": {
+          "title": "フィルターの表示/非表示",
+          "description": "フィルターオプションの表示を切り替える"
+        },
         "focusSearch": {
           "title": "検索にフォーカス",
           "description": "検索入力フィールドにフォーカス"

@@ -47,10 +47,17 @@ export const keyboardShortcuts: KeyboardShortcut[] = [
     category: 'basic'
   },
   {
-    id: 'focus-search',
+    id: 'toggle-search',
     key: 'Ctrl+F',
-    description: 'Search',
-    handler: 'onFocusSearch',
+    description: 'Toggle search',
+    handler: 'onToggleSearch',
+    category: 'basic'
+  },
+  {
+    id: 'toggle-filter',
+    key: 'Ctrl+Shift+F',
+    description: 'Toggle filter',
+    handler: 'onToggleFilter',
     category: 'basic'
   },
   

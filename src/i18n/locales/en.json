@@ -61,6 +61,8 @@
     "new-task": "Add new task",
     "command-palette": "Open command palette",
     "open-settings": "Open settings",
+    "toggle-search": "Toggle search",
+    "toggle-filter": "Toggle filter",
     "focus-search": "Search",
     "select-all": "Select all",
     "delete-selected": "Delete selected tasks",
@@ -379,6 +381,14 @@
         }
       },
       "search": {
+        "toggleSearch": {
+          "title": "Toggle Search",
+          "description": "Show or hide the search bar"
+        },
+        "toggleFilter": {
+          "title": "Toggle Filter",
+          "description": "Show or hide the filter options"
+        },
         "focusSearch": {
           "title": "Focus Search",
           "description": "Focus on the search input field"

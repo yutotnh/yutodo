@@ -181,6 +181,30 @@ const createTaskCommands = (t: TFunction): CommandAction[] => [
 // Search Commands
 const createSearchCommands = (t: TFunction): CommandAction[] => [
   {
+    id: 'search.toggle',
+    title: t('commandPalette.commands.search.toggleSearch.title', 'Toggle Search'),
+    description: t('commandPalette.commands.search.toggleSearch.description', 'Show or hide the search bar'),
+    category: 'search',
+    keywords: ['search', 'find', 'toggle', 'show', 'hide'],
+    keybinding: getShortcutKey('onToggleSearch'),
+    icon: 'search',
+    execute: (context: CommandContext) => {
+      context.onToggleSearch();
+    }
+  },
+  {
+    id: 'search.toggleFilter',
+    title: t('commandPalette.commands.search.toggleFilter.title', 'Toggle Filter'),
+    description: t('commandPalette.commands.search.toggleFilter.description', 'Show or hide the filter options'),
+    category: 'search',
+    keywords: ['filter', 'toggle', 'show', 'hide', 'status'],
+    keybinding: getShortcutKey('onToggleFilter'),
+    icon: 'filter',
+    execute: (context: CommandContext) => {
+      context.onToggleFilter();
+    }
+  },
+  {
     id: 'search.focus',
     title: t('commandPalette.commands.search.focusSearch.title', 'Focus Search'),
     description: t('commandPalette.commands.search.focusSearch.description', 'Focus on the search input field'),
