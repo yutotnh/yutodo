@@ -686,8 +686,8 @@ command = "showHelp"
         // Clean up existing settings watcher
         this.settingsWatcher();
         this.settingsWatcher = null;
-      } catch (cleanupError) {
-        // Error cleaning up watcher
+      } catch {
+        // Error cleaning up watcher - ignore
       }
     }
     
@@ -738,8 +738,8 @@ command = "showHelp"
             // Clean up existing keybindings watcher
             this.keybindingsWatcher();
             this.keybindingsWatcher = null;
-          } catch (cleanupError) {
-            // Error cleaning up watcher
+          } catch {
+            // Error cleaning up watcher - ignore
           }
         }
         

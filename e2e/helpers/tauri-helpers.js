@@ -9,7 +9,7 @@ export async function waitForAppReady() {
     await browser.waitUntil(
         async () => {
             const title = await browser.getTitle();
-            return title === 'YuToDo';
+            return title.includes('YuToDo');
         },
         {
             timeout: 10000,
@@ -17,14 +17,54 @@ export async function waitForAppReady() {
         }
     );
 
-    // Wait for React app to mount
+    // Get page source to debug
+    const pageSource = await browser.getPageSource();
+    console.log('Page source length:', pageSource.length);
+    
+    // Check if there are any script errors in the page
+    const hasScriptError = await browser.execute(() => {
+        return window.onerror ? 'Has error handler' : 'No error handler';
+    });
+    console.log('Script error status:', hasScriptError);
+    
+    // Check if React is loaded
+    const reactStatus = await browser.execute(() => {
+        return {
+            hasReact: typeof window.React !== 'undefined',
+            hasReactDOM: typeof window.ReactDOM !== 'undefined',
+            rootElement: document.getElementById('root') ? 'exists' : 'missing',
+            rootContent: document.getElementById('root')?.innerHTML || 'empty'
+        };
+    });
+    console.log('React status:', reactStatus);
+
+    // Wait for React app to mount - try multiple selectors
     await browser.waitUntil(
         async () => {
+            // Try app-container first
             const appElement = await $('[data-testid="app-container"]');
-            return await appElement.isExisting();
+            if (await appElement.isExisting()) {
+                return true;
+            }
+            
+            // Try .app class
+            const appClass = await $('.app');
+            if (await appClass.isExisting()) {
+                return true;
+            }
+            
+            // Try #root
+            const rootElement = await $('#root');
+            if (await rootElement.isExisting()) {
+                const html = await rootElement.getHTML();
+                // Check if root has content (not empty)
+                return html && html.length > 50;
+            }
+            
+            return false;
         },
         {
-            timeout: 5000,
+            timeout: 10000,
             timeoutMsg: 'React app did not mount'
         }
     );

@@ -28,6 +28,8 @@ export async function checkTauriWatchAPI(): Promise<boolean> {
       key.includes('watch')
     );
     
+    logger.debug('Tauri watch functions found:', watchFunctions.length);
+    
     // Check window functions
     
     return true;
