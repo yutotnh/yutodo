@@ -91,7 +91,8 @@ export const DEFAULT_KEYBINDINGS: Keybinding[] = [
   { key: 'Ctrl+Shift+P', command: 'openCommandPalette' },
   { key: 'Ctrl+N', command: 'newTask', when: '!inputFocus' },
   { key: 'Ctrl+,', command: 'openSettings' },
-  { key: 'Ctrl+F', command: 'focusSearch', when: '!inputFocus' },
+  { key: 'Ctrl+F', command: 'toggleSearch', when: '!inputFocus' },
+  { key: 'Ctrl+Shift+F', command: 'toggleFilter', when: '!inputFocus' },
   { key: 'Ctrl+K Ctrl+S', command: 'showKeybindings' },
   
   // Task commands
