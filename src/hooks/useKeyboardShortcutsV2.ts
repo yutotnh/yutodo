@@ -10,6 +10,10 @@ export interface KeyboardShortcutHandlers {
   onFocusSearch: () => void;
   onOpenCommandPalette: () => void;
   
+  // Search/Filter operations
+  onToggleSearch?: () => void;
+  onToggleFilter?: () => void;
+  
   // Task operations
   onSelectAll: () => void;
   onDeleteSelected: () => void;
@@ -298,6 +302,12 @@ function executeCommand(command: string, handlers: KeyboardShortcutHandlers) {
     case 'focusSearch':
       handlers.onFocusSearch();
       break;
+    case 'toggleSearch':
+      handlers.onToggleSearch?.();
+      break;
+    case 'toggleFilter':
+      handlers.onToggleFilter?.();
+      break;
     case 'openCommandPalette':
       handlers.onOpenCommandPalette();
       break;
@@ -359,6 +369,8 @@ function getCommandDescription(command: string): string {
     newTask: 'Add new task',
     openSettings: 'Open settings',
     focusSearch: 'Search',
+    toggleSearch: 'Toggle search',
+    toggleFilter: 'Toggle filter',
     openCommandPalette: 'Open command palette',
     selectAll: 'Select all',
     deleteSelected: 'Delete selected',
