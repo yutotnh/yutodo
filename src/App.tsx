@@ -1435,6 +1435,7 @@ function App() {
                 ref={searchInputRef}
                 searchQuery={searchQuery}
                 onSearchChange={setSearchQuery}
+                onClose={() => setShowSearch(false)}
               />
             )}
 
@@ -1443,6 +1444,7 @@ function App() {
                 currentFilter={currentFilter}
                 onFilterChange={setCurrentFilter}
                 counts={filterCounts}
+                onClose={() => setShowFilter(false)}
               />
             )}
 

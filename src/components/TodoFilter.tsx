@@ -1,5 +1,5 @@
 import React from 'react';
-import { Filter, CheckCircle, Circle, Clock, AlertTriangle } from 'lucide-react';
+import { Filter, CheckCircle, Circle, Clock, AlertTriangle, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 export type FilterType = 'all' | 'completed' | 'pending' | 'overdue' | 'high' | 'medium' | 'low';
@@ -7,6 +7,7 @@ export type FilterType = 'all' | 'completed' | 'pending' | 'overdue' | 'high' | 
 interface TodoFilterProps {
   currentFilter: FilterType;
   onFilterChange: (filter: FilterType) => void;
+  onClose?: () => void;
   counts: {
     all: number;
     completed: number;
@@ -18,7 +19,7 @@ interface TodoFilterProps {
   };
 }
 
-export const TodoFilter: React.FC<TodoFilterProps> = ({ currentFilter, onFilterChange, counts }) => {
+export const TodoFilter: React.FC<TodoFilterProps> = ({ currentFilter, onFilterChange, onClose, counts }) => {
   const { t } = useTranslation();
   
   const filters = [
@@ -33,10 +34,22 @@ export const TodoFilter: React.FC<TodoFilterProps> = ({ currentFilter, onFilterC
 
   return (
     <div className="todo-filter">
-      <h3 className="filter-title">
-        <Filter size={16} />
-        {t('filters.title')}
-      </h3>
+      <div className="filter-header">
+        <h3 className="filter-title">
+          <Filter size={16} />
+          {t('filters.title')}
+        </h3>
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="filter-close"
+            aria-label={t('common.close')}
+            title={t('common.close')}
+          >
+            <X size={16} />
+          </button>
+        )}
+      </div>
       <div className="filter-buttons">
         {filters.map(filter => {
           const Icon = filter.icon;

@@ -5,11 +5,12 @@ import { useTranslation } from 'react-i18next';
 interface SearchBarProps {
   searchQuery: string;
   onSearchChange: (query: string) => void;
+  onClose?: () => void;
   placeholder?: string;
 }
 
 export const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(
-  ({ searchQuery, onSearchChange, placeholder }, ref) => {
+  ({ searchQuery, onSearchChange, onClose, placeholder }, ref) => {
     const { t } = useTranslation();
     const handleClear = () => {
       onSearchChange('');
@@ -38,6 +39,16 @@ export const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(
             </button>
           )}
         </div>
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="search-close"
+            aria-label={t('common.close')}
+            title={t('common.close')}
+          >
+            <X size={16} />
+          </button>
+        )}
       </div>
     );
   }

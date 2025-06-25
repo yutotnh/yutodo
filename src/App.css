@@ -1717,12 +1717,16 @@ body {
   padding: 1rem 1.5rem;
   background: #ffffff;
   border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .search-input-container {
   position: relative;
   display: flex;
   align-items: center;
+  flex: 1;
   max-width: 400px;
 }
 
@@ -1766,6 +1770,24 @@ body {
   color: #6b7280;
 }
 
+.search-close {
+  padding: 0.5rem;
+  background: transparent;
+  border: none;
+  border-radius: 0.375rem;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.search-close:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
 /* Todo Filter */
 .todo-filter {
   padding: 1rem 1.5rem;
@@ -1773,13 +1795,38 @@ body {
   border-bottom: 1px solid #e2e8f0;
 }
 
+.filter-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
 .filter-title {
-  margin: 0 0 0.75rem 0;
+  margin: 0;
   display: flex;
   align-items: center;
   gap: 0.5rem;
   font-size: 0.875rem;
   font-weight: 600;
+  color: #374151;
+}
+
+.filter-close {
+  padding: 0.5rem;
+  background: transparent;
+  border: none;
+  border-radius: 0.375rem;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.filter-close:hover {
+  background: #f3f4f6;
   color: #374151;
 }
 
@@ -2804,6 +2851,15 @@ body {
   color: #cbd5e1 !important;
 }
 
+.app.app--dark .search-close {
+  color: #94a3b8 !important;
+}
+
+.app.app--dark .search-close:hover {
+  background: #475569 !important;
+  color: #e2e8f0 !important;
+}
+
 .app.app--dark .todo-filter {
   background: #1e293b !important;
   border-bottom-color: #334155 !important;
@@ -2832,6 +2888,15 @@ body {
 }
 
 .app.app--dark .filter-count {
+  color: #e2e8f0 !important;
+}
+
+.app.app--dark .filter-close {
+  color: #94a3b8 !important;
+}
+
+.app.app--dark .filter-close:hover {
+  background: #475569 !important;
   color: #e2e8f0 !important;
 }
 
