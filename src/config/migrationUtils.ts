@@ -1,8 +1,20 @@
-import { AppSettings } from '../types/todo';
 import { AppSettingsFile, Keybinding } from '../types/settings';
 import { exists, writeTextFile } from '@tauri-apps/plugin-fs';
 import { join, appDataDir } from '@tauri-apps/api/path';
 import logger from '../utils/logger';
+
+// Type for old settings format (before 3-view system)
+interface LegacyAppSettings {
+  alwaysOnTop?: boolean;
+  detailedMode?: boolean;
+  darkMode?: 'auto' | 'light' | 'dark';
+  confirmDelete?: boolean;
+  customCss?: string;
+  serverUrl?: string;
+  language?: 'auto' | 'en' | 'ja';
+  startupView?: 'tasks' | 'schedules';
+  currentView?: 'tasks' | 'schedules'; // Legacy property
+}
 
 /**
  * Get migration data from localStorage
@@ -17,7 +29,7 @@ export function getMigrationData(): { settings: AppSettingsFile; keybindings: Ke
     }
     
     // Parse old settings
-    const oldSettings: AppSettings = JSON.parse(oldSettingsJson);
+    const oldSettings: LegacyAppSettings = JSON.parse(oldSettingsJson);
     logger.debug('Found old settings:', oldSettings);
     
     // Convert to new format
@@ -54,15 +66,22 @@ export async function completeMigration(): Promise<void> {
 /**
  * Convert old AppSettings to new AppSettingsFile format
  */
-function convertToFileSettings(old: AppSettings): AppSettingsFile {
+function convertToFileSettings(old: LegacyAppSettings): AppSettingsFile {
   return {
     app: {
       theme: old.darkMode || 'auto',
       language: old.language || 'auto',
       alwaysOnTop: old.alwaysOnTop || false,
-      detailedMode: old.detailedMode || false,
       confirmDelete: old.confirmDelete !== false, // Default true
-      startupView: old.currentView || old.startupView || 'tasks'
+      startupView: (() => {
+        // マイグレーション: currentView/startupViewとdetailedModeから新しいstartupViewを決定
+        const oldView = old.currentView || old.startupView;
+        if (oldView === 'schedules') {
+          return 'schedules';
+        }
+        // タスクビューの場合はdetailedModeで詳細/簡易を決定
+        return old.detailedMode !== false ? 'tasks-detailed' : 'tasks-simple';
+      })()
     },
     server: {
       url: old.serverUrl || 'http://localhost:3001',
@@ -83,7 +102,7 @@ function convertToFileSettings(old: AppSettings): AppSettingsFile {
 /**
  * Extract any custom keybindings from old settings
  */
-function extractKeybindings(old: AppSettings): Keybinding[] {
+function extractKeybindings(old: LegacyAppSettings): Keybinding[] {
   const keybindings: Keybinding[] = [];
   
   // Old settings didn't have custom keybindings, but check for future compatibility

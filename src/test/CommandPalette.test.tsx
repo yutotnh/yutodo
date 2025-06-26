@@ -55,13 +55,13 @@ describe('CommandPalette - Basic Tests', () => {
     vi.clearAllMocks();
     
     mockContext = {
-      startupView: 'tasks',
+      startupView: 'tasks-detailed',
       selectedTasks: new Set<string>(),
       searchQuery: '',
       settings: {
         theme: 'auto',
         language: 'auto',
-        startupView: 'tasks',
+        startupView: 'tasks-detailed',
         slimMode: false,
         alwaysOnTop: false,
         customCss: '',

@@ -9,7 +9,6 @@ interface MenuBarProps {
   onSelectAll: () => void;
   onDeleteSelected: () => void;
   onShowSettings: () => void;
-  onToggleSlim: () => void;
   onToggleAlwaysOnTop: () => void;
   onShowShortcuts: () => void;
   onShowAbout: () => void;
@@ -18,7 +17,7 @@ interface MenuBarProps {
   onQuit?: () => void;
   onMenuStateChange?: (isOpen: boolean) => void;
   isAltKeyActive?: boolean;
-  onViewChange: (view: 'tasks' | 'schedules') => void;
+  onViewChange: (view: 'tasks-detailed' | 'tasks-simple' | 'schedules') => void;
 }
 
 interface MenuItemData {
@@ -35,7 +34,6 @@ export const MenuBar: React.FC<MenuBarProps> = ({
   onSelectAll,
   onDeleteSelected,
   onShowSettings,
-  onToggleSlim,
   onToggleAlwaysOnTop,
   onShowShortcuts,
   onShowAbout,
@@ -88,11 +86,10 @@ export const MenuBar: React.FC<MenuBarProps> = ({
       label: t('menu.view'),
       accessKey: 'V',
       items: [
-        { id: 'show-tasks', label: settings.startupView === 'tasks' ? t('menu.showingTasks') : t('menu.showTasks'), action: () => onViewChange('tasks') },
+        { id: 'show-tasks-detailed', label: settings.startupView === 'tasks-detailed' ? t('menu.showingTasksDetailed') : t('menu.showTasksDetailed'), action: () => onViewChange('tasks-detailed') },
+        { id: 'show-tasks-simple', label: settings.startupView === 'tasks-simple' ? t('menu.showingTasksSimple') : t('menu.showTasksSimple'), action: () => onViewChange('tasks-simple') },
         { id: 'show-schedules', label: settings.startupView === 'schedules' ? t('menu.showingSchedules') : t('menu.showSchedules'), action: () => onViewChange('schedules') },
         { id: 'separator-1', separator: true },
-        { id: 'toggle-slim', label: settings.detailedMode ? t('menu.enableSlimMode') : t('menu.disableSlimMode'), action: onToggleSlim },
-        { id: 'separator-2', separator: true },
         { id: 'always-on-top', label: settings.alwaysOnTop ? t('menu.disableAlwaysOnTop') : t('menu.enableAlwaysOnTop'), action: onToggleAlwaysOnTop }
       ] as MenuItemData[]
     },
@@ -105,7 +102,7 @@ export const MenuBar: React.FC<MenuBarProps> = ({
         { id: 'about', label: t('menu.about'), action: onShowAbout }
       ] as MenuItemData[]
     }
-  }), [t, onNewTask, onImportTasks, onExportTasks, onShowSettings, onQuit, onSelectAll, onDeleteSelected, onShowShortcuts, onShowAbout, onToggleAlwaysOnTop, onToggleSlim, onViewChange, settings.alwaysOnTop, settings.startupView, settings.detailedMode]);
+  }), [t, onNewTask, onImportTasks, onExportTasks, onShowSettings, onQuit, onSelectAll, onDeleteSelected, onShowShortcuts, onShowAbout, onToggleAlwaysOnTop, onViewChange, settings.alwaysOnTop, settings.startupView]);
 
 
   // 外部クリックでメニューを閉じる

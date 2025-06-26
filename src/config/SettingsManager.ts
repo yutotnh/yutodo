@@ -465,14 +465,11 @@ language = "auto"
 # Window always on top
 alwaysOnTop = false
 
-# Show detailed mode with descriptions
-detailedMode = false
-
 # Confirm before deleting tasks
 confirmDelete = true
 
-# Current view: "tasks" | "schedules"
-currentView = "tasks"
+# Current view: "tasks-detailed" | "tasks-simple" | "schedules"
+startupView = "tasks-detailed"
 
 [server]
 # Backend server URL
@@ -1028,7 +1025,7 @@ command = "showHelp"
       logger.debug('🔧 New settings:', {
         theme: this.settings.app?.theme,
         language: this.settings.app?.language,
-        detailedMode: this.settings.app?.detailedMode
+        startupView: this.settings.app?.startupView
       });
     } catch (error) {
       logger.error('❌ Failed to reload settings:', error);

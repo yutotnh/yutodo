@@ -121,7 +121,6 @@ describe('migrationUtils', () => {
           theme: 'dark',
           language: 'ja',
           alwaysOnTop: true,
-          detailedMode: false,
           confirmDelete: false,
           startupView: 'schedules'
         },
@@ -152,9 +151,8 @@ describe('migrationUtils', () => {
         theme: 'auto',
         language: 'auto',
         alwaysOnTop: false,
-        detailedMode: false,
         confirmDelete: true, // Default is true
-        startupView: 'tasks'
+        startupView: 'tasks-detailed'
       });
     });
 

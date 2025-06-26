@@ -6,9 +6,8 @@ export interface AppSettingsFile {
     theme: 'auto' | 'light' | 'dark';
     language: 'auto' | 'en' | 'ja';
     alwaysOnTop: boolean;
-    detailedMode: boolean;
     confirmDelete: boolean;
-    startupView: 'tasks' | 'schedules';
+    startupView: 'tasks-detailed' | 'tasks-simple' | 'schedules';
   };
   
   // Server settings
@@ -65,9 +64,8 @@ export const DEFAULT_APP_SETTINGS: AppSettingsFile = {
     theme: 'auto',
     language: 'auto',
     alwaysOnTop: false,
-    detailedMode: false,
     confirmDelete: true,
-    startupView: 'tasks'
+    startupView: 'tasks-detailed'
   },
   server: {
     url: 'http://localhost:3001',

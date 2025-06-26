@@ -43,13 +43,12 @@ import './components/CommandPalette.css';
 
 const DEFAULT_SETTINGS: AppSettings = {
   alwaysOnTop: false,
-  detailedMode: false,
   darkMode: 'auto',
   confirmDelete: true,
   customCss: '',
   serverUrl: 'http://localhost:3001',
   language: 'auto',
-  startupView: 'tasks'
+  startupView: 'tasks-detailed'
 };
 
 // Tauri環境でのフォールバック設定
@@ -171,7 +170,6 @@ function App() {
       // ファイル設定からAppSettings形式に変換
       const appSettings: AppSettings = {
         alwaysOnTop: fileSettings.app.alwaysOnTop,
-        detailedMode: fileSettings.app.detailedMode,
         darkMode: fileSettings.app.theme,
         confirmDelete: fileSettings.app.confirmDelete,
         customCss: fileSettings.appearance.customCss,
@@ -541,7 +539,6 @@ function App() {
             theme: newSettings.darkMode as 'auto' | 'light' | 'dark',
             language: newSettings.language,
             alwaysOnTop: newSettings.alwaysOnTop,
-            detailedMode: newSettings.detailedMode,
             confirmDelete: newSettings.confirmDelete,
             startupView: newSettings.startupView
           },
@@ -603,10 +600,6 @@ function App() {
   };
 
   // メニューアクションハンドラー
-
-  const handleToggleSlim = () => {
-    handleSettingsChange({ ...settings, detailedMode: !settings.detailedMode });
-  };
 
   const handleToggleAlwaysOnTop = () => {
     handleSettingsChange({ ...settings, alwaysOnTop: !settings.alwaysOnTop });
@@ -1013,8 +1006,13 @@ function App() {
     setSelectionAnchorIndex(-1);
   };
 
+  // ビューヘルパー関数
+  const isTasksView = () => settings.startupView === 'tasks-detailed' || settings.startupView === 'tasks-simple';
+  const isDetailedTasksView = () => settings.startupView === 'tasks-detailed';
+  const isSimpleTasksView = () => settings.startupView === 'tasks-simple';
+
   // ビュー切り替えハンドラー
-  const handleViewChange = (view: 'tasks' | 'schedules') => {
+  const handleViewChange = (view: 'tasks-detailed' | 'tasks-simple' | 'schedules') => {
     setSettings(prev => ({ ...prev, startupView: view }));
   };
 
@@ -1320,7 +1318,7 @@ function App() {
     },
     // View switching
     onShowTasks: () => {
-      handleSettingsChange({ ...settings, startupView: 'tasks' });
+      handleSettingsChange({ ...settings, startupView: 'tasks-detailed' });
     },
     onShowSchedules: () => {
       handleSettingsChange({ ...settings, startupView: 'schedules' });
@@ -1425,12 +1423,17 @@ function App() {
     onToggleSelectedCompletion: keyboardHandlers.onToggleSelectedCompletion,
     onExportTasks: handleExportTasksFromMenu,
     onImportTasks: handleImportTasksFromMenu,
-    onViewChange: (view) => setSettings(prev => ({ ...prev, startupView: view })),
+    onViewChange: (view: 'tasks-detailed' | 'tasks-simple' | 'schedules') => setSettings(prev => ({ ...prev, startupView: view })),
     onToggleDarkMode: () => {
       const newMode = settings.darkMode === 'dark' ? 'light' : settings.darkMode === 'light' ? 'auto' : 'dark';
       setSettings(prev => ({ ...prev, darkMode: newMode }));
     },
-    onToggleSlimMode: () => setSettings(prev => ({ ...prev, detailedMode: !settings.detailedMode })),
+    onToggleSlimMode: () => {
+      if (isTasksView()) {
+        const newView = isDetailedTasksView() ? 'tasks-simple' : 'tasks-detailed';
+        setSettings(prev => ({ ...prev, startupView: newView }));
+      }
+    },
     onToggleAlwaysOnTop: () => setSettings(prev => ({ ...prev, alwaysOnTop: !settings.alwaysOnTop })),
     onShowHelp: () => setShowShortcutHelp(true),
     // Schedule handlers
@@ -1439,8 +1442,8 @@ function App() {
   };
 
   return (
-    <div data-testid="app-container" className={`app ${!settings.detailedMode ? 'app--slim' : ''} ${getThemeClass()}`}>
-      <header data-testid="app-header" className={`app-header ${(settings.detailedMode || showHeader) ? 'app-header--visible' : 'app-header--hidden'}`} onMouseDown={handleHeaderMouseDown}>
+    <div data-testid="app-container" className={`app ${isSimpleTasksView() ? 'app--slim' : ''} ${getThemeClass()}`}>
+      <header data-testid="app-header" className={`app-header ${(isDetailedTasksView() || showHeader) ? 'app-header--visible' : 'app-header--hidden'}`} onMouseDown={handleHeaderMouseDown}>
         <div className="header-left">
           <MenuBar
             settings={settings}
@@ -1448,7 +1451,6 @@ function App() {
             onSelectAll={keyboardHandlers.onSelectAll}
             onDeleteSelected={keyboardHandlers.onDeleteSelected}
             onShowSettings={() => setShowSettings(true)}
-            onToggleSlim={handleToggleSlim}
             onToggleAlwaysOnTop={handleToggleAlwaysOnTop}
             onShowShortcuts={() => setShowShortcutHelp(true)}
             onShowAbout={handleShowAbout}
@@ -1460,7 +1462,7 @@ function App() {
           />
         </div>
         <div className="header-center">
-          {settings.detailedMode && (
+          {isDetailedTasksView() && (
             <ConnectionStatus
               connectionStatus={connectionStatus}
               reconnectAttempts={reconnectAttempts}
@@ -1489,7 +1491,7 @@ function App() {
       </header>
 
       <main className="app-main">
-        {settings.startupView === 'tasks' ? (
+        {isTasksView() ? (
           <>
             {showSearch && (
               <SearchBar
@@ -1561,7 +1563,7 @@ function App() {
                         onUpdate={updateTodo}
                         onDelete={handleDeleteWithConfirm}
                         isSelected={selectedTodos.has(todo.id)}
-                        slimMode={!settings.detailedMode}
+                        slimMode={isSimpleTasksView()}
                         onSelect={(id, selected, event) => {
                           const allTodos = [...pendingTodos, ...completedTodos];
                           const currentIndex = allTodos.findIndex(todo => todo.id === id);
@@ -1630,7 +1632,7 @@ function App() {
                               onUpdate={updateTodo}
                               onDelete={handleDeleteWithConfirm}
                               isSelected={selectedTodos.has(todo.id)}
-                              slimMode={!settings.detailedMode}
+                              slimMode={isSimpleTasksView()}
                               onSelect={(id, selected, event) => {
                                 const allTodos = [...pendingTodos, ...completedTodos];
                                 const currentIndex = allTodos.findIndex(todo => todo.id === id);
@@ -1737,14 +1739,14 @@ function App() {
       )}
 
       {/* 底部固定のAddTodoForm (タスクビューのみ) */}
-      {isWindowFocused && settings.startupView === 'tasks' && (
+      {isWindowFocused && isTasksView() && (
         <div className="add-todo-overlay">
-          <AddTodoForm ref={addTodoFormRef} onAdd={addTodo} slimMode={!settings.detailedMode} />
+          <AddTodoForm ref={addTodoFormRef} onAdd={addTodo} slimMode={isSimpleTasksView()} />
         </div>
       )}
 
       {/* ミニモード用の固定接続状況インジケーター */}
-      {!settings.detailedMode && (
+      {isSimpleTasksView() && (
         <div 
           data-testid="connection-status"
           className="fixed-connection-indicator-container"

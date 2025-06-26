@@ -218,7 +218,6 @@ export function useFileSettings(): UseFileSettingsReturn {
 export function fileSettingsToAppSettings(fileSettings: AppSettingsFile): any {
   return {
     alwaysOnTop: fileSettings.app.alwaysOnTop,
-    detailedMode: fileSettings.app.detailedMode,
     darkMode: fileSettings.app.theme,
     confirmDelete: fileSettings.app.confirmDelete,
     customCss: fileSettings.appearance.customCss,
@@ -239,10 +238,6 @@ export function appSettingsToFileSettings(appSettings: any): Partial<AppSettings
     updates.app.alwaysOnTop = appSettings.alwaysOnTop;
   }
   
-  if (appSettings.detailedMode !== undefined) {
-    updates.app = updates.app || {};
-    updates.app.detailedMode = appSettings.detailedMode;
-  }
   
   if (appSettings.darkMode !== undefined) {
     updates.app = updates.app || {};

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Settings as SettingsIcon, X, Monitor, Palette, Server, List, Moon, FileText, Download, Upload, Shield, Globe } from 'lucide-react';
+import { Settings as SettingsIcon, X, Monitor, Palette, Server, Moon, FileText, Download, Upload, Shield, Globe } from 'lucide-react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { useTranslation } from 'react-i18next';
 import { AppSettings, Todo } from '../types/todo';
@@ -94,12 +94,6 @@ export const Settings: React.FC<SettingsProps> = ({ settings, onSettingsChange, 
   };
 
 
-  const handleDetailedModeChange = (detailedMode: boolean) => {
-    const newSettings = { ...localSettings, detailedMode };
-    setLocalSettings(newSettings);
-    onSettingsChange(newSettings);
-  };
-
   const handleDarkModeChange = (darkMode: 'auto' | 'light' | 'dark') => {
     const newSettings = { ...localSettings, darkMode };
     setLocalSettings(newSettings);
@@ -172,18 +166,6 @@ export const Settings: React.FC<SettingsProps> = ({ settings, onSettingsChange, 
                 onChange={(e) => handleAlwaysOnTopChange(e.target.checked)}
               />
               <span>{t('settings.alwaysOnTop')}</span>
-            </label>
-            <label className="setting-item">
-              <input
-                type="checkbox"
-                checked={localSettings.detailedMode}
-                onChange={(e) => handleDetailedModeChange(e.target.checked)}
-                data-testid="detailed-mode-toggle"
-              />
-              <span>
-                <List size={14} />
-                {t('settings.detailedMode')}
-              </span>
             </label>
             <div className="setting-item setting-item--full">
               <span>

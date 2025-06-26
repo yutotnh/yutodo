@@ -156,14 +156,6 @@ export const SettingsV2: React.FC<SettingsV2Props> = ({
                 />
                 <span>{t('settings.window.alwaysOnTop')}</span>
               </label>
-              <label className="setting-item">
-                <input
-                  type="checkbox"
-                  checked={localSettings.detailedMode}
-                  onChange={(e) => handleSettingChange('detailedMode', e.target.checked)}
-                />
-                <span>{t('settings.window.detailedMode')}</span>
-              </label>
             </div>
 
             {/* Language Settings */}

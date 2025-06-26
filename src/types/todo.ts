@@ -16,13 +16,12 @@ export interface Todo {
 
 export interface AppSettings {
   alwaysOnTop: boolean;
-  detailedMode: boolean;
   darkMode: 'auto' | 'light' | 'dark';
   confirmDelete: boolean;
   customCss: string;
   serverUrl: string;
   language: 'auto' | 'en' | 'ja';
-  startupView: 'tasks' | 'schedules'; // アプリ起動時の初期画面
+  startupView: 'tasks-detailed' | 'tasks-simple' | 'schedules'; // アプリ起動時の初期画面
 }
 
 export interface SearchSettings {

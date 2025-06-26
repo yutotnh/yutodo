@@ -33,17 +33,30 @@ const createFileCommands = (t: TFunction): CommandAction[] => [
 // View Commands
 const createViewCommands = (t: TFunction): CommandAction[] => [
   {
-    id: 'view.tasks',
-    title: t('commandPalette.commands.view.switchToTasks.title', 'Switch to Tasks View'),
-    description: t('commandPalette.commands.view.switchToTasks.description', 'Switch to tasks management view'),
+    id: 'view.tasks.detailed',
+    title: t('commandPalette.commands.view.switchToTasks.title', 'Switch to Tasks View (Detailed)'),
+    description: t('commandPalette.commands.view.switchToTasks.description', 'Switch to detailed tasks management view'),
     category: 'view',
-    keywords: ['tasks', 'todo', 'switch'],
+    keywords: ['tasks', 'todo', 'switch', 'detailed'],
     icon: 'list',
     execute: (context: CommandContext) => {
-      context.onViewChange('tasks');
+      context.onViewChange('tasks-detailed');
     },
     isEnabled: () => true,
-    isVisible: (context?: CommandContext) => context?.startupView !== 'tasks'
+    isVisible: (context?: CommandContext) => context?.startupView !== 'tasks-detailed'
+  },
+  {
+    id: 'view.tasks.simple',
+    title: t('commandPalette.commands.view.switchToTasks.title', 'Switch to Tasks View (Simple)'),
+    description: t('commandPalette.commands.view.switchToTasks.description', 'Switch to simple tasks management view'),
+    category: 'view',
+    keywords: ['tasks', 'todo', 'switch', 'simple', 'compact'],
+    icon: 'list',
+    execute: (context: CommandContext) => {
+      context.onViewChange('tasks-simple');
+    },
+    isEnabled: () => true,
+    isVisible: (context?: CommandContext) => context?.startupView !== 'tasks-simple'
   },
   {
     id: 'view.schedules',
@@ -118,7 +131,7 @@ const createTaskCommands = (t: TFunction): CommandAction[] => [
     execute: (context: CommandContext) => {
       context.onSelectAll();
     },
-    isVisible: (context?: CommandContext) => context?.startupView === 'tasks'
+    isVisible: (context?: CommandContext) => context?.startupView === 'tasks-detailed' || context?.startupView === 'tasks-simple'
   },
   {
     id: 'task.clearSelection',
@@ -132,7 +145,7 @@ const createTaskCommands = (t: TFunction): CommandAction[] => [
       context.onClearSelection();
     },
     isEnabled: (context?: CommandContext) => (context?.selectedTasks.size || 0) > 0,
-    isVisible: (context?: CommandContext) => context?.startupView === 'tasks'
+    isVisible: (context?: CommandContext) => context?.startupView === 'tasks-detailed' || context?.startupView === 'tasks-simple'
   },
   {
     id: 'task.deleteSelected',
@@ -146,7 +159,7 @@ const createTaskCommands = (t: TFunction): CommandAction[] => [
       context.onDeleteSelected();
     },
     isEnabled: (context?: CommandContext) => (context?.selectedTasks.size || 0) > 0,
-    isVisible: (context?: CommandContext) => context?.startupView === 'tasks'
+    isVisible: (context?: CommandContext) => context?.startupView === 'tasks-detailed' || context?.startupView === 'tasks-simple'
   },
   {
     id: 'task.editSelected',
@@ -160,7 +173,7 @@ const createTaskCommands = (t: TFunction): CommandAction[] => [
       context.onEditSelected();
     },
     isEnabled: (context?: CommandContext) => (context?.selectedTasks.size || 0) === 1,
-    isVisible: (context?: CommandContext) => context?.startupView === 'tasks'
+    isVisible: (context?: CommandContext) => context?.startupView === 'tasks-detailed' || context?.startupView === 'tasks-simple'
   },
   {
     id: 'task.toggleCompletion',
@@ -174,7 +187,7 @@ const createTaskCommands = (t: TFunction): CommandAction[] => [
       context.onToggleSelectedCompletion();
     },
     isEnabled: (context?: CommandContext) => (context?.selectedTasks.size || 0) > 0,
-    isVisible: (context?: CommandContext) => context?.startupView === 'tasks'
+    isVisible: (context?: CommandContext) => context?.startupView === 'tasks-detailed' || context?.startupView === 'tasks-simple'
   }
 ];
 

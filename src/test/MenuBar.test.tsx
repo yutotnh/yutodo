@@ -13,13 +13,12 @@ vi.mock('react-i18next', () => ({
 describe('MenuBar', () => {
   const mockSettings: AppSettings = {
     alwaysOnTop: false,
-    detailedMode: true,
     darkMode: 'auto',
     confirmDelete: true,
     customCss: '',
     serverUrl: 'http://localhost:3001',
     language: 'auto',
-    startupView: 'tasks',
+    startupView: 'tasks-detailed',
   };
 
   const defaultProps = {
@@ -28,7 +27,6 @@ describe('MenuBar', () => {
     onSelectAll: vi.fn(),
     onDeleteSelected: vi.fn(),
     onShowSettings: vi.fn(),
-    onToggleSlim: vi.fn(),
     onToggleAlwaysOnTop: vi.fn(),
     onShowShortcuts: vi.fn(),
     onShowAbout: vi.fn(),
@@ -70,16 +68,16 @@ describe('MenuBar', () => {
     expect(defaultProps.onViewChange).toHaveBeenCalledWith('schedules');
   });
 
-  it('calls onViewChange when switching to tasks', () => {
+  it('calls onViewChange when switching to tasks detailed', () => {
     render(<MenuBar {...defaultProps} />);
     
     const viewMenu = screen.getByRole('button', { name: /menu\.\s*v\s*iew/ });
     fireEvent.click(viewMenu);
     
-    const tasksItem = screen.getByText('menu.showingTasks');
+    const tasksItem = screen.getByText('menu.showingTasksDetailed');
     fireEvent.click(tasksItem);
     
-    expect(defaultProps.onViewChange).toHaveBeenCalledWith('tasks');
+    expect(defaultProps.onViewChange).toHaveBeenCalledWith('tasks-detailed');
   });
 
   it('calls onNewTask when new task menu item is clicked', () => {
@@ -165,15 +163,49 @@ describe('MenuBar', () => {
     expect(screen.queryByText('H')).not.toBeInTheDocument();
   });
 
-  it('highlights current view in view menu', () => {
-    const tasksViewSettings = { ...mockSettings, startupView: 'tasks' as const };
+  it('calls onViewChange when switching to tasks simple', () => {
+    render(<MenuBar {...defaultProps} />);
+    
+    const viewMenu = screen.getByRole('button', { name: /menu\.\s*v\s*iew/ });
+    fireEvent.click(viewMenu);
+    
+    const tasksSimpleItem = screen.getByText('menu.showTasksSimple');
+    fireEvent.click(tasksSimpleItem);
+    
+    expect(defaultProps.onViewChange).toHaveBeenCalledWith('tasks-simple');
+  });
+
+  it('highlights current view in view menu for tasks-detailed', () => {
+    const tasksViewSettings = { ...mockSettings, startupView: 'tasks-detailed' as const };
     render(<MenuBar {...defaultProps} settings={tasksViewSettings} />);
     
     const viewMenu = screen.getByRole('button', { name: /menu\.\s*v\s*iew/ });
     fireEvent.click(viewMenu);
     
-    const tasksItem = screen.getByText('menu.showingTasks');
+    const tasksItem = screen.getByText('menu.showingTasksDetailed');
     expect(tasksItem).toBeInTheDocument();
+  });
+
+  it('highlights current view in view menu for tasks-simple', () => {
+    const tasksSimpleViewSettings = { ...mockSettings, startupView: 'tasks-simple' as const };
+    render(<MenuBar {...defaultProps} settings={tasksSimpleViewSettings} />);
+    
+    const viewMenu = screen.getByRole('button', { name: /menu\.\s*v\s*iew/ });
+    fireEvent.click(viewMenu);
+    
+    const tasksSimpleItem = screen.getByText('menu.showingTasksSimple');
+    expect(tasksSimpleItem).toBeInTheDocument();
+  });
+
+  it('highlights current view in view menu for schedules', () => {
+    const schedulesViewSettings = { ...mockSettings, startupView: 'schedules' as const };
+    render(<MenuBar {...defaultProps} settings={schedulesViewSettings} />);
+    
+    const viewMenu = screen.getByRole('button', { name: /menu\.\s*v\s*iew/ });
+    fireEvent.click(viewMenu);
+    
+    const schedulesItem = screen.getByText('menu.showingSchedules');
+    expect(schedulesItem).toBeInTheDocument();
   });
 
   it('handles hierarchical hamburger menu correctly', () => {

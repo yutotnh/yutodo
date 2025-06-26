@@ -30,7 +30,7 @@ export interface CommandPaletteState {
 
 export interface CommandContext {
   // App state context for command execution
-  startupView: 'tasks' | 'schedules';
+  startupView: 'tasks-detailed' | 'tasks-simple' | 'schedules';
   selectedTasks: Set<string>;
   searchQuery: string;
   settings: any;
@@ -50,7 +50,7 @@ export interface CommandContext {
   onToggleSelectedCompletion: () => void;
   onExportTasks: () => void;
   onImportTasks: () => void;
-  onViewChange: (view: 'tasks' | 'schedules') => void;
+  onViewChange: (view: 'tasks-detailed' | 'tasks-simple' | 'schedules') => void;
   onToggleDarkMode: () => void;
   onToggleSlimMode: () => void;
   onToggleAlwaysOnTop: () => void;

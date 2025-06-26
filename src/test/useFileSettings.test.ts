@@ -17,9 +17,8 @@ describe('useFileSettings', () => {
       theme: 'dark' as const,
       language: 'en' as const,
       alwaysOnTop: true,
-      detailedMode: false,
       confirmDelete: true,
-      startupView: 'tasks' as const
+      startupView: 'tasks-detailed' as const
     },
     server: {
       url: 'http://localhost:3001',
@@ -315,7 +314,6 @@ describe('Conversion functions', () => {
       
       expect(appSettings).toEqual({
         alwaysOnTop: true,
-        detailedMode: false,
         darkMode: 'dark',
         confirmDelete: false,
         customCss: '.custom { color: blue; }',
@@ -330,13 +328,12 @@ describe('Conversion functions', () => {
     it('should convert app settings to file settings format', () => {
       const appSettings = {
         alwaysOnTop: true,
-        detailedMode: false,
         darkMode: 'light' as const,
         confirmDelete: true,
         customCss: '.todo { color: green; }',
         serverUrl: 'http://localhost:5000',
         language: 'en' as const,
-        startupView: 'tasks' as const
+        startupView: 'tasks-detailed' as const
       };
       
       const fileSettings = appSettingsToFileSettings(appSettings);
@@ -344,11 +341,10 @@ describe('Conversion functions', () => {
       expect(fileSettings).toEqual({
         app: {
           alwaysOnTop: true,
-          detailedMode: false,
           theme: 'light',
           confirmDelete: true,
           language: 'en',
-          startupView: 'tasks'
+          startupView: 'tasks-detailed'
         },
         server: {
           url: 'http://localhost:5000'
