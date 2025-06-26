@@ -4079,8 +4079,8 @@ body {
 }
 
 .modal-content {
-  width: 90%;
-  max-width: 700px;
+  width: clamp(320px, 90vw, min(90vw, 1200px));
+  max-width: min(90vw, 1200px);
   max-height: 90vh;
   background: white;
   border-radius: 0.75rem;
@@ -4090,8 +4090,8 @@ body {
 }
 
 .schedule-modal {
-  width: 90%;
-  max-width: 700px;
+  width: clamp(400px, 92vw, min(92vw, 1400px));
+  max-width: min(92vw, 1400px);
   max-height: 90vh;
   background: white;
   border-radius: 0.75rem;
@@ -4101,8 +4101,8 @@ body {
 }
 
 .todo-edit-modal {
-  width: 90%;
-  max-width: 500px;
+  width: clamp(300px, 85vw, min(85vw, 800px));
+  max-width: min(85vw, 800px);
   max-height: 90vh;
 }
 
@@ -4519,4 +4519,64 @@ body {
 .app--dark select option:hover {
   background: #4b5563 !important;
   color: #f3f4f6 !important;
+}
+
+/* Modal responsive width optimization */
+@media (min-width: 768px) {
+  .modal-content {
+    max-width: min(85vw, 1000px);
+  }
+  
+  .schedule-modal {
+    max-width: min(88vw, 1200px);
+  }
+  
+  .todo-edit-modal {
+    max-width: min(80vw, 700px);
+  }
+}
+
+@media (min-width: 1200px) {
+  .modal-content {
+    max-width: min(80vw, 1400px);
+  }
+  
+  .schedule-modal {
+    max-width: min(85vw, 1600px);
+  }
+  
+  .todo-edit-modal {
+    max-width: min(75vw, 900px);
+  }
+}
+
+@media (min-width: 1600px) {
+  .modal-content {
+    max-width: min(75vw, 1600px);
+  }
+  
+  .schedule-modal {
+    max-width: min(80vw, 1800px);
+  }
+  
+  .todo-edit-modal {
+    max-width: min(70vw, 1000px);
+  }
+}
+
+@media (max-width: 480px) {
+  .modal-content {
+    width: 95vw;
+    max-width: 95vw;
+  }
+  
+  .schedule-modal {
+    width: 95vw;
+    max-width: 95vw;
+  }
+  
+  .todo-edit-modal {
+    width: 95vw;
+    max-width: 95vw;
+  }
 }
