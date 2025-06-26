@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Settings as SettingsIcon, X, Monitor, Palette, Server, Moon, FileText, Download, Upload, Shield, Globe } from 'lucide-react';
+import { Settings as SettingsIcon, X, Monitor, Palette, Server, List, Moon, FileText, Shield, Globe, ExternalLink, Keyboard } from 'lucide-react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { useTranslation } from 'react-i18next';
 import { AppSettings, Todo } from '../types/todo';
 import { DataManager } from './DataManager';
 import { supportedLanguages } from '../i18n';
 import { useWindowDrag } from '../hooks/useWindowDrag';
+import { useFileSettings, fileSettingsToAppSettings, appSettingsToFileSettings } from '../hooks/useFileSettings';
 import logger from '../utils/logger';
 
 interface SettingsProps {
@@ -18,23 +19,51 @@ interface SettingsProps {
   reconnectAttempts?: number;
 }
 
-export const Settings: React.FC<SettingsProps> = ({ settings, onSettingsChange, onClose, todos = [], onImportTodos, connectionStatus = 'disconnected', reconnectAttempts = 0 }) => {
+type SettingsTab = 'general' | 'appearance' | 'server' | 'data' | 'keybindings';
+
+export const Settings: React.FC<SettingsProps> = ({ 
+  settings, 
+  onSettingsChange, 
+  onClose, 
+  todos = [], 
+  onImportTodos, 
+  connectionStatus = 'disconnected', 
+  reconnectAttempts = 0 
+}) => {
   const { t } = useTranslation();
   const [localSettings, setLocalSettings] = useState<AppSettings>(settings);
+  const [activeTab, setActiveTab] = useState<SettingsTab>('general');
   const settingsPanelRef = useRef<HTMLDivElement>(null);
+  
+  // File-based settings hook
+  const {
+    settings: fileSettings,
+    keybindings,
+    updateSettings: updateFileSettings,
+    openSettingsFile,
+    openKeybindingsFile
+  } = useFileSettings();
   
   // Window drag functionality
   const { handleMouseDown: handleHeaderDrag } = useWindowDrag();
+
+  // Sync file settings with local settings
+  useEffect(() => {
+    if (fileSettings) {
+      const appSettings = fileSettingsToAppSettings(fileSettings);
+      setLocalSettings(prev => ({ ...prev, ...appSettings }));
+    }
+  }, [fileSettings]);
 
   useEffect(() => {
     setLocalSettings(settings);
   }, [settings]);
 
-  // 設定パネル外側クリック検知（タイトルバー除く）
+  // Handle click outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (settingsPanelRef.current && !settingsPanelRef.current.contains(event.target as Node)) {
-        // アプリヘッダー領域（28px + padding = 44px）をクリックした場合はモーダルを閉じない
+        // Don't close if clicking on app header
         if (event.clientY <= 44) {
           return;
         }
@@ -48,7 +77,7 @@ export const Settings: React.FC<SettingsProps> = ({ settings, onSettingsChange, 
     };
   }, [onClose]);
 
-  // Escキーで設定を閉じる
+  // Handle Escape key
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
@@ -64,290 +93,340 @@ export const Settings: React.FC<SettingsProps> = ({ settings, onSettingsChange, 
     };
   }, [onClose]);
 
+  const handleSettingChange = async (key: keyof AppSettings, value: any) => {
+    const newSettings = { ...localSettings, [key]: value };
+    setLocalSettings(newSettings);
+    
+    // Update file settings if available
+    if (fileSettings) {
+      try {
+        const fileUpdates = appSettingsToFileSettings({ [key]: value });
+        await updateFileSettings(fileUpdates);
+      } catch (error) {
+        logger.error('Failed to update file settings:', error);
+      }
+    }
+    
+    onSettingsChange(newSettings);
+  };
+
   const handleAlwaysOnTopChange = async (alwaysOnTop: boolean) => {
-    // 現在の状態を保存
     const previousSettings = { ...localSettings };
     
-    // まずUIを即座に更新
     const newSettings = { ...localSettings, alwaysOnTop };
     setLocalSettings(newSettings);
     
     try {
-      // Tauri環境でのみウィンドウ操作を実行
       if (typeof window !== 'undefined' && (window as any).__TAURI_INTERNALS__) {
         logger.debug('Setting always on top:', alwaysOnTop);
         const appWindow = getCurrentWindow();
         await appWindow.setAlwaysOnTop(alwaysOnTop);
         logger.debug('Always on top set successfully');
-      } else {
-        logger.debug('Not in Tauri environment, skipping window operation');
       }
       
-      // 成功したら親コンポーネントに通知
+      // Update file settings
+      if (fileSettings) {
+        await updateFileSettings({ app: { ...fileSettings.app, alwaysOnTop } });
+      }
+      
       onSettingsChange(newSettings);
     } catch (error) {
       logger.error('Failed to set always on top:', error);
-      // エラーが発生した場合は状態を元に戻す
       setLocalSettings(previousSettings);
       alert(`Failed to set always on top: ${error}`);
     }
   };
 
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'general':
+        return (
+          <div className="settings-content">
+            {/* Window Settings */}
+            <div className="settings-group">
+              <h3>
+                <Monitor size={16} />
+                {t('settings.window.title')}
+              </h3>
+              <label className="setting-item">
+                <input
+                  type="checkbox"
+                  checked={localSettings.alwaysOnTop}
+                  onChange={(e) => handleAlwaysOnTopChange(e.target.checked)}
+                />
+                <span>{t('settings.window.alwaysOnTop')}</span>
+              </label>
+            </div>
 
-  const handleDarkModeChange = (darkMode: 'auto' | 'light' | 'dark') => {
-    const newSettings = { ...localSettings, darkMode };
-    setLocalSettings(newSettings);
-    onSettingsChange(newSettings);
+            {/* Language Settings */}
+            <div className="settings-group">
+              <h3>
+                <Globe size={16} />
+                {t('settings.language.title')}
+              </h3>
+              <div className="setting-item">
+                <select
+                  value={localSettings.language || 'auto'}
+                  onChange={(e) => handleSettingChange('language', e.target.value)}
+                  className="setting-select"
+                >
+                  <option value="auto">{t('settings.language.auto')}</option>
+                  {Object.entries(supportedLanguages).map(([code, name]) => (
+                    <option key={code} value={code}>
+                      {name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Delete Confirmation */}
+            <div className="settings-group">
+              <h3>
+                <Shield size={16} />
+                {t('settings.behavior.title')}
+              </h3>
+              <label className="setting-item">
+                <input
+                  type="checkbox"
+                  checked={localSettings.confirmDelete}
+                  onChange={(e) => handleSettingChange('confirmDelete', e.target.checked)}
+                />
+                <span>{t('settings.behavior.confirmDelete')}</span>
+              </label>
+            </div>
+          </div>
+        );
+
+      case 'appearance':
+        return (
+          <div className="settings-content">
+            <div className="settings-group">
+              <h3>
+                <Palette size={16} />
+                {t('settings.theme.title')}
+              </h3>
+              <div className="theme-options">
+                <label className={`theme-option ${localSettings.darkMode === 'auto' ? 'active' : ''}`}>
+                  <input
+                    type="radio"
+                    name="theme"
+                    value="auto"
+                    checked={localSettings.darkMode === 'auto'}
+                    onChange={(e) => handleSettingChange('darkMode', e.target.value)}
+                  />
+                  <Monitor size={20} />
+                  <span>{t('settings.theme.auto')}</span>
+                </label>
+                <label className={`theme-option ${localSettings.darkMode === 'light' ? 'active' : ''}`}>
+                  <input
+                    type="radio"
+                    name="theme"
+                    value="light"
+                    checked={localSettings.darkMode === 'light'}
+                    onChange={(e) => handleSettingChange('darkMode', e.target.value)}
+                  />
+                  <Monitor size={20} />
+                  <span>{t('settings.theme.light')}</span>
+                </label>
+                <label className={`theme-option ${localSettings.darkMode === 'dark' ? 'active' : ''}`}>
+                  <input
+                    type="radio"
+                    name="theme"
+                    value="dark"
+                    checked={localSettings.darkMode === 'dark'}
+                    onChange={(e) => handleSettingChange('darkMode', e.target.value)}
+                  />
+                  <Moon size={20} />
+                  <span>{t('settings.theme.dark')}</span>
+                </label>
+              </div>
+            </div>
+
+            <div className="settings-group">
+              <h3>
+                <FileText size={16} />
+                {t('settings.appearance.customCss')}
+              </h3>
+              <textarea
+                className="custom-css-textarea"
+                placeholder={t('settings.appearance.customCssPlaceholder')}
+                value={localSettings.customCss || ''}
+                onChange={(e) => handleSettingChange('customCss', e.target.value)}
+                rows={10}
+              />
+            </div>
+          </div>
+        );
+
+      case 'server':
+        return (
+          <div className="settings-content">
+            <div className="settings-group">
+              <h3>
+                <Server size={16} />
+                {t('settings.server.title')}
+              </h3>
+              <div className="setting-item">
+                <label>{t('settings.server.url')}</label>
+                <input
+                  type="text"
+                  className="server-url-input"
+                  value={localSettings.serverUrl}
+                  onChange={(e) => handleSettingChange('serverUrl', e.target.value)}
+                  placeholder="http://localhost:3001"
+                />
+              </div>
+              <div className="server-status">
+                <span className={`status-indicator ${connectionStatus}`}></span>
+                <span>{t(`settings.server.status.${connectionStatus}`)}</span>
+                {reconnectAttempts > 0 && (
+                  <span className="reconnect-info">
+                    ({t('settings.server.reconnectAttempts', { count: reconnectAttempts })})
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'data':
+        return (
+          <div className="settings-content">
+            <DataManager
+              todos={todos}
+              onImport={onImportTodos || (() => {})}
+            />
+          </div>
+        );
+
+      case 'keybindings':
+        return (
+          <div className="settings-content">
+            <div className="settings-group">
+              <h3>
+                <Keyboard size={16} />
+                {t('settings.keybindings.title')}
+              </h3>
+              
+              {fileSettings ? (
+                <>
+                  <div className="file-settings-info">
+                    <p>{t('settings.keybindings.fileBasedDescription')}</p>
+                    <div className="file-actions">
+                      <button
+                        className="file-action-button"
+                        onClick={openKeybindingsFile}
+                        title={t('settings.keybindings.openFile')}
+                      >
+                        <ExternalLink size={14} />
+                        {t('settings.keybindings.openFile')}
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div className="keybindings-list">
+                    {keybindings.map((kb, index) => (
+                      <div key={index} className="keybinding-item">
+                        <span className="keybinding-key">{kb.key}</span>
+                        <span className="keybinding-command">{kb.command}</span>
+                        {kb.when && (
+                          <span className="keybinding-when" title={kb.when}>
+                            {t('settings.keybindings.when')}: {kb.when}
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <div className="keybindings-legacy">
+                  <p>{t('settings.keybindings.legacyDescription')}</p>
+                  <p className="keybindings-hint">
+                    {t('settings.keybindings.pressForHelp', { key: 'Ctrl+K, Ctrl+S' })}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+
+      default:
+        return null;
+    }
   };
-
-  const handleCustomCssChange = (customCss: string) => {
-    const newSettings = { ...localSettings, customCss };
-    setLocalSettings(newSettings);
-    onSettingsChange(newSettings);
-  };
-
-  const handleServerUrlChange = (serverUrl: string) => {
-    const newSettings = { ...localSettings, serverUrl };
-    setLocalSettings(newSettings);
-    onSettingsChange(newSettings);
-  };
-
-  const handleConfirmDeleteChange = (confirmDelete: boolean) => {
-    const newSettings = { ...localSettings, confirmDelete };
-    setLocalSettings(newSettings);
-    onSettingsChange(newSettings);
-  };
-
-  const handleLanguageChange = (language: 'auto' | 'en' | 'ja') => {
-    const newSettings = { ...localSettings, language };
-    setLocalSettings(newSettings);
-    onSettingsChange(newSettings);
-  };
-
-  // Configuration file management handlers
-  const handleExportConfig = () => {
-    // Note: Configuration file management is now handled through the file-based settings system
-    // This feature could be re-implemented using the SettingsManager if needed
-    alert('Configuration export/import is now handled through the file-based settings system. Check your config directory for settings.toml and keybindings.toml files.');
-  };
-
-  const handleImportConfig = () => {
-    // Note: Configuration file management is now handled through the file-based settings system  
-    // This feature could be re-implemented using the SettingsManager if needed
-    alert('Configuration export/import is now handled through the file-based settings system. You can manually edit settings.toml and keybindings.toml files in your config directory.');
-  };
-
-  // 設定ファイル管理は useFileSettings フックで実装されています
 
   return (
-    <div className="settings-overlay">
-      <div data-testid="settings-modal" className="settings-panel" ref={settingsPanelRef}>
+    <div className="settings-overlay" style={{ pointerEvents: 'none' }}>
+      <div 
+        className="settings-panel" 
+        ref={settingsPanelRef}
+        style={{ pointerEvents: 'auto' }}
+      >
         <div className="settings-header" onMouseDown={handleHeaderDrag}>
           <h2>
             <SettingsIcon size={20} />
             {t('settings.title')}
           </h2>
-          <button data-testid="settings-close" onClick={onClose} className="settings-close">
+          <button className="close-button" onClick={onClose}>
             <X size={20} />
           </button>
         </div>
-
-        <div className="settings-content">
-          <div className="settings-section">
-            <h3>
-              <Monitor size={16} />
-              Window Options
-            </h3>
-            <label className="setting-item">
-              <input
-                data-testid="always-on-top-toggle"
-                type="checkbox"
-                checked={localSettings.alwaysOnTop}
-                onChange={(e) => handleAlwaysOnTopChange(e.target.checked)}
-              />
-              <span>{t('settings.alwaysOnTop')}</span>
-            </label>
-            <div className="setting-item setting-item--full">
-              <span>
-                <Moon size={14} />
-                Theme
-              </span>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.5rem' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <input
-                    type="radio"
-                    name="darkMode"
-                    value="auto"
-                    checked={localSettings.darkMode === 'auto'}
-                    onChange={() => handleDarkModeChange('auto')}
-                  />
-                  <span>{t('settings.auto')}</span>
-                </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <input
-                    type="radio"
-                    name="darkMode"
-                    value="light"
-                    checked={localSettings.darkMode === 'light'}
-                    onChange={() => handleDarkModeChange('light')}
-                  />
-                  <span>{t('settings.light')}</span>
-                </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <input
-                    type="radio"
-                    name="darkMode"
-                    value="dark"
-                    checked={localSettings.darkMode === 'dark'}
-                    onChange={() => handleDarkModeChange('dark')}
-                  />
-                  <span>{t('settings.dark')}</span>
-                </label>
-              </div>
-            </div>
-            
-            <div className="setting-item setting-item--full">
-              <span>
-                <Globe size={14} />
-                Language
-              </span>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.5rem' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <input
-                    type="radio"
-                    name="language"
-                    value="auto"
-                    checked={localSettings.language === 'auto'}
-                    onChange={() => handleLanguageChange('auto')}
-                  />
-                  <span>{t('settings.auto')}</span>
-                </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <input
-                    type="radio"
-                    name="language"
-                    value="en"
-                    checked={localSettings.language === 'en'}
-                    onChange={() => handleLanguageChange('en')}
-                  />
-                  <span>{supportedLanguages.en}</span>
-                </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <input
-                    type="radio"
-                    name="language"
-                    value="ja"
-                    checked={localSettings.language === 'ja'}
-                    onChange={() => handleLanguageChange('ja')}
-                  />
-                  <span>{supportedLanguages.ja}</span>
-                </label>
-              </div>
-            </div>
-          </div>
-
-          <div className="settings-section">
-            <h3>
-              <Shield size={16} />
-              Behavior Settings
-            </h3>
-            <label className="setting-item">
-              <input
-                type="checkbox"
-                checked={localSettings.confirmDelete}
-                onChange={(e) => handleConfirmDeleteChange(e.target.checked)}
-              />
-              <span>{t('settings.confirmDelete')}</span>
-            </label>
-          </div>
-
-          <div className="settings-section">
-            <h3>
-              <Server size={16} />
-              Server Connection
-            </h3>
-            <div className="setting-item setting-item--full">
-              <span>Connection Status:</span>
-              <div className="connection-status-info">
-                <span className={`status-indicator status-${connectionStatus}`}>
-                  {connectionStatus === 'connected' && '● Connected'}
-                  {connectionStatus === 'connecting' && `○ Connecting${reconnectAttempts > 0 ? ` (${reconnectAttempts})` : ''}`}
-                  {connectionStatus === 'disconnected' && '× Disconnected'}
-                  {connectionStatus === 'error' && '! Connection Error'}
-                </span>
-              </div>
-            </div>
-            <label className="setting-item setting-item--full">
-              <span>{t('settings.server.url')}:</span>
-              <input
-                type="text"
-                value={localSettings.serverUrl}
-                onChange={(e) => handleServerUrlChange(e.target.value)}
-                placeholder="http://localhost:3001"
-                className="server-url-input"
-              />
-            </label>
-          </div>
-
-          <div className="settings-section">
-            <h3>
-              <Palette size={16} />
-              {t('settings.customCss')}
-            </h3>
-            <label className="setting-item setting-item--full">
-              <span>{t('settings.customCss')}:</span>
-              <textarea
-                value={localSettings.customCss}
-                onChange={(e) => handleCustomCssChange(e.target.value)}
-                placeholder="/* Add your custom CSS here */&#10;.todo-item { background: #f0f0f0; }"
-                className="custom-css-textarea"
-                rows={8}
-              />
-            </label>
-          </div>
-
-          <div className="settings-section">
-            <h3>
-              <FileText size={16} />
-              Configuration File
-            </h3>
-            <div className="data-manager-actions">
-              <div className="data-manager-section">
-                <h4>{t('settings.exportSettings')} / {t('settings.importSettings')}</h4>
-                <div className="data-manager-buttons">
-                  <button
-                    onClick={handleExportConfig}
-                    className="data-btn data-btn--export"
-                  >
-                    <Download size={16} />
-                    {t('settings.exportSettings')}
-                  </button>
-                  <label className="data-btn data-btn--import">
-                    <Upload size={16} />
-                    {t('settings.importSettings')}
-                    <input
-                      type="file"
-                      accept=".toml,.txt"
-                      onChange={handleImportConfig}
-                      style={{ display: 'none' }}
-                    />
-                  </label>
-                </div>
-                <p className="data-description">
-                  Export your settings as a TOML file or import from a previously exported file.
-                </p>
-              </div>
-              
-            </div>
-          </div>
-
-          {onImportTodos && (
-            <DataManager
-              todos={todos}
-              onImport={onImportTodos}
-            />
-          )}
+        
+        <div className="settings-tabs">
+          <button
+            className={`settings-tab ${activeTab === 'general' ? 'active' : ''}`}
+            onClick={() => setActiveTab('general')}
+          >
+            <Monitor size={16} />
+            {t('settings.tabs.general')}
+          </button>
+          <button
+            className={`settings-tab ${activeTab === 'appearance' ? 'active' : ''}`}
+            onClick={() => setActiveTab('appearance')}
+          >
+            <Palette size={16} />
+            {t('settings.tabs.appearance')}
+          </button>
+          <button
+            className={`settings-tab ${activeTab === 'server' ? 'active' : ''}`}
+            onClick={() => setActiveTab('server')}
+          >
+            <Server size={16} />
+            {t('settings.tabs.server')}
+          </button>
+          <button
+            className={`settings-tab ${activeTab === 'data' ? 'active' : ''}`}
+            onClick={() => setActiveTab('data')}
+          >
+            <List size={16} />
+            {t('settings.tabs.data')}
+          </button>
+          <button
+            className={`settings-tab ${activeTab === 'keybindings' ? 'active' : ''}`}
+            onClick={() => setActiveTab('keybindings')}
+          >
+            <Keyboard size={16} />
+            {t('settings.tabs.keybindings')}
+          </button>
         </div>
+        
+        <div className="settings-body">
+          {renderTabContent()}
+        </div>
+        
+        {fileSettings && (
+          <div className="settings-footer">
+            <button
+              className="settings-file-link"
+              onClick={openSettingsFile}
+              title={t('settings.openSettingsFile')}
+            >
+              <ExternalLink size={14} />
+              {t('settings.openSettingsFile')}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -2,7 +2,6 @@ import React, { useRef } from 'react';
 import { Upload, FileText, Database } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Todo } from '../types/todo';
-import { numberToPriority } from '../utils/priorityUtils';
 import { formatTomlKeyValue } from '../utils/tomlUtils';
 
 
@@ -109,7 +108,7 @@ export const DataManager: React.FC<DataManagerProps> = ({ todos, onImport }) => 
         tasksToml += formatTomlKeyValue('title', todo.title);
         tasksToml += formatTomlKeyValue('description', todo.description || '');
         tasksToml += `completed = ${todo.completed}\n`;
-        tasksToml += `priority = "${typeof todo.priority === 'number' ? numberToPriority(todo.priority) : todo.priority}"\n`;
+        tasksToml += `priority = "${todo.priority}"\n`;
         tasksToml += `scheduled_for = "${todo.scheduledFor || ""}"\n`;
         tasksToml += `created_at = "${todo.createdAt}"\n`;
         tasksToml += `updated_at = "${todo.updatedAt}"\n`;

@@ -125,12 +125,8 @@ export class SettingsManager {
       await this.ensureDirectories();
       // Directories ensured
       
-      // Check for and migrate old settings
-      logger.info('Step 3: Checking for old settings to migrate...');
-      await this.migrateOldSettings();
-      
       // Load or create default files
-      logger.info('Step 4: Loading or creating settings...');
+      logger.info('Step 3: Loading or creating settings...');
       await this.loadOrCreateSettings();
       logger.info('Settings loaded/created');
       
@@ -304,77 +300,6 @@ export class SettingsManager {
         logger.info(`📁 Creating directory: ${dir}`);
         await mkdir(dir, { recursive: true });
         // Directory created
-      }
-    }
-  }
-  
-  /**
-   * Migrate settings from old paths to new paths
-   */
-  private async migrateOldSettings(): Promise<void> {
-    if (!this.paths) {
-      throw new Error('Cannot migrate settings: paths not initialized');
-    }
-    
-    const platform = await this.getPlatform();
-    const homeDir = await this.getHomeDirectory();
-    
-    // Define old paths based on platform
-    let oldSettingsPath: string | null = null;
-    let oldKeybindingsPath: string | null = null;
-    
-    switch (platform) {
-      case 'linux': {
-        // Old path: ~/.local/share/yutotnh/YuToDo/
-        const oldLinuxDir = await join(homeDir, '.local', 'share', 'yutotnh', 'YuToDo');
-        oldSettingsPath = await join(oldLinuxDir, 'settings.toml');
-        oldKeybindingsPath = await join(oldLinuxDir, 'keybindings.toml');
-        break;
-      }
-        
-      case 'windows':
-        // Old path was already in %APPDATA%/YuToDo, so no migration needed
-        break;
-        
-      case 'darwin':
-        // Old path was already in ~/Library/Application Support/YuToDo, so no migration needed
-        break;
-    }
-    
-    // Perform migration if old files exist
-    if (oldSettingsPath && await exists(oldSettingsPath)) {
-      logger.info('🔄 Found old settings file, migrating to new location...');
-      try {
-        // Read old file
-        const oldContent = await readTextFile(oldSettingsPath);
-        
-        // Write to new location if it doesn't exist
-        if (!await exists(this.paths.settingsFile)) {
-          await writeTextFile(this.paths.settingsFile, oldContent);
-          logger.info('✅ Settings migrated successfully');
-        } else {
-          logger.info('⚠️ New settings file already exists, skipping migration');
-        }
-      } catch (error) {
-        logger.error('❌ Failed to migrate settings:', error);
-      }
-    }
-    
-    if (oldKeybindingsPath && await exists(oldKeybindingsPath)) {
-      logger.info('🔄 Found old keybindings file, migrating to new location...');
-      try {
-        // Read old file
-        const oldContent = await readTextFile(oldKeybindingsPath);
-        
-        // Write to new location if it doesn't exist
-        if (!await exists(this.paths.keybindingsFile)) {
-          await writeTextFile(this.paths.keybindingsFile, oldContent);
-          logger.info('✅ Keybindings migrated successfully');
-        } else {
-          logger.info('⚠️ New keybindings file already exists, skipping migration');
-        }
-      } catch (error) {
-        logger.error('❌ Failed to migrate keybindings:', error);
       }
     }
   }

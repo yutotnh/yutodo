@@ -19,7 +19,7 @@ import {
 } from '@dnd-kit/sortable';
 import { TodoItem } from './components/TodoItem';
 import { AddTodoForm, AddTodoFormRef } from './components/AddTodoForm';
-import { SettingsV2 } from './components/SettingsV2';
+import { Settings } from './components/Settings';
 import { ShortcutHelp } from './components/ShortcutHelp';
 import { TodoFilter, FilterType } from './components/TodoFilter';
 import { SearchBar } from './components/SearchBar';
@@ -30,11 +30,10 @@ import { ScheduleView } from './components/ScheduleView';
 import { ScheduleModal } from './components/ScheduleModal';
 import { CommandPalette } from './components/CommandPalette';
 import { useSocket } from './hooks/useSocket';
-import { useKeyboardShortcutsV2 } from './hooks/useKeyboardShortcutsV2';
+import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useFileSettings } from './hooks/useFileSettings';
 import { AppSettings, Todo, Schedule, SearchSettings } from './types/todo';
 import { CommandContext } from './types/commands';
-import { numberToPriority } from './utils/priorityUtils';
 import { formatTomlKeyValue } from './utils/tomlUtils';
 import { registerDefaultCommands } from './commands/defaultCommands';
 import logger from './utils/logger';
@@ -749,7 +748,7 @@ function App() {
         tasksToml += formatTomlKeyValue('title', todo.title);
         tasksToml += formatTomlKeyValue('description', todo.description || '');
         tasksToml += `completed = ${todo.completed}\n`;
-        tasksToml += `priority = "${typeof todo.priority === 'number' ? numberToPriority(todo.priority) : todo.priority}"\n`;
+        tasksToml += `priority = "${todo.priority}"\n`;
         tasksToml += `scheduled_for = "${todo.scheduledFor || ""}"\n`;
         tasksToml += `created_at = "${todo.createdAt}"\n`;
         tasksToml += `updated_at = "${todo.updatedAt}"\n`;
@@ -1154,11 +1153,11 @@ function App() {
       case 'overdue':
         return isOverdue;
       case 'high':
-        return (typeof todo.priority === 'number' ? numberToPriority(todo.priority) : todo.priority) === 'high';
+        return todo.priority === 'high';
       case 'medium':
-        return (typeof todo.priority === 'number' ? numberToPriority(todo.priority) : todo.priority) === 'medium';
+        return todo.priority === 'medium';
       case 'low':
-        return (typeof todo.priority === 'number' ? numberToPriority(todo.priority) : todo.priority) === 'low';
+        return todo.priority === 'low';
       default:
         return true;
     }
@@ -1173,9 +1172,9 @@ function App() {
       const now = new Date();
       return todo.scheduledFor && new Date(todo.scheduledFor) < now && !todo.completed;
     }).length,
-    high: todos.filter(todo => (typeof todo.priority === 'number' ? numberToPriority(todo.priority) : todo.priority) === 'high').length,
-    medium: todos.filter(todo => (typeof todo.priority === 'number' ? numberToPriority(todo.priority) : todo.priority) === 'medium').length,
-    low: todos.filter(todo => (typeof todo.priority === 'number' ? numberToPriority(todo.priority) : todo.priority) === 'low').length
+    high: todos.filter(todo => todo.priority === 'high').length,
+    medium: todos.filter(todo => todo.priority === 'medium').length,
+    low: todos.filter(todo => todo.priority === 'low').length
   };
 
   // キーボードショートカットハンドラ（filteredTodosを使用）
@@ -1308,7 +1307,7 @@ function App() {
   };
 
   // キーボードショートカットを有効化
-  const { shortcuts, updateContext } = useKeyboardShortcutsV2(keyboardHandlers, { 
+  const { shortcuts, updateContext } = useKeyboardShortcuts(keyboardHandlers, { 
     isModalOpen: showSettings || showShortcutHelp || deleteConfirm.isOpen || showScheduleModal || showCommandPalette 
   });
   
@@ -1656,7 +1655,7 @@ function App() {
       </main>
 
       {showSettings && (
-        <SettingsV2
+        <Settings
           settings={settings}
           onSettingsChange={handleSettingsChange}
           onClose={() => setShowSettings(false)}

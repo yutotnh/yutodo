@@ -1,7 +1,5 @@
 import { describe, it, expect } from 'vitest';
 import { 
-  numberToPriority, 
-  priorityToNumber, 
   getPriorityText, 
   getPriorityClassSuffix,
   isValidPriority,
@@ -270,39 +268,6 @@ describe('Utility Functions', () => {
   });
 
   describe('Priority Utilities', () => {
-    describe('numberToPriority', () => {
-      it('should convert numbers to priority strings correctly', () => {
-        expect(numberToPriority(0)).toBe('low');
-        expect(numberToPriority(1)).toBe('medium');
-        expect(numberToPriority(2)).toBe('high');
-      });
-
-      it('should handle invalid numbers by returning low', () => {
-        expect(numberToPriority(-1)).toBe('low');
-        expect(numberToPriority(3)).toBe('low');
-        expect(numberToPriority(999)).toBe('low');
-      });
-    });
-
-    describe('priorityToNumber', () => {
-      it('should convert priority strings to numbers correctly', () => {
-        expect(priorityToNumber('low')).toBe(0);
-        expect(priorityToNumber('medium')).toBe(1);
-        expect(priorityToNumber('high')).toBe(2);
-      });
-
-      it('should handle invalid strings by returning 0', () => {
-        expect(priorityToNumber('invalid' as any)).toBe(0);
-        expect(priorityToNumber('' as any)).toBe(0);
-        expect(priorityToNumber(null as any)).toBe(0);
-      });
-
-      it('should handle number priorities correctly', () => {
-        expect(priorityToNumber(0 as any)).toBe(0);
-        expect(priorityToNumber(1 as any)).toBe(0); // Invalid numbers default to low
-        expect(priorityToNumber(2 as any)).toBe(0);
-      });
-    });
 
     describe('getPriorityText', () => {
       it('should return display text for string priorities', () => {
@@ -311,15 +276,8 @@ describe('Utility Functions', () => {
         expect(getPriorityText('high')).toBe('High');
       });
 
-      it('should handle legacy number priorities', () => {
-        expect(getPriorityText(0)).toBe('Low');
-        expect(getPriorityText(1)).toBe('Medium');
-        expect(getPriorityText(2)).toBe('High');
-      });
-
       it('should handle invalid priorities', () => {
         expect(getPriorityText('invalid' as any)).toBe('Low');
-        expect(getPriorityText(999 as any)).toBe('Low');
       });
     });
 
@@ -330,11 +288,6 @@ describe('Utility Functions', () => {
         expect(getPriorityClassSuffix('high')).toBe('2');
       });
 
-      it('should return number strings for number priorities', () => {
-        expect(getPriorityClassSuffix(0)).toBe('0');
-        expect(getPriorityClassSuffix(1)).toBe('1');
-        expect(getPriorityClassSuffix(2)).toBe('2');
-      });
     });
 
     describe('isValidPriority', () => {
@@ -364,42 +317,5 @@ describe('Utility Functions', () => {
       });
     });
 
-    describe('Export/Import Integration', () => {
-      it('should handle mixed priority types during conversion', () => {
-        const testCases = [
-          { input: 'high', expectedString: 'high', expectedNumber: 2 },
-          { input: 'medium', expectedString: 'medium', expectedNumber: 1 },
-          { input: 'low', expectedString: 'low', expectedNumber: 0 },
-          { input: 2, expectedString: 'high', expectedNumber: 2 },
-          { input: 1, expectedString: 'medium', expectedNumber: 1 },
-          { input: 0, expectedString: 'low', expectedNumber: 0 }
-        ];
-
-        testCases.forEach(({ input, expectedString, expectedNumber }) => {
-          if (typeof input === 'number') {
-            expect(numberToPriority(input)).toBe(expectedString);
-          } else {
-            expect(priorityToNumber(input)).toBe(expectedNumber);
-          }
-        });
-      });
-
-      it('should provide round-trip conversion consistency', () => {
-        const priorities = ['low', 'medium', 'high'] as const;
-        const numbers = [0, 1, 2] as const;
-
-        priorities.forEach((priority) => {
-          const number = priorityToNumber(priority);
-          const backToPriority = numberToPriority(number);
-          expect(backToPriority).toBe(priority);
-        });
-
-        numbers.forEach((number) => {
-          const priority = numberToPriority(number);
-          const backToNumber = priorityToNumber(priority);
-          expect(backToNumber).toBe(number);
-        });
-      });
-    });
   });
 });

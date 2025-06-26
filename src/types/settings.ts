@@ -55,7 +55,7 @@ export interface SettingsChangeEvent {
   type: 'settings' | 'keybindings';
   previous: AppSettingsFile | Keybinding[];
   current: AppSettingsFile | Keybinding[];
-  source: 'file' | 'app' | 'migration';
+  source: 'file' | 'app';
 }
 
 // Default settings

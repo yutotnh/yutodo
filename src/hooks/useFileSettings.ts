@@ -1,15 +1,19 @@
 import { useState, useEffect, useCallback } from 'react';
 import { AppSettingsFile, Keybinding, SettingsChangeEvent } from '../types/settings';
 import { settingsManager } from '../config/SettingsManager';
-import { getMigrationData, completeMigration, isMigrationNeeded, isTauriEnvironment } from '../config/migrationUtils';
 import logger from '../utils/logger';
+
+// Helper function to check if we're in Tauri environment
+function isTauriEnvironment(): boolean {
+  return typeof window !== 'undefined' && (window as any).__TAURI_INTERNALS__ !== undefined;
+}
 
 interface UseFileSettingsReturn {
   settings: AppSettingsFile | null;
   keybindings: Keybinding[];
   isLoading: boolean;
   error: Error | null;
-  lastChangeSource: 'app' | 'file' | 'migration' | null;
+  lastChangeSource: 'app' | 'file' | null;
   updateSettings: (updates: Partial<AppSettingsFile>) => Promise<void>;
   addKeybinding: (keybinding: Keybinding) => Promise<void>;
   removeKeybinding: (key: string) => Promise<void>;
@@ -26,7 +30,7 @@ export function useFileSettings(): UseFileSettingsReturn {
   const [keybindings, setKeybindings] = useState<Keybinding[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
-  const [lastChangeSource, setLastChangeSource] = useState<'app' | 'file' | 'migration' | null>(null);
+  const [lastChangeSource, setLastChangeSource] = useState<'app' | 'file' | null>(null);
   
   // Initialize settings manager
   useEffect(() => {
@@ -41,46 +45,10 @@ export function useFileSettings(): UseFileSettingsReturn {
       }
       
       try {
-        // Check if migration is needed
-        logger.info('Checking if migration is needed...');
-        const needsMigration = await isMigrationNeeded();
-        logger.info('Migration needed:', needsMigration);
-        
-        // Get migration data if needed
-        let migrationData = null;
-        if (needsMigration) {
-          logger.info('Starting migration from localStorage to file-based settings');
-          migrationData = getMigrationData();
-          
-          if (migrationData) {
-            logger.info('Migration data prepared, will apply after initialization');
-          }
-        }
-        
         // Initialize settings manager
         logger.info('Starting SettingsManager initialization...');
         await settingsManager.initialize();
         logger.info('SettingsManager initialization completed successfully');
-        
-        // Apply migration data if needed
-        if (migrationData) {
-          logger.info('Applying migration data...');
-          try {
-            // Update settings
-            await settingsManager.updateSettings(migrationData.settings);
-            
-            // Add custom keybindings if any
-            for (const kb of migrationData.keybindings) {
-              await settingsManager.addKeybinding(kb);
-            }
-            
-            // Complete migration by backing up and clearing localStorage
-            await completeMigration();
-            logger.info('Migration completed successfully');
-          } catch (error) {
-            logger.error('Failed to apply migration data:', error);
-          }
-        }
         
         if (!mounted) return;
         
