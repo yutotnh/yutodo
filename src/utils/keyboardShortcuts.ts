@@ -60,6 +60,27 @@ export const keyboardShortcuts: KeyboardShortcut[] = [
     handler: 'onToggleFilter',
     category: 'basic'
   },
+  {
+    id: 'toggle-case-sensitive',
+    key: 'Alt+C',
+    description: 'Toggle case sensitive',
+    handler: 'onToggleCaseSensitive',
+    category: 'basic'
+  },
+  {
+    id: 'toggle-regex',
+    key: 'Alt+R',
+    description: 'Toggle regex mode',
+    handler: 'onToggleRegex',
+    category: 'basic'
+  },
+  {
+    id: 'toggle-whole-word',
+    key: 'Alt+W',
+    description: 'Toggle whole word',
+    handler: 'onToggleWholeWord',
+    category: 'basic'
+  },
   
   // Task operations
   {

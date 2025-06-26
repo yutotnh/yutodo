@@ -287,6 +287,12 @@
     "deleteInactiveSchedulesDesc": "This will permanently delete all inactive and completed schedules. This action cannot be undone.",
     "inactiveSchedulesDeleted": "{{count}} inactive schedules deleted"
   },
+  "search": {
+    "caseSensitive": "Match Case",
+    "useRegex": "Use Regular Expression",
+    "wholeWord": "Match Whole Word",
+    "invalidRegex": "Invalid regular expression"
+  },
   "common": {
     "cancel": "Cancel",
     "save": "Save",
@@ -392,6 +398,18 @@
         "focusSearch": {
           "title": "Focus Search",
           "description": "Focus on the search input field"
+        },
+        "toggleCaseSensitive": {
+          "title": "Toggle Case Sensitive",
+          "description": "Toggle case sensitive search"
+        },
+        "toggleRegex": {
+          "title": "Toggle Regex Mode",
+          "description": "Toggle regular expression search"
+        },
+        "toggleWholeWord": {
+          "title": "Toggle Whole Word",
+          "description": "Toggle whole word search"
         }
       },
       "settings": {

@@ -32,7 +32,7 @@ import { CommandPalette } from './components/CommandPalette';
 import { useSocket } from './hooks/useSocket';
 import { useKeyboardShortcutsV2 } from './hooks/useKeyboardShortcutsV2';
 import { useFileSettings } from './hooks/useFileSettings';
-import { AppSettings, Todo, Schedule } from './types/todo';
+import { AppSettings, Todo, Schedule, SearchSettings } from './types/todo';
 import { CommandContext } from './types/commands';
 import { numberToPriority } from './utils/priorityUtils';
 import { formatTomlKeyValue } from './utils/tomlUtils';
@@ -129,6 +129,11 @@ function App() {
   const [editingSchedule, setEditingSchedule] = useState<Schedule | null>(null);
   const [showSearch, setShowSearch] = useState(false);
   const [showFilter, setShowFilter] = useState(false);
+  const [searchSettings, setSearchSettings] = useState<SearchSettings>({
+    caseSensitive: false,
+    useRegex: false,
+    wholeWord: false
+  });
   const addTodoFormRef = useRef<AddTodoFormRef>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -1130,9 +1135,46 @@ function App() {
     const isOverdue = todo.scheduledFor && new Date(todo.scheduledFor) < now && !todo.completed;
 
     // 検索クエリでフィルタリング
-    const matchesSearch = searchQuery === '' ||
-      todo.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (todo.description && todo.description.toLowerCase().includes(searchQuery.toLowerCase()));
+    const matchesSearch = (() => {
+      if (searchQuery === '') return true;
+      
+      const searchText = searchQuery;
+      const targetTitle = todo.title;
+      const targetDescription = todo.description || '';
+      
+      // 正規表現モード
+      if (searchSettings.useRegex) {
+        try {
+          const regex = new RegExp(searchText, searchSettings.caseSensitive ? 'g' : 'gi');
+          return regex.test(targetTitle) || regex.test(targetDescription);
+        } catch {
+          // 無効な正規表現の場合はfalseを返す
+          return false;
+        }
+      }
+      
+      // 通常の検索
+      let titleToSearch = targetTitle;
+      let descToSearch = targetDescription;
+      let queryToSearch = searchText;
+      
+      // 大文字小文字を区別しない場合
+      if (!searchSettings.caseSensitive) {
+        titleToSearch = titleToSearch.toLowerCase();
+        descToSearch = descToSearch.toLowerCase();
+        queryToSearch = queryToSearch.toLowerCase();
+      }
+      
+      // 単語単位で検索
+      if (searchSettings.wholeWord) {
+        // 単語境界を考慮した検索
+        const wordBoundaryRegex = new RegExp(`\\b${queryToSearch.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, searchSettings.caseSensitive ? 'g' : 'gi');
+        return wordBoundaryRegex.test(targetTitle) || wordBoundaryRegex.test(targetDescription);
+      }
+      
+      // 通常の部分一致検索
+      return titleToSearch.includes(queryToSearch) || descToSearch.includes(queryToSearch);
+    })();
 
     if (!matchesSearch) return false;
 
@@ -1187,13 +1229,29 @@ function App() {
         setTimeout(() => {
           searchInputRef.current?.focus();
         }, 100);
-      } else {
-        // 検索を非表示にする場合は、検索クエリをクリア
-        setSearchQuery('');
       }
+      // 検索クエリは保持する（クリアしない）
     },
     onToggleFilter: () => {
       setShowFilter(prev => !prev);
+    },
+    onToggleCaseSensitive: () => {
+      setSearchSettings(prev => ({
+        ...prev,
+        caseSensitive: !prev.caseSensitive
+      }));
+    },
+    onToggleRegex: () => {
+      setSearchSettings(prev => ({
+        ...prev,
+        useRegex: !prev.useRegex
+      }));
+    },
+    onToggleWholeWord: () => {
+      setSearchSettings(prev => ({
+        ...prev,
+        wholeWord: !prev.wholeWord
+      }));
     },
     onFocusSearch: () => {
       // 後方互換性のため残す
@@ -1357,6 +1415,9 @@ function App() {
     onFocusSearch: keyboardHandlers.onFocusSearch,
     onToggleSearch: keyboardHandlers.onToggleSearch,
     onToggleFilter: keyboardHandlers.onToggleFilter,
+    onToggleCaseSensitive: keyboardHandlers.onToggleCaseSensitive,
+    onToggleRegex: keyboardHandlers.onToggleRegex,
+    onToggleWholeWord: keyboardHandlers.onToggleWholeWord,
     onSelectAll: keyboardHandlers.onSelectAll,
     onDeleteSelected: keyboardHandlers.onDeleteSelected,
     onClearSelection: keyboardHandlers.onClearSelection,
@@ -1435,6 +1496,8 @@ function App() {
                 ref={searchInputRef}
                 searchQuery={searchQuery}
                 onSearchChange={setSearchQuery}
+                searchSettings={searchSettings}
+                onSearchSettingsChange={setSearchSettings}
                 onClose={() => setShowSearch(false)}
               />
             )}

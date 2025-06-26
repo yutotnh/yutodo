@@ -83,6 +83,11 @@ describe('CommandPalette - Basic Tests', () => {
       onToggleSlimMode: vi.fn(),
       onToggleAlwaysOnTop: vi.fn(),
       onShowHelp: vi.fn(),
+      onToggleSearch: vi.fn(),
+      onToggleFilter: vi.fn(),
+      onToggleCaseSensitive: vi.fn(),
+      onToggleRegex: vi.fn(),
+      onToggleWholeWord: vi.fn(),
     };
 
     mockOnClose = vi.fn();

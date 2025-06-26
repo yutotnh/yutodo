@@ -40,6 +40,9 @@ export interface CommandContext {
   onFocusSearch: () => void;
   onToggleSearch: () => void;
   onToggleFilter: () => void;
+  onToggleCaseSensitive: () => void;
+  onToggleRegex: () => void;
+  onToggleWholeWord: () => void;
   onSelectAll: () => void;
   onDeleteSelected: () => void;
   onClearSelection: () => void;

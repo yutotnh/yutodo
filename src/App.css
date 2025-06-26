@@ -1788,6 +1788,84 @@ body {
   color: #374151;
 }
 
+/* Advanced Search Options */
+.search-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.search-input-container--error .search-input {
+  border-color: #ef4444;
+}
+
+.search-input-container--error .search-input:focus {
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.search-options {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.search-option {
+  padding: 0.375rem;
+  background: transparent;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.25rem;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.search-option:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+  color: #374151;
+}
+
+.search-option--active {
+  background: #3b82f6;
+  border-color: #3b82f6;
+  color: white;
+}
+
+.search-option--active:hover {
+  background: #2563eb;
+  border-color: #2563eb;
+}
+
+.search-option--error {
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+.search-option--error:hover {
+  background: #fef2f2;
+  border-color: #ef4444;
+  color: #dc2626;
+}
+
+.search-error {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 0.25rem;
+  padding: 0.5rem 0.75rem;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 0.375rem;
+  color: #dc2626;
+  font-size: 0.75rem;
+  z-index: 10;
+}
+
 /* Todo Filter */
 .todo-filter {
   padding: 1rem 1.5rem;
@@ -2858,6 +2936,55 @@ body {
 .app.app--dark .search-close:hover {
   background: #475569 !important;
   color: #e2e8f0 !important;
+}
+
+/* Dark mode advanced search options */
+.app.app--dark .search-input-container--error .search-input {
+  border-color: #ef4444 !important;
+}
+
+.app.app--dark .search-input-container--error .search-input:focus {
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
+}
+
+.app.app--dark .search-option {
+  background: transparent !important;
+  border-color: #475569 !important;
+  color: #94a3b8 !important;
+}
+
+.app.app--dark .search-option:hover {
+  background: #475569 !important;
+  border-color: #64748b !important;
+  color: #e2e8f0 !important;
+}
+
+.app.app--dark .search-option--active {
+  background: #3b82f6 !important;
+  border-color: #3b82f6 !important;
+  color: white !important;
+}
+
+.app.app--dark .search-option--active:hover {
+  background: #2563eb !important;
+  border-color: #2563eb !important;
+}
+
+.app.app--dark .search-option--error {
+  border-color: #ef4444 !important;
+  color: #ef4444 !important;
+}
+
+.app.app--dark .search-option--error:hover {
+  background: #7f1d1d !important;
+  border-color: #ef4444 !important;
+  color: #f87171 !important;
+}
+
+.app.app--dark .search-error {
+  background: #7f1d1d !important;
+  border-color: #991b1b !important;
+  color: #fca5a5 !important;
 }
 
 .app.app--dark .todo-filter {

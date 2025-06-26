@@ -43,8 +43,8 @@ export const TodoFilter: React.FC<TodoFilterProps> = ({ currentFilter, onFilterC
           <button
             onClick={onClose}
             className="filter-close"
-            aria-label={t('common.close')}
-            title={t('common.close')}
+            aria-label={t('buttons.close')}
+            title={t('buttons.close')}
           >
             <X size={16} />
           </button>

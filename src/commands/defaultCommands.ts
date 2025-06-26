@@ -215,6 +215,42 @@ const createSearchCommands = (t: TFunction): CommandAction[] => [
     execute: (context: CommandContext) => {
       context.onFocusSearch();
     }
+  },
+  {
+    id: 'search.toggleCaseSensitive',
+    title: t('commandPalette.commands.search.toggleCaseSensitive.title', 'Toggle Case Sensitive'),
+    description: t('commandPalette.commands.search.toggleCaseSensitive.description', 'Toggle case sensitive search'),
+    category: 'search',
+    keywords: ['case', 'sensitive', 'toggle', 'search'],
+    keybinding: getShortcutKey('onToggleCaseSensitive'),
+    icon: 'type',
+    execute: (context: CommandContext) => {
+      context.onToggleCaseSensitive();
+    }
+  },
+  {
+    id: 'search.toggleRegex',
+    title: t('commandPalette.commands.search.toggleRegex.title', 'Toggle Regex Mode'),
+    description: t('commandPalette.commands.search.toggleRegex.description', 'Toggle regular expression search'),
+    category: 'search',
+    keywords: ['regex', 'regular', 'expression', 'toggle', 'search'],
+    keybinding: getShortcutKey('onToggleRegex'),
+    icon: 'code',
+    execute: (context: CommandContext) => {
+      context.onToggleRegex();
+    }
+  },
+  {
+    id: 'search.toggleWholeWord',
+    title: t('commandPalette.commands.search.toggleWholeWord.title', 'Toggle Whole Word'),
+    description: t('commandPalette.commands.search.toggleWholeWord.description', 'Toggle whole word search'),
+    category: 'search',
+    keywords: ['whole', 'word', 'toggle', 'search'],
+    keybinding: getShortcutKey('onToggleWholeWord'),
+    icon: 'type',
+    execute: (context: CommandContext) => {
+      context.onToggleWholeWord();
+    }
   }
 ];
 

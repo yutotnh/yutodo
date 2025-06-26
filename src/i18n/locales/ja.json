@@ -286,6 +286,12 @@
     "deleteInactiveSchedulesDesc": "非アクティブおよび完了したスケジュールを完全に削除します。この操作は取り消すことができません。",
     "inactiveSchedulesDeleted": "{{count}}個の非アクティブなスケジュールを削除しました"
   },
+  "search": {
+    "caseSensitive": "大文字と小文字を区別",
+    "useRegex": "正規表現を使用",
+    "wholeWord": "単語単位で検索",
+    "invalidRegex": "無効な正規表現です"
+  },
   "common": {
     "cancel": "キャンセル",
     "save": "保存",
@@ -391,6 +397,18 @@
         "focusSearch": {
           "title": "検索にフォーカス",
           "description": "検索入力フィールドにフォーカス"
+        },
+        "toggleCaseSensitive": {
+          "title": "大文字小文字の区別を切り替え",
+          "description": "大文字小文字を区別する検索を切り替える"
+        },
+        "toggleRegex": {
+          "title": "正規表現モードを切り替え",
+          "description": "正規表現検索を切り替える"
+        },
+        "toggleWholeWord": {
+          "title": "単語単位検索を切り替え",
+          "description": "単語単位での検索を切り替える"
         }
       },
       "settings": {

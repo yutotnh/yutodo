@@ -12,6 +12,12 @@ vi.mock('react-i18next', () => ({
 
 describe('SearchBar', () => {
   const mockOnSearchChange = vi.fn();
+  const mockOnSearchSettingsChange = vi.fn();
+  const defaultSearchSettings = {
+    caseSensitive: false,
+    useRegex: false,
+    wholeWord: false
+  };
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -26,21 +32,21 @@ describe('SearchBar', () => {
   };
 
   it('renders search input with placeholder', () => {
-    render(<SearchBar searchQuery="" onSearchChange={mockOnSearchChange} />);
+    render(<SearchBar searchQuery="" onSearchChange={mockOnSearchChange} searchSettings={defaultSearchSettings} onSearchSettingsChange={mockOnSearchSettingsChange} />);
     
     const input = screen.getByPlaceholderText('tasks.search');
     expect(input).toBeInTheDocument();
   });
 
   it('displays the current search value', () => {
-    render(<SearchBar searchQuery="test search" onSearchChange={mockOnSearchChange} />);
+    render(<SearchBar searchQuery="test search" onSearchChange={mockOnSearchChange} searchSettings={defaultSearchSettings} onSearchSettingsChange={mockOnSearchSettingsChange} />);
     
     const input = screen.getByDisplayValue('test search');
     expect(input).toBeInTheDocument();
   });
 
   it('calls onSearchChange when input value changes', () => {
-    render(<SearchBar searchQuery="" onSearchChange={mockOnSearchChange} />);
+    render(<SearchBar searchQuery="" onSearchChange={mockOnSearchChange} searchSettings={defaultSearchSettings} onSearchSettingsChange={mockOnSearchSettingsChange} />);
     
     const input = screen.getByRole('textbox');
     fireEvent.change(input, { target: { value: 'new search' } });
@@ -49,21 +55,21 @@ describe('SearchBar', () => {
   });
 
   it('shows clear button when there is a search value', () => {
-    render(<SearchBar searchQuery="test" onSearchChange={mockOnSearchChange} />);
+    render(<SearchBar searchQuery="test" onSearchChange={mockOnSearchChange} searchSettings={defaultSearchSettings} onSearchSettingsChange={mockOnSearchSettingsChange} />);
     
     const clearButton = screen.getByLabelText('tasks.clearSearch');
     expect(clearButton).toBeInTheDocument();
   });
 
   it('hides clear button when search value is empty', () => {
-    render(<SearchBar searchQuery="" onSearchChange={mockOnSearchChange} />);
+    render(<SearchBar searchQuery="" onSearchChange={mockOnSearchChange} searchSettings={defaultSearchSettings} onSearchSettingsChange={mockOnSearchSettingsChange} />);
     
     const clearButton = screen.queryByLabelText('tasks.clearSearch');
     expect(clearButton).not.toBeInTheDocument();
   });
 
   it('calls onSearchChange with empty string when clear button is clicked', () => {
-    render(<SearchBar searchQuery="test" onSearchChange={mockOnSearchChange} />);
+    render(<SearchBar searchQuery="test" onSearchChange={mockOnSearchChange} searchSettings={defaultSearchSettings} onSearchSettingsChange={mockOnSearchSettingsChange} />);
     
     const clearButton = screen.getByLabelText('tasks.clearSearch');
     fireEvent.click(clearButton);
@@ -72,7 +78,7 @@ describe('SearchBar', () => {
   });
 
   it('applies correct CSS classes', () => {
-    const { container } = render(<SearchBar searchQuery="test" onSearchChange={mockOnSearchChange} />);
+    const { container } = render(<SearchBar searchQuery="test" onSearchChange={mockOnSearchChange} searchSettings={defaultSearchSettings} onSearchSettingsChange={mockOnSearchSettingsChange} />);
     
     const searchContainer = container.querySelector('.search-bar');
     expect(searchContainer).toBeInTheDocument();
@@ -82,7 +88,7 @@ describe('SearchBar', () => {
   });
 
   it('handles rapid input changes', () => {
-    render(<SearchBar searchQuery="" onSearchChange={mockOnSearchChange} />);
+    render(<SearchBar searchQuery="" onSearchChange={mockOnSearchChange} searchSettings={defaultSearchSettings} onSearchSettingsChange={mockOnSearchSettingsChange} />);
     
     const input = screen.getByRole('textbox');
     
@@ -95,7 +101,7 @@ describe('SearchBar', () => {
   });
 
   it('handles empty string input', () => {
-    render(<SearchBar searchQuery="test" onSearchChange={mockOnSearchChange} />);
+    render(<SearchBar searchQuery="test" onSearchChange={mockOnSearchChange} searchSettings={defaultSearchSettings} onSearchSettingsChange={mockOnSearchSettingsChange} />);
     
     const input = screen.getByRole('textbox');
     fireEvent.change(input, { target: { value: '' } });
@@ -104,7 +110,7 @@ describe('SearchBar', () => {
   });
 
   it('uses custom placeholder when provided', () => {
-    render(<SearchBar searchQuery="" onSearchChange={mockOnSearchChange} placeholder="Custom placeholder" />);
+    render(<SearchBar searchQuery="" onSearchChange={mockOnSearchChange} searchSettings={defaultSearchSettings} onSearchSettingsChange={mockOnSearchSettingsChange} placeholder="Custom placeholder" />);
     
     const input = screen.getByPlaceholderText('Custom placeholder');
     expect(input).toBeInTheDocument();
@@ -112,16 +118,52 @@ describe('SearchBar', () => {
 
   it('forwards ref to input element', () => {
     const ref = React.createRef<HTMLInputElement>();
-    render(<SearchBar ref={ref} searchQuery="" onSearchChange={mockOnSearchChange} />);
+    render(<SearchBar ref={ref} searchQuery="" onSearchChange={mockOnSearchChange} searchSettings={defaultSearchSettings} onSearchSettingsChange={mockOnSearchSettingsChange} />);
     
     expect(ref.current).toBeInstanceOf(HTMLInputElement);
     expect(ref.current?.className).toBe('search-input');
   });
 
+  it('calls onClose when Escape key is pressed in search input', () => {
+    const mockOnClose = vi.fn();
+    render(
+      <SearchBar 
+        searchQuery="test" 
+        onSearchChange={mockOnSearchChange} 
+        searchSettings={defaultSearchSettings} 
+        onSearchSettingsChange={mockOnSearchSettingsChange}
+        onClose={mockOnClose}
+      />
+    );
+    
+    const input = screen.getByRole('textbox');
+    fireEvent.keyDown(input, { key: 'Escape' });
+    
+    expect(mockOnClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not throw error when Escape is pressed without onClose prop', () => {
+    render(
+      <SearchBar 
+        searchQuery="test" 
+        onSearchChange={mockOnSearchChange} 
+        searchSettings={defaultSearchSettings} 
+        onSearchSettingsChange={mockOnSearchSettingsChange}
+      />
+    );
+    
+    const input = screen.getByRole('textbox');
+    
+    // Should not throw error
+    expect(() => {
+      fireEvent.keyDown(input, { key: 'Escape' });
+    }).not.toThrow();
+  });
+
   describe('Dark Mode Support', () => {
     it('applies dark mode styles to search bar', () => {
       renderWithDarkMode(
-        <SearchBar searchQuery="" onSearchChange={mockOnSearchChange} />,
+        <SearchBar searchQuery="" onSearchChange={mockOnSearchChange} searchSettings={defaultSearchSettings} onSearchSettingsChange={mockOnSearchSettingsChange} />,
         true
       );
 
@@ -140,7 +182,7 @@ describe('SearchBar', () => {
 
     it('applies dark mode styles to clear button when visible', () => {
       renderWithDarkMode(
-        <SearchBar searchQuery="test" onSearchChange={mockOnSearchChange} />,
+        <SearchBar searchQuery="test" onSearchChange={mockOnSearchChange} searchSettings={defaultSearchSettings} onSearchSettingsChange={mockOnSearchSettingsChange} />,
         true
       );
 

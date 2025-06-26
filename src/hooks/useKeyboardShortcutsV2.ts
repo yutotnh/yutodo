@@ -13,6 +13,9 @@ export interface KeyboardShortcutHandlers {
   // Search/Filter operations
   onToggleSearch?: () => void;
   onToggleFilter?: () => void;
+  onToggleCaseSensitive?: () => void;
+  onToggleRegex?: () => void;
+  onToggleWholeWord?: () => void;
   
   // Task operations
   onSelectAll: () => void;
@@ -137,9 +140,12 @@ export const useKeyboardShortcutsV2 = (
     { key: 'Ctrl+Shift+P', command: 'openCommandPalette' },
     { key: 'Ctrl+N', command: 'newTask', when: '!inputFocus' },
     { key: 'Ctrl+,', command: 'openSettings' },
-    { key: 'Ctrl+F', command: 'toggleSearch', when: '!inputFocus' },
-    { key: 'Ctrl+Shift+F', command: 'toggleFilter', when: '!inputFocus' },
+    { key: 'Ctrl+F', command: 'toggleSearch' },
+    { key: 'Ctrl+Shift+F', command: 'toggleFilter' },
     { key: 'Ctrl+K Ctrl+S', command: 'showKeybindings' },
+    { key: 'Alt+C', command: 'toggleCaseSensitive' },
+    { key: 'Alt+R', command: 'toggleRegex' },
+    { key: 'Alt+W', command: 'toggleWholeWord' },
     { key: 'Ctrl+A', command: 'selectAll', when: '!inputFocus' },
     { key: 'Ctrl+D', command: 'toggleTaskComplete', when: 'taskSelected && !inputFocus' },
     { key: 'Delete', command: 'deleteSelected', when: 'taskSelected && !inputFocus' },
@@ -308,6 +314,15 @@ function executeCommand(command: string, handlers: KeyboardShortcutHandlers) {
     case 'toggleFilter':
       handlers.onToggleFilter?.();
       break;
+    case 'toggleCaseSensitive':
+      handlers.onToggleCaseSensitive?.();
+      break;
+    case 'toggleRegex':
+      handlers.onToggleRegex?.();
+      break;
+    case 'toggleWholeWord':
+      handlers.onToggleWholeWord?.();
+      break;
     case 'openCommandPalette':
       handlers.onOpenCommandPalette();
       break;
@@ -371,6 +386,9 @@ function getCommandDescription(command: string): string {
     focusSearch: 'Search',
     toggleSearch: 'Toggle search',
     toggleFilter: 'Toggle filter',
+    toggleCaseSensitive: 'Toggle case sensitive',
+    toggleRegex: 'Toggle regex mode',
+    toggleWholeWord: 'Toggle whole word',
     openCommandPalette: 'Open command palette',
     selectAll: 'Select all',
     deleteSelected: 'Delete selected',

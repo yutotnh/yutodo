@@ -25,6 +25,12 @@ export interface AppSettings {
   currentView: 'tasks' | 'schedules'; // 現在のビュー状態
 }
 
+export interface SearchSettings {
+  caseSensitive: boolean;
+  useRegex: boolean;
+  wholeWord: boolean;
+}
+
 // スケジュール関連の型定義
 export type ScheduleType = 'once' | 'daily' | 'weekly' | 'monthly' | 'custom';
 
