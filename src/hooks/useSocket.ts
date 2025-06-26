@@ -178,6 +178,16 @@ export const useSocket = (serverUrl: string) => {
     }
   };
 
+  const retryConnection = () => {
+    if (socketRef.current) {
+      logger.network('Manual retry connection requested');
+      setConnectionStatus('connecting');
+      setReconnectAttempts(0);
+      socketRef.current.disconnect();
+      socketRef.current.connect();
+    }
+  };
+
   return {
     todos,
     schedules,
@@ -193,6 +203,7 @@ export const useSocket = (serverUrl: string) => {
     addSchedule,
     updateSchedule,
     deleteSchedule,
-    toggleSchedule
+    toggleSchedule,
+    retryConnection
   };
 };

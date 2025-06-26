@@ -24,7 +24,7 @@ import { ShortcutHelp } from './components/ShortcutHelp';
 import { TodoFilter, FilterType } from './components/TodoFilter';
 import { SearchBar } from './components/SearchBar';
 import { DeleteConfirmDialog } from './components/DeleteConfirmDialog';
-import { ConnectionStatus } from './components/ConnectionStatus';
+import { ConnectionErrorOverlay } from './components/ConnectionErrorOverlay';
 import { MenuBar } from './components/MenuBar';
 import { ScheduleView } from './components/ScheduleView';
 import { ScheduleModal } from './components/ScheduleModal';
@@ -120,7 +120,6 @@ function App() {
     title: string;
     message: string;
   }>({ isOpen: false, todoIds: [], title: '', message: '' });
-  const [showConnectionTooltip, setShowConnectionTooltip] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAltKeyActive, setIsAltKeyActive] = useState(false);
   const [isCompletedExpanded, setIsCompletedExpanded] = useState(true);
@@ -150,7 +149,8 @@ function App() {
     addSchedule,
     updateSchedule,
     deleteSchedule,
-    toggleSchedule
+    toggleSchedule,
+    retryConnection
   } = useSocket(settings.serverUrl);
 
   // ファイルベースの設定を適用
@@ -929,37 +929,6 @@ function App() {
     }
   }, [settings.darkMode, systemPrefersDark, isDarkMode]);
 
-  const getConnectionStatusText = () => {
-    switch (connectionStatus) {
-      case 'connected':
-        return t('connection.connected');
-      case 'connecting':
-        return reconnectAttempts > 0 ? t('connection.reconnecting', { attempt: reconnectAttempts }) : t('connection.connecting');
-      case 'disconnected':
-        return t('connection.disconnected');
-      case 'error':
-        return t('connection.error');
-      default:
-        return t('connection.unknown');
-    }
-  };
-
-  const getConnectionStatusBgColor = () => {
-    switch (connectionStatus) {
-      case 'connected':
-        return '#10b981'; // green-500
-      case 'connecting':
-        return '#3b82f6'; // blue-500
-      case 'disconnected':
-        return '#6b7280'; // gray-500
-      case 'error':
-        return '#ef4444'; // red-500
-      default:
-        return '#9ca3af'; // gray-400
-    }
-  };
-
-
   // 削除ハンドラー（設定に応じて確認ダイアログを表示）
   const handleDeleteWithConfirm = (todoId: string) => {
     if (settings.confirmDelete) {
@@ -1462,13 +1431,7 @@ function App() {
           />
         </div>
         <div className="header-center">
-          {isDetailedTasksView() && (
-            <ConnectionStatus
-              connectionStatus={connectionStatus}
-              reconnectAttempts={reconnectAttempts}
-              isSlimMode={false}
-            />
-          )}
+          {/* Connection status now handled by overlay */}
         </div>
         <div className="header-right">
           <button
@@ -1745,56 +1708,16 @@ function App() {
         </div>
       )}
 
-      {/* ミニモード用の固定接続状況インジケーター */}
-      {isSimpleTasksView() && (
-        <div 
-          data-testid="connection-status"
-          className="fixed-connection-indicator-container"
-          style={{
-            position: 'fixed',
-            bottom: '12px',
-            right: '12px',
-            zIndex: 1000
-          }}
-          onMouseEnter={() => setShowConnectionTooltip(true)}
-          onMouseLeave={() => setShowConnectionTooltip(false)}
-        >
-          <div 
-            className="fixed-connection-indicator"
-            style={{
-              width: '12px',
-              height: '12px',
-              borderRadius: '50%',
-              backgroundColor: getConnectionStatusBgColor(),
-              border: '2px solid rgba(255, 255, 255, 0.8)',
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
-              animation: connectionStatus === 'connecting' ? 'pulse 1.5s infinite' : 'none',
-              cursor: 'pointer'
-            }}
-          />
-          {showConnectionTooltip && (
-            <div
-              className="connection-tooltip"
-              style={{
-                position: 'absolute',
-                bottom: '20px',
-                right: '0px',
-                backgroundColor: isDarkMode ? '#374151' : '#ffffff',
-                color: isDarkMode ? '#f3f4f6' : '#1f2937',
-                padding: '6px 10px',
-                borderRadius: '6px',
-                fontSize: '12px',
-                whiteSpace: 'nowrap',
-                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-                border: `1px solid ${isDarkMode ? '#4b5563' : '#e5e7eb'}`,
-                zIndex: 1001
-              }}
-            >
-              {getConnectionStatusText()}
-            </div>
-          )}
-        </div>
-      )}
+      {/* Connection status now handled by overlay */}
+
+      {/* Connection Error Overlay */}
+      <ConnectionErrorOverlay
+        connectionStatus={connectionStatus}
+        reconnectAttempts={reconnectAttempts}
+        onRetry={retryConnection}
+        onOpenSettings={() => setShowSettings(true)}
+        serverUrl={settings.serverUrl}
+      />
     </div>
   );
 }

@@ -165,6 +165,22 @@
       },
       "reconnectAttempts": "再接続試行回数: {{count}}"
     },
+    "connectionError": {
+      "connecting": "サーバーに接続中...",
+      "reconnecting": "サーバーに再接続中...",
+      "failed": "接続失敗",
+      "disconnected": "サーバーとの接続が切れました",
+      "initialConnection": "接続を確立中",
+      "attemptCount": "{{count}}/5回目の試行",
+      "failedDescription": "サーバーに接続できません。ネットワーク接続とサーバー設定を確認してください。",
+      "disconnectedDescription": "サーバーとの接続が失われました。変更内容は同期されません。",
+      "serverUrl": "サーバー",
+      "nextRetry": "{{seconds}}秒後に再試行",
+      "retryNow": "今すぐ再試行",
+      "settings": "サーバー設定",
+      "closeTemporary": "一時的に閉じる（Escキー）",
+      "helpText": "Escキーを押すと一時的にオフラインで作業できます。再接続するまで変更内容は同期されません。"
+    },
     "keybindings": {
       "title": "キーボードショートカット",
       "fileBasedDescription": "キーボードショートカットはkeybindings.tomlファイルで管理されています。下のボタンをクリックしてデフォルトのテキストエディタでファイルを開いてください。",

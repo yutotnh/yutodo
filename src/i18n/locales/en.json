@@ -165,6 +165,22 @@
       },
       "reconnectAttempts": "Reconnect attempts: {{count}}"
     },
+    "connectionError": {
+      "connecting": "Connecting to server...",
+      "reconnecting": "Reconnecting to server...",
+      "failed": "Connection Failed",
+      "disconnected": "Server Disconnected",
+      "initialConnection": "Establishing connection",
+      "attemptCount": "Attempt {{count}} of 5",
+      "failedDescription": "Unable to connect to the server. Please check your network connection and server settings.",
+      "disconnectedDescription": "Lost connection to the server. Your changes will not be synchronized.",
+      "serverUrl": "Server",
+      "nextRetry": "Next retry in {{seconds}} seconds",
+      "retryNow": "Retry Now",
+      "settings": "Server Settings",
+      "closeTemporary": "Close temporarily (Press Esc)",
+      "helpText": "Press Esc to work offline temporarily. Changes will not be synchronized until reconnected."
+    },
     "keybindings": {
       "title": "Keyboard Shortcuts",
       "fileBasedDescription": "Keybindings are managed in the keybindings.toml file. Click below to open the file in your default text editor.",
