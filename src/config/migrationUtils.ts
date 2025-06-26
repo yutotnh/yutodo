@@ -62,7 +62,7 @@ function convertToFileSettings(old: AppSettings): AppSettingsFile {
       alwaysOnTop: old.alwaysOnTop || false,
       detailedMode: old.detailedMode || false,
       confirmDelete: old.confirmDelete !== false, // Default true
-      currentView: old.currentView || 'tasks'
+      startupView: old.currentView || old.startupView || 'tasks'
     },
     server: {
       url: old.serverUrl || 'http://localhost:3001',

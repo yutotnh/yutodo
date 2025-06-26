@@ -49,7 +49,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   customCss: '',
   serverUrl: 'http://localhost:3001',
   language: 'auto',
-  currentView: 'tasks'
+  startupView: 'tasks'
 };
 
 // Tauri環境でのフォールバック設定
@@ -177,7 +177,7 @@ function App() {
         customCss: fileSettings.appearance.customCss,
         serverUrl: fileSettings.server.url,
         language: fileSettings.app.language,
-        currentView: fileSettings.app.currentView
+        startupView: fileSettings.app.startupView
       };
       
       const finalSettings = { ...DEFAULT_SETTINGS, ...appSettings };
@@ -543,7 +543,7 @@ function App() {
             alwaysOnTop: newSettings.alwaysOnTop,
             detailedMode: newSettings.detailedMode,
             confirmDelete: newSettings.confirmDelete,
-            currentView: newSettings.currentView
+            startupView: newSettings.startupView
           },
           server: {
             url: newSettings.serverUrl,
@@ -1015,7 +1015,7 @@ function App() {
 
   // ビュー切り替えハンドラー
   const handleViewChange = (view: 'tasks' | 'schedules') => {
-    setSettings(prev => ({ ...prev, currentView: view }));
+    setSettings(prev => ({ ...prev, startupView: view }));
   };
 
   // スケジュール関連ハンドラー
@@ -1320,10 +1320,10 @@ function App() {
     },
     // View switching
     onShowTasks: () => {
-      handleSettingsChange({ ...settings, currentView: 'tasks' });
+      handleSettingsChange({ ...settings, startupView: 'tasks' });
     },
     onShowSchedules: () => {
-      handleSettingsChange({ ...settings, currentView: 'schedules' });
+      handleSettingsChange({ ...settings, startupView: 'schedules' });
     },
     // Navigation (TODO: implement these)
     onNextTask: () => {
@@ -1406,7 +1406,7 @@ function App() {
 
   // CommandContext for command palette
   const commandContext: CommandContext = {
-    currentView: settings.currentView,
+    startupView: settings.startupView,
     selectedTasks: selectedTodos,
     searchQuery,
     settings,
@@ -1425,7 +1425,7 @@ function App() {
     onToggleSelectedCompletion: keyboardHandlers.onToggleSelectedCompletion,
     onExportTasks: handleExportTasksFromMenu,
     onImportTasks: handleImportTasksFromMenu,
-    onViewChange: (view) => setSettings(prev => ({ ...prev, currentView: view })),
+    onViewChange: (view) => setSettings(prev => ({ ...prev, startupView: view })),
     onToggleDarkMode: () => {
       const newMode = settings.darkMode === 'dark' ? 'light' : settings.darkMode === 'light' ? 'auto' : 'dark';
       setSettings(prev => ({ ...prev, darkMode: newMode }));
@@ -1489,7 +1489,7 @@ function App() {
       </header>
 
       <main className="app-main">
-        {settings.currentView === 'tasks' ? (
+        {settings.startupView === 'tasks' ? (
           <>
             {showSearch && (
               <SearchBar
@@ -1737,7 +1737,7 @@ function App() {
       )}
 
       {/* 底部固定のAddTodoForm (タスクビューのみ) */}
-      {isWindowFocused && settings.currentView === 'tasks' && (
+      {isWindowFocused && settings.startupView === 'tasks' && (
         <div className="add-todo-overlay">
           <AddTodoForm ref={addTodoFormRef} onAdd={addTodo} slimMode={!settings.detailedMode} />
         </div>

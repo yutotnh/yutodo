@@ -55,13 +55,13 @@ describe('CommandPalette - Basic Tests', () => {
     vi.clearAllMocks();
     
     mockContext = {
-      currentView: 'tasks',
+      startupView: 'tasks',
       selectedTasks: new Set<string>(),
       searchQuery: '',
       settings: {
         theme: 'auto',
         language: 'auto',
-        currentView: 'tasks',
+        startupView: 'tasks',
         slimMode: false,
         alwaysOnTop: false,
         customCss: '',
@@ -278,7 +278,7 @@ describe('CommandPalette - Basic Tests', () => {
       // Change context
       const updatedContext = {
         ...mockContext,
-        currentView: 'schedules' as const,
+        startupView: 'schedules' as const,
       };
 
       rerender(

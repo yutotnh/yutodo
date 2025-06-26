@@ -43,7 +43,7 @@ const createViewCommands = (t: TFunction): CommandAction[] => [
       context.onViewChange('tasks');
     },
     isEnabled: () => true,
-    isVisible: (context?: CommandContext) => context?.currentView !== 'tasks'
+    isVisible: (context?: CommandContext) => context?.startupView !== 'tasks'
   },
   {
     id: 'view.schedules',
@@ -56,7 +56,7 @@ const createViewCommands = (t: TFunction): CommandAction[] => [
       context.onViewChange('schedules');
     },
     isEnabled: () => true,
-    isVisible: (context?: CommandContext) => context?.currentView !== 'schedules'
+    isVisible: (context?: CommandContext) => context?.startupView !== 'schedules'
   },
   {
     id: 'view.toggle.dark',
@@ -118,7 +118,7 @@ const createTaskCommands = (t: TFunction): CommandAction[] => [
     execute: (context: CommandContext) => {
       context.onSelectAll();
     },
-    isVisible: (context?: CommandContext) => context?.currentView === 'tasks'
+    isVisible: (context?: CommandContext) => context?.startupView === 'tasks'
   },
   {
     id: 'task.clearSelection',
@@ -132,7 +132,7 @@ const createTaskCommands = (t: TFunction): CommandAction[] => [
       context.onClearSelection();
     },
     isEnabled: (context?: CommandContext) => (context?.selectedTasks.size || 0) > 0,
-    isVisible: (context?: CommandContext) => context?.currentView === 'tasks'
+    isVisible: (context?: CommandContext) => context?.startupView === 'tasks'
   },
   {
     id: 'task.deleteSelected',
@@ -146,7 +146,7 @@ const createTaskCommands = (t: TFunction): CommandAction[] => [
       context.onDeleteSelected();
     },
     isEnabled: (context?: CommandContext) => (context?.selectedTasks.size || 0) > 0,
-    isVisible: (context?: CommandContext) => context?.currentView === 'tasks'
+    isVisible: (context?: CommandContext) => context?.startupView === 'tasks'
   },
   {
     id: 'task.editSelected',
@@ -160,7 +160,7 @@ const createTaskCommands = (t: TFunction): CommandAction[] => [
       context.onEditSelected();
     },
     isEnabled: (context?: CommandContext) => (context?.selectedTasks.size || 0) === 1,
-    isVisible: (context?: CommandContext) => context?.currentView === 'tasks'
+    isVisible: (context?: CommandContext) => context?.startupView === 'tasks'
   },
   {
     id: 'task.toggleCompletion',
@@ -174,7 +174,7 @@ const createTaskCommands = (t: TFunction): CommandAction[] => [
       context.onToggleSelectedCompletion();
     },
     isEnabled: (context?: CommandContext) => (context?.selectedTasks.size || 0) > 0,
-    isVisible: (context?: CommandContext) => context?.currentView === 'tasks'
+    isVisible: (context?: CommandContext) => context?.startupView === 'tasks'
   }
 ];
 

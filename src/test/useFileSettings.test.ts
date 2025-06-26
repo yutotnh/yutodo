@@ -19,7 +19,7 @@ describe('useFileSettings', () => {
       alwaysOnTop: true,
       detailedMode: false,
       confirmDelete: true,
-      currentView: 'tasks' as const
+      startupView: 'tasks' as const
     },
     server: {
       url: 'http://localhost:3001',
@@ -294,7 +294,7 @@ describe('Conversion functions', () => {
           alwaysOnTop: true,
           detailedMode: false,
           confirmDelete: false,
-          currentView: 'schedules' as const
+          startupView: 'schedules' as const
         },
         server: {
           url: 'http://localhost:4000',
@@ -321,7 +321,7 @@ describe('Conversion functions', () => {
         customCss: '.custom { color: blue; }',
         serverUrl: 'http://localhost:4000',
         language: 'ja',
-        currentView: 'schedules'
+        startupView: 'schedules'
       });
     });
   });
@@ -336,7 +336,7 @@ describe('Conversion functions', () => {
         customCss: '.todo { color: green; }',
         serverUrl: 'http://localhost:5000',
         language: 'en' as const,
-        currentView: 'tasks' as const
+        startupView: 'tasks' as const
       };
       
       const fileSettings = appSettingsToFileSettings(appSettings);
@@ -348,7 +348,7 @@ describe('Conversion functions', () => {
           theme: 'light',
           confirmDelete: true,
           language: 'en',
-          currentView: 'tasks'
+          startupView: 'tasks'
         },
         server: {
           url: 'http://localhost:5000'

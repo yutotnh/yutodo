@@ -52,7 +52,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       setFilteredCommands([]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, context.currentView, context.selectedTasks.size]); // contextは意図的に除外（無限ループ防止）
+  }, [isOpen, context.startupView, context.selectedTasks.size]); // contextは意図的に除外（無限ループ防止）
 
   // Update filtered commands when search query changes
   useEffect(() => {
@@ -60,7 +60,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     setFilteredCommands(commands);
     setSelectedIndex(0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchQuery, context.currentView, context.selectedTasks.size]); // contextは意図的に除外（無限ループ防止）
+  }, [searchQuery, context.startupView, context.selectedTasks.size]); // contextは意図的に除外（無限ループ防止）
 
   // Execute selected command
   const executeSelectedCommand = useCallback(async () => {

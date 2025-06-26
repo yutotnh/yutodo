@@ -19,7 +19,7 @@ describe('MenuBar', () => {
     customCss: '',
     serverUrl: 'http://localhost:3001',
     language: 'auto',
-    currentView: 'tasks',
+    startupView: 'tasks',
   };
 
   const defaultProps = {
@@ -166,7 +166,7 @@ describe('MenuBar', () => {
   });
 
   it('highlights current view in view menu', () => {
-    const tasksViewSettings = { ...mockSettings, currentView: 'tasks' as const };
+    const tasksViewSettings = { ...mockSettings, startupView: 'tasks' as const };
     render(<MenuBar {...defaultProps} settings={tasksViewSettings} />);
     
     const viewMenu = screen.getByRole('button', { name: /menu\.\s*v\s*iew/ });

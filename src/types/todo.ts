@@ -22,7 +22,7 @@ export interface AppSettings {
   customCss: string;
   serverUrl: string;
   language: 'auto' | 'en' | 'ja';
-  currentView: 'tasks' | 'schedules'; // 現在のビュー状態
+  startupView: 'tasks' | 'schedules'; // アプリ起動時の初期画面
 }
 
 export interface SearchSettings {

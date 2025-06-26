@@ -224,7 +224,7 @@ export function fileSettingsToAppSettings(fileSettings: AppSettingsFile): any {
     customCss: fileSettings.appearance.customCss,
     serverUrl: fileSettings.server.url,
     language: fileSettings.app.language,
-    currentView: fileSettings.app.currentView
+    startupView: fileSettings.app.startupView
   };
 }
 
@@ -269,9 +269,15 @@ export function appSettingsToFileSettings(appSettings: any): Partial<AppSettings
     updates.app.language = appSettings.language;
   }
   
+  if (appSettings.startupView !== undefined) {
+    updates.app = updates.app || {};
+    updates.app.startupView = appSettings.startupView;
+  }
+  
+  // Backward compatibility: handle legacy currentView property
   if (appSettings.currentView !== undefined) {
     updates.app = updates.app || {};
-    updates.app.currentView = appSettings.currentView;
+    updates.app.startupView = appSettings.currentView;
   }
   
   return updates;

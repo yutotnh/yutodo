@@ -123,7 +123,7 @@ describe('migrationUtils', () => {
           alwaysOnTop: true,
           detailedMode: false,
           confirmDelete: false,
-          currentView: 'schedules'
+          startupView: 'schedules'
         },
         server: {
           url: 'http://localhost:4000',
@@ -154,7 +154,7 @@ describe('migrationUtils', () => {
         alwaysOnTop: false,
         detailedMode: false,
         confirmDelete: true, // Default is true
-        currentView: 'tasks'
+        startupView: 'tasks'
       });
     });
 

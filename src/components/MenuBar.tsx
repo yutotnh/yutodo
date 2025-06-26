@@ -88,8 +88,8 @@ export const MenuBar: React.FC<MenuBarProps> = ({
       label: t('menu.view'),
       accessKey: 'V',
       items: [
-        { id: 'show-tasks', label: settings.currentView === 'tasks' ? t('menu.showingTasks') : t('menu.showTasks'), action: () => onViewChange('tasks') },
-        { id: 'show-schedules', label: settings.currentView === 'schedules' ? t('menu.showingSchedules') : t('menu.showSchedules'), action: () => onViewChange('schedules') },
+        { id: 'show-tasks', label: settings.startupView === 'tasks' ? t('menu.showingTasks') : t('menu.showTasks'), action: () => onViewChange('tasks') },
+        { id: 'show-schedules', label: settings.startupView === 'schedules' ? t('menu.showingSchedules') : t('menu.showSchedules'), action: () => onViewChange('schedules') },
         { id: 'separator-1', separator: true },
         { id: 'toggle-slim', label: settings.detailedMode ? t('menu.enableSlimMode') : t('menu.disableSlimMode'), action: onToggleSlim },
         { id: 'separator-2', separator: true },
@@ -105,7 +105,7 @@ export const MenuBar: React.FC<MenuBarProps> = ({
         { id: 'about', label: t('menu.about'), action: onShowAbout }
       ] as MenuItemData[]
     }
-  }), [t, onNewTask, onImportTasks, onExportTasks, onShowSettings, onQuit, onSelectAll, onDeleteSelected, onShowShortcuts, onShowAbout, onToggleAlwaysOnTop, onToggleSlim, onViewChange, settings.alwaysOnTop, settings.currentView, settings.detailedMode]);
+  }), [t, onNewTask, onImportTasks, onExportTasks, onShowSettings, onQuit, onSelectAll, onDeleteSelected, onShowShortcuts, onShowAbout, onToggleAlwaysOnTop, onToggleSlim, onViewChange, settings.alwaysOnTop, settings.startupView, settings.detailedMode]);
 
 
   // 外部クリックでメニューを閉じる

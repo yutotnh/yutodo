@@ -8,7 +8,7 @@ export interface AppSettingsFile {
     alwaysOnTop: boolean;
     detailedMode: boolean;
     confirmDelete: boolean;
-    currentView: 'tasks' | 'schedules';
+    startupView: 'tasks' | 'schedules';
   };
   
   // Server settings
@@ -67,7 +67,7 @@ export const DEFAULT_APP_SETTINGS: AppSettingsFile = {
     alwaysOnTop: false,
     detailedMode: false,
     confirmDelete: true,
-    currentView: 'tasks'
+    startupView: 'tasks'
   },
   server: {
     url: 'http://localhost:3001',
