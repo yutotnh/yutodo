@@ -278,7 +278,7 @@ export const Settings: React.FC<SettingsProps> = ({ settings, onSettingsChange, 
               </div>
             </div>
             <label className="setting-item setting-item--full">
-              <span>{t('settings.serverUrl')}:</span>
+              <span>{t('settings.server.url')}:</span>
               <input
                 type="text"
                 value={localSettings.serverUrl}

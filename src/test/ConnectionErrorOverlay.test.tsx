@@ -38,7 +38,7 @@ describe('ConnectionErrorOverlay', () => {
     connectionStatus: 'error' as const,
     reconnectAttempts: 0,
     onRetry: vi.fn(),
-    onOpenSettings: vi.fn(),
+    onUpdateServerUrl: vi.fn(),
     serverUrl: 'http://localhost:3001'
   };
 
@@ -58,7 +58,7 @@ describe('ConnectionErrorOverlay', () => {
     expect(screen.getByText('Connection Failed')).toBeInTheDocument();
     expect(screen.getByText('Unable to connect to the server. Please check your network connection and server settings.')).toBeInTheDocument();
     expect(screen.getByText('Retry Now')).toBeInTheDocument();
-    expect(screen.getByText('Server Settings')).toBeInTheDocument();
+    expect(screen.getByText('Change')).toBeInTheDocument();
     expect(screen.getByText('http://localhost:3001')).toBeInTheDocument();
   });
 
@@ -92,13 +92,39 @@ describe('ConnectionErrorOverlay', () => {
     expect(defaultProps.onRetry).toHaveBeenCalledTimes(1);
   });
 
-  it('calls onOpenSettings when settings button is clicked', () => {
+  it('allows editing server URL inline', async () => {
     render(<ConnectionErrorOverlay {...defaultProps} connectionStatus="error" />);
     
-    const settingsButton = screen.getByText('Server Settings');
-    fireEvent.click(settingsButton);
+    // Initially shows current URL and change button
+    expect(screen.getByText('http://localhost:3001')).toBeInTheDocument();
+    expect(screen.getByText('Change')).toBeInTheDocument();
     
-    expect(defaultProps.onOpenSettings).toHaveBeenCalledTimes(1);
+    // Click change button to start editing
+    const changeButton = screen.getByText('Change');
+    fireEvent.click(changeButton);
+    
+    // Should show input field
+    const input = screen.getByDisplayValue('http://localhost:3001');
+    expect(input).toBeInTheDocument();
+    expect(screen.queryByText('Change')).not.toBeInTheDocument();
+  });
+
+  it('calls onUpdateServerUrl when URL is changed and saved', async () => {
+    render(<ConnectionErrorOverlay {...defaultProps} connectionStatus="error" />);
+    
+    // Start editing
+    const changeButton = screen.getByText('Change');
+    fireEvent.click(changeButton);
+    
+    // Change URL
+    const input = screen.getByDisplayValue('http://localhost:3001');
+    fireEvent.change(input, { target: { value: 'http://localhost:8080' } });
+    
+    // Save changes
+    const saveButton = screen.getByTitle('Save');
+    fireEvent.click(saveButton);
+    
+    expect(defaultProps.onUpdateServerUrl).toHaveBeenCalledWith('http://localhost:8080');
   });
 
   it('can be closed temporarily with close button', async () => {
@@ -130,7 +156,7 @@ describe('ConnectionErrorOverlay', () => {
     render(<ConnectionErrorOverlay {...defaultProps} connectionStatus="connecting" />);
     
     expect(screen.queryByText('Retry Now')).not.toBeInTheDocument();
-    expect(screen.getByText('Server Settings')).toBeInTheDocument();
+    expect(screen.getByText('Change')).toBeInTheDocument();
   });
 
   it('shows correct server URL', () => {

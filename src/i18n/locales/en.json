@@ -177,9 +177,18 @@
       "serverUrl": "Server",
       "nextRetry": "Next retry in {{seconds}} seconds",
       "retryNow": "Retry Now",
-      "settings": "Server Settings",
+      "change": "Change",
+      "editUrl": "Edit server URL",
       "closeTemporary": "Close temporarily (Press Esc)",
-      "helpText": "Press Esc to work offline temporarily. Changes will not be synchronized until reconnected."
+      "helpText": "Press Esc to work offline temporarily. Changes will not be synchronized until reconnected.",
+      "editHelpText": "Enter to save, Esc to cancel editing."
+    },
+    "serverUrl": {
+      "title": "Server URL Settings",
+      "label": "Server URL",
+      "description": "Enter the server URL to connect to. Make sure the server is running and accessible.",
+      "invalidUrl": "Please enter a valid URL (http:// or https://)",
+      "examples": "Examples:"
     },
     "keybindings": {
       "title": "Keyboard Shortcuts",

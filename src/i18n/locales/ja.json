@@ -177,9 +177,18 @@
       "serverUrl": "サーバー",
       "nextRetry": "{{seconds}}秒後に再試行",
       "retryNow": "今すぐ再試行",
-      "settings": "サーバー設定",
+      "change": "変更",
+      "editUrl": "サーバーURLを編集",
       "closeTemporary": "一時的に閉じる（Escキー）",
-      "helpText": "Escキーを押すと一時的にオフラインで作業できます。再接続するまで変更内容は同期されません。"
+      "helpText": "Escキーを押すと一時的にオフラインで作業できます。再接続するまで変更内容は同期されません。",
+      "editHelpText": "Enterで保存、Escで編集をキャンセルします。"
+    },
+    "serverUrl": {
+      "title": "サーバーURL設定",
+      "label": "サーバーURL",
+      "description": "接続するサーバーのURLを入力してください。サーバーが起動しており、アクセス可能であることを確認してください。",
+      "invalidUrl": "有効なURL（http://またはhttps://）を入力してください",
+      "examples": "例："
     },
     "keybindings": {
       "title": "キーボードショートカット",

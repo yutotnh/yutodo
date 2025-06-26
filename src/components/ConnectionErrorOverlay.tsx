@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { WifiOff, Loader2, AlertTriangle, RefreshCw, Settings, X } from 'lucide-react';
+import { WifiOff, Loader2, AlertTriangle, RefreshCw, Server, X, Check } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 interface ConnectionErrorOverlayProps {
   connectionStatus: 'connecting' | 'connected' | 'disconnected' | 'error';
   reconnectAttempts: number;
   onRetry: () => void;
-  onOpenSettings: () => void;
+  onUpdateServerUrl: (newUrl: string) => void;
   serverUrl: string;
 }
 
@@ -14,12 +14,15 @@ export const ConnectionErrorOverlay: React.FC<ConnectionErrorOverlayProps> = ({
   connectionStatus,
   reconnectAttempts,
   onRetry,
-  onOpenSettings,
+  onUpdateServerUrl,
   serverUrl
 }) => {
   const { t } = useTranslation();
   const [isVisible, setIsVisible] = useState(true);
   const [timeUntilNextRetry, setTimeUntilNextRetry] = useState(0);
+  const [isEditingUrl, setIsEditingUrl] = useState(false);
+  const [editedUrl, setEditedUrl] = useState(serverUrl);
+  const [isValidUrl, setIsValidUrl] = useState(true);
 
   // 接続成功時はオーバーレイを非表示
   useEffect(() => {
@@ -53,17 +56,76 @@ export const ConnectionErrorOverlay: React.FC<ConnectionErrorOverlayProps> = ({
     }
   }, [connectionStatus, reconnectAttempts]);
 
-  // ESCキーで一時的に閉じる
+  // Reset edited URL when server URL changes
+  useEffect(() => {
+    setEditedUrl(serverUrl);
+  }, [serverUrl]);
+
+  // ESCキーでURL編集をキャンセルまたは一時的に閉じる
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape' && isVisible) {
-        setIsVisible(false);
+        if (isEditingUrl) {
+          // URL編集中ならキャンセル
+          setIsEditingUrl(false);
+          setEditedUrl(serverUrl);
+          setIsValidUrl(true);
+        } else {
+          // 編集中でなければオーバーレイを閉じる
+          setIsVisible(false);
+        }
+        event.preventDefault();
+        event.stopPropagation();
       }
     };
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isVisible]);
+  }, [isVisible, isEditingUrl, serverUrl]);
+
+  // Validate URL
+  const validateUrl = (urlString: string): boolean => {
+    try {
+      const urlObj = new URL(urlString);
+      return urlObj.protocol === 'http:' || urlObj.protocol === 'https:';
+    } catch {
+      return false;
+    }
+  };
+
+  const handleUrlChange = (newUrl: string) => {
+    setEditedUrl(newUrl);
+    setIsValidUrl(newUrl.trim() === '' || validateUrl(newUrl.trim()));
+  };
+
+  const handleStartEditing = () => {
+    setIsEditingUrl(true);
+    setEditedUrl(serverUrl);
+    setIsValidUrl(true);
+  };
+
+  const handleCancelEditing = () => {
+    setIsEditingUrl(false);
+    setEditedUrl(serverUrl);
+    setIsValidUrl(true);
+  };
+
+  const handleSaveUrl = () => {
+    const trimmedUrl = editedUrl.trim();
+    if (trimmedUrl && validateUrl(trimmedUrl) && trimmedUrl !== serverUrl) {
+      onUpdateServerUrl(trimmedUrl);
+    }
+    setIsEditingUrl(false);
+  };
+
+  const handleUrlInputKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      if (isValidUrl && editedUrl.trim() !== '') {
+        handleSaveUrl();
+      }
+    }
+  };
 
   // 接続済みの場合は何も表示しない
   if (connectionStatus === 'connected' || !isVisible) {
@@ -136,14 +198,63 @@ export const ConnectionErrorOverlay: React.FC<ConnectionErrorOverlayProps> = ({
             {statusInfo.description}
           </p>
           
-          {/* Server URL display */}
+          {/* Server URL display/editing */}
           <div className="connection-error-server">
-            <span className="text-sm text-gray-600">
-              {t('connectionError.serverUrl', 'Server')}: 
-            </span>
-            <code className="text-sm font-mono bg-gray-200 px-2 py-1 rounded ml-2">
-              {serverUrl}
-            </code>
+            <div className="connection-error-server-label">
+              <Server className="w-4 h-4 mr-1" />
+              <span className="text-sm font-medium text-gray-700">
+                {t('connectionError.serverUrl', 'Server')}: 
+              </span>
+            </div>
+            
+            {!isEditingUrl ? (
+              <div className="connection-error-server-display">
+                <code className="connection-error-server-url">
+                  {serverUrl}
+                </code>
+                <button
+                  className="connection-error-edit-button"
+                  onClick={handleStartEditing}
+                  title={t('connectionError.editUrl', 'Edit server URL')}
+                >
+                  {t('connectionError.change', 'Change')}
+                </button>
+              </div>
+            ) : (
+              <div className="connection-error-server-edit">
+                <input
+                  type="url"
+                  value={editedUrl}
+                  onChange={(e) => handleUrlChange(e.target.value)}
+                  onKeyDown={handleUrlInputKeyDown}
+                  className={`connection-error-url-input ${!isValidUrl ? 'connection-error-url-input--error' : ''}`}
+                  placeholder="http://localhost:3001"
+                  autoFocus
+                />
+                <div className="connection-error-url-actions">
+                  <button
+                    className="connection-error-url-button connection-error-url-button--save"
+                    onClick={handleSaveUrl}
+                    disabled={!isValidUrl || editedUrl.trim() === '' || editedUrl.trim() === serverUrl}
+                    title={t('buttons.save', 'Save')}
+                  >
+                    <Check className="w-4 h-4" />
+                  </button>
+                  <button
+                    className="connection-error-url-button connection-error-url-button--cancel"
+                    onClick={handleCancelEditing}
+                    title={t('buttons.cancel', 'Cancel')}
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+                {!isValidUrl && editedUrl.trim() !== '' && (
+                  <div className="connection-error-url-error">
+                    {t('serverUrl.invalidUrl', 'Please enter a valid URL (http:// or https://)')}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Countdown timer for auto-retry */}
@@ -168,19 +279,15 @@ export const ConnectionErrorOverlay: React.FC<ConnectionErrorOverlayProps> = ({
             </button>
           )}
           
-          <button
-            className="connection-error-button connection-error-button--secondary"
-            onClick={onOpenSettings}
-          >
-            <Settings className="w-4 h-4 mr-2" />
-            {t('connectionError.settings', 'Server Settings')}
-          </button>
         </div>
 
         {/* Help text */}
         <div className="connection-error-help">
           <p className="text-xs text-gray-500">
-            {t('connectionError.helpText', 'Press Esc to work offline temporarily. Changes will not be synchronized until reconnected.')}
+            {isEditingUrl 
+              ? t('connectionError.editHelpText', 'Enter to save, Esc to cancel editing.')
+              : t('connectionError.helpText', 'Press Esc to work offline temporarily. Changes will not be synchronized until reconnected.')
+            }
           </p>
         </div>
       </div>

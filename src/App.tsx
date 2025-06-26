@@ -1715,7 +1715,34 @@ function App() {
         connectionStatus={connectionStatus}
         reconnectAttempts={reconnectAttempts}
         onRetry={retryConnection}
-        onOpenSettings={() => setShowSettings(true)}
+        onUpdateServerUrl={(newUrl) => {
+          const newSettings = { ...settings, serverUrl: newUrl };
+          setSettings(newSettings);
+          // Convert AppSettings to AppSettingsFile format
+          const fileSettings = {
+            app: {
+              theme: newSettings.darkMode,
+              language: newSettings.language,
+              alwaysOnTop: newSettings.alwaysOnTop,
+              confirmDelete: newSettings.confirmDelete,
+              startupView: newSettings.startupView
+            },
+            server: {
+              url: newUrl,
+              reconnectInterval: 5000,
+              timeout: 30000
+            },
+            ui: {
+              autoHideHeader: true,
+              fontSize: 14,
+              fontFamily: 'Inter, sans-serif'
+            },
+            appearance: {
+              customCss: newSettings.customCss
+            }
+          };
+          updateFileSettings(fileSettings);
+        }}
         serverUrl={settings.serverUrl}
       />
     </div>
