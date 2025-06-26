@@ -1,5 +1,4 @@
 // File-based settings type definitions
-// Separate from config.ts to maintain backward compatibility during migration
 
 export interface AppSettingsFile {
   // Application settings
@@ -91,8 +90,11 @@ export const DEFAULT_KEYBINDINGS: Keybinding[] = [
   { key: 'Ctrl+Shift+P', command: 'openCommandPalette' },
   { key: 'Ctrl+N', command: 'newTask', when: '!inputFocus' },
   { key: 'Ctrl+,', command: 'openSettings' },
-  { key: 'Ctrl+F', command: 'toggleSearch', when: '!inputFocus' },
-  { key: 'Ctrl+Shift+F', command: 'toggleFilter', when: '!inputFocus' },
+  { key: 'Ctrl+F', command: 'toggleSearch' },
+  { key: 'Ctrl+Shift+F', command: 'toggleFilter' },
+  { key: 'Alt+C', command: 'toggleCaseSensitive' },
+  { key: 'Alt+R', command: 'toggleRegex' },
+  { key: 'Alt+W', command: 'toggleWholeWord' },
   { key: 'Ctrl+K Ctrl+S', command: 'showKeybindings' },
   
   // Task commands
@@ -117,14 +119,6 @@ export const DEFAULT_KEYBINDINGS: Keybinding[] = [
   // Help
   { key: 'F1', command: 'showHelp' }
 ];
-
-// Schema for validation
-export interface SettingsSchema {
-  $schema: string;
-  type: 'object';
-  properties: Record<string, any>;
-  required: string[];
-}
 
 // Error types
 export class SettingsError extends Error {

@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Settings as SettingsIcon, X, Monitor, Palette, Server, List, Moon, FileText, Download, Upload, RotateCcw, Shield, Globe } from 'lucide-react';
+import { Settings as SettingsIcon, X, Monitor, Palette, Server, List, Moon, FileText, Download, Upload, Shield, Globe } from 'lucide-react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { useTranslation } from 'react-i18next';
 import { AppSettings, Todo } from '../types/todo';
 import { DataManager } from './DataManager';
-import { configManager } from '../utils/configManager';
 import { supportedLanguages } from '../i18n';
 import { useWindowDrag } from '../hooks/useWindowDrag';
 import logger from '../utils/logger';
@@ -131,138 +130,20 @@ export const Settings: React.FC<SettingsProps> = ({ settings, onSettingsChange, 
     onSettingsChange(newSettings);
   };
 
-  // ファイルダウンロード関数（Tauri対応）
-  const downloadFile = async (content: string, filename: string, mimeType: string = 'text/plain') => {
-    try {
-      // Tauri環境の場合、saveFileDialogを使用
-      if (typeof window !== 'undefined' && (window as any).__TAURI_INTERNALS__) {
-        try {
-          // Tauri APIをダイナミックインポート
-          // @ts-ignore - Tauri API dynamic import
-          const dialog = await import('@tauri-apps/plugin-dialog');
-          // @ts-ignore - Tauri API dynamic import
-          const fs = await import('@tauri-apps/plugin-fs');
-          // ファイル保存ダイアログを表示
-          const filePath = await dialog.save({
-            defaultPath: filename,
-            filters: [{
-              name: 'Text Files',
-              extensions: ['toml', 'json', 'csv', 'txt']
-            }]
-          });
-          
-          if (filePath) {
-            logger.debug("Writing file to:", filePath);
-            await fs.writeTextFile(filePath, content);
-            logger.debug(`File saved via Tauri: ${filePath}`);
-            return true;
-          } else {
-            logger.debug('User cancelled file save dialog');
-            return false;
-          }
-        } catch (tauriError) {
-          logger.warn('Tauri save failed, falling back to browser download:', tauriError);
-          // Tauriが失敗した場合、標準的な方法にフォールバック
-        }
-      }
-      
-      // 標準的なブラウザダウンロード
-      logger.debug('Using standard browser download');
-      const blob = new Blob([content], { type: mimeType });
-      const url = URL.createObjectURL(blob);
-      
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      a.style.display = 'none';
-      document.body.appendChild(a);
-      
-      a.click();
-      
-      setTimeout(() => {
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-      }, 100);
-      
-      logger.debug(`Standard download triggered: ${filename}`);
-      return true;
-    } catch (error) {
-      logger.error('Download failed:', error);
-      return false;
-    }
+  // Configuration file management handlers
+  const handleExportConfig = () => {
+    // Note: Configuration file management is now handled through the file-based settings system
+    // This feature could be re-implemented using the SettingsManager if needed
+    alert('Configuration export/import is now handled through the file-based settings system. Check your config directory for settings.toml and keybindings.toml files.');
   };
 
-  // 設定ファイル管理
-  const handleExportConfig = async () => {
-    logger.debug("Export config button clicked");
-    try {
-      logger.debug("Calling configManager.exportConfig()");
-      const tomlContent = await configManager.exportConfig();
-      // logger.debug("TOML content generated:", tomlContent);
-      
-      // まずはダウンロードを試行
-      const success = await downloadFile(tomlContent, 'todo-app-config.toml', 'text/plain');
-      if (success) {
-        logger.debug("Export completed successfully");
-        return;
-      }
-      
-      // ダウンロードに失敗した場合、クリップボードにコピー
-      logger.warn("Standard download failed, trying clipboard");
-      await navigator.clipboard.writeText(tomlContent);
-      alert(t('settings.settingsCopiedToClipboard'));
-      logger.debug("Content copied to clipboard");
-    } catch (error) {
-      logger.error("Failed to export config:", error);
-      alert(t('settings.settingsExportFailed', { error }));
-    }
+  const handleImportConfig = () => {
+    // Note: Configuration file management is now handled through the file-based settings system  
+    // This feature could be re-implemented using the SettingsManager if needed
+    alert('Configuration export/import is now handled through the file-based settings system. You can manually edit settings.toml and keybindings.toml files in your config directory.');
   };
 
-  const handleImportConfig = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    logger.debug("Import config file selected");
-    const file = event.target.files?.[0];
-    if (!file) {
-      logger.debug("No file selected");
-      return;
-    }
-
-    logger.debug("File selected:", file.name, "Size:", file.size);
-    try {
-      logger.debug("Reading file content");
-      const content = await file.text();
-      // logger.debug("File content:", content);
-      
-      logger.debug("Importing config");
-      await configManager.importConfig(content);
-      const newSettings = configManager.getAppSettings();
-      logger.debug("New settings:", newSettings);
-      setLocalSettings(newSettings);
-      onSettingsChange(newSettings);
-      alert(t('settings.settingsImported'));
-      logger.debug("Import completed successfully");
-    } catch (error) {
-      logger.error("Failed to import config:", error);
-      alert(t('settings.settingsImportFailed'));
-    }
-    
-    // ファイル入力をリセット
-    event.target.value = '';
-  };
-
-  const handleResetConfig = async () => {
-    if (confirm(t('settings.resetSettingsConfirm'))) {
-      try {
-        await configManager.resetToDefaults();
-        const defaultSettings = configManager.getAppSettings();
-        setLocalSettings(defaultSettings);
-        onSettingsChange(defaultSettings);
-        alert(t('settings.settingsReset'));
-      } catch (error) {
-        logger.error('Failed to reset config:', error);
-        alert(t('settings.settingsResetFailed'));
-      }
-    }
-  };
+  // 設定ファイル管理は useFileSettings フックで実装されています
 
   return (
     <div className="settings-overlay">
@@ -475,26 +356,6 @@ export const Settings: React.FC<SettingsProps> = ({ settings, onSettingsChange, 
                 </p>
               </div>
               
-              <div className="data-manager-section">
-                <h4>{t('settings.resetSettings')}</h4>
-                <div className="data-manager-buttons">
-                  <button
-                    onClick={handleResetConfig}
-                    className="data-btn"
-                    style={{ 
-                      background: '#ef4444', 
-                      borderColor: '#ef4444', 
-                      color: 'white' 
-                    }}
-                  >
-                    <RotateCcw size={16} />
-                    {t('settings.resetSettings')}
-                  </button>
-                </div>
-                <p className="data-description">
-                  Reset all settings to their default values. This action cannot be undone.
-                </p>
-              </div>
             </div>
           </div>
 
