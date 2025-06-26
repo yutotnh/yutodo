@@ -330,21 +330,21 @@
         }
       },
       "view": {
-        "switchToTasks": {
-          "title": "タスクビューに切り替え",
-          "description": "タスク管理ビューに切り替え"
+        "switchToTasksDetailed": {
+          "title": "タスク(詳細)に切り替え",
+          "description": "全ての情報を表示する詳細なタスクビューに切り替え"
+        },
+        "switchToTasksSimple": {
+          "title": "タスク(簡易)に切り替え",
+          "description": "生産性重視のコンパクトなタスクビューに切り替え"
         },
         "switchToSchedules": {
-          "title": "スケジュールビューに切り替え",
-          "description": "スケジュール管理ビューに切り替え"
+          "title": "スケジュールに切り替え",
+          "description": "スケジュール管理と自動化ビューに切り替え"
         },
         "toggleDarkMode": {
           "title": "ダークモード切り替え",
           "description": "ライトテーマとダークテーマを切り替え"
-        },
-        "toggleSlimMode": {
-          "title": "スリムモード切り替え",
-          "description": "詳細表示とコンパクト表示を切り替え"
         },
         "toggleAlwaysOnTop": {
           "title": "常に最前面表示を切り替え",

@@ -34,10 +34,10 @@ const createFileCommands = (t: TFunction): CommandAction[] => [
 const createViewCommands = (t: TFunction): CommandAction[] => [
   {
     id: 'view.tasks.detailed',
-    title: t('commandPalette.commands.view.switchToTasks.title', 'Switch to Tasks View (Detailed)'),
-    description: t('commandPalette.commands.view.switchToTasks.description', 'Switch to detailed tasks management view'),
+    title: t('commandPalette.commands.view.switchToTasksDetailed.title', 'Switch to Tasks (Detailed)'),
+    description: t('commandPalette.commands.view.switchToTasksDetailed.description', 'Switch to full-featured detailed tasks view with all information'),
     category: 'view',
-    keywords: ['tasks', 'todo', 'switch', 'detailed'],
+    keywords: ['tasks', 'todo', 'detailed', 'full', 'complete', 'comprehensive'],
     icon: 'list',
     execute: (context: CommandContext) => {
       context.onViewChange('tasks-detailed');
@@ -47,11 +47,11 @@ const createViewCommands = (t: TFunction): CommandAction[] => [
   },
   {
     id: 'view.tasks.simple',
-    title: t('commandPalette.commands.view.switchToTasks.title', 'Switch to Tasks View (Simple)'),
-    description: t('commandPalette.commands.view.switchToTasks.description', 'Switch to simple tasks management view'),
+    title: t('commandPalette.commands.view.switchToTasksSimple.title', 'Switch to Tasks (Simple)'),
+    description: t('commandPalette.commands.view.switchToTasksSimple.description', 'Switch to compact minimal tasks view for focused productivity'),
     category: 'view',
-    keywords: ['tasks', 'todo', 'switch', 'simple', 'compact'],
-    icon: 'list',
+    keywords: ['tasks', 'todo', 'simple', 'compact', 'minimal', 'focused', 'slim'],
+    icon: 'minimize',
     execute: (context: CommandContext) => {
       context.onViewChange('tasks-simple');
     },
@@ -60,10 +60,10 @@ const createViewCommands = (t: TFunction): CommandAction[] => [
   },
   {
     id: 'view.schedules',
-    title: t('commandPalette.commands.view.switchToSchedules.title', 'Switch to Schedules View'),
-    description: t('commandPalette.commands.view.switchToSchedules.description', 'Switch to schedules management view'),
+    title: t('commandPalette.commands.view.switchToSchedules.title', 'Switch to Schedules'),
+    description: t('commandPalette.commands.view.switchToSchedules.description', 'Switch to schedule management and automation view'),
     category: 'view',
-    keywords: ['schedules', 'calendar', 'switch'],
+    keywords: ['schedules', 'calendar', 'automation', 'recurring', 'timeline'],
     icon: 'calendar',
     execute: (context: CommandContext) => {
       context.onViewChange('schedules');
@@ -80,17 +80,6 @@ const createViewCommands = (t: TFunction): CommandAction[] => [
     icon: 'moon',
     execute: (context: CommandContext) => {
       context.onToggleDarkMode();
-    }
-  },
-  {
-    id: 'view.toggle.slim',
-    title: t('commandPalette.commands.view.toggleSlimMode.title', 'Toggle Slim Mode'),
-    description: t('commandPalette.commands.view.toggleSlimMode.description', 'Switch between detailed and compact view'),
-    category: 'view',
-    keywords: ['slim', 'compact', 'detailed', 'mode'],
-    icon: 'minimize',
-    execute: (context: CommandContext) => {
-      context.onToggleSlimMode();
     }
   },
   {

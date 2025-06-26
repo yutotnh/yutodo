@@ -112,6 +112,8 @@ export const DEFAULT_KEYBINDINGS: Keybinding[] = [
   
   // View commands
   { key: 'Ctrl+1', command: 'showTasks' },
+  { key: 'Ctrl+Shift+1', command: 'showTasksDetailed' },
+  { key: 'Ctrl+Alt+1', command: 'showTasksSimple' },
   { key: 'Ctrl+2', command: 'showSchedules' },
   
   // Help

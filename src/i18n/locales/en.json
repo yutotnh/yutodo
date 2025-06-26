@@ -331,21 +331,21 @@
         }
       },
       "view": {
-        "switchToTasks": {
-          "title": "Switch to Tasks View",
-          "description": "Switch to tasks management view"
+        "switchToTasksDetailed": {
+          "title": "Switch to Tasks (Detailed)",
+          "description": "Switch to full-featured detailed tasks view with all information"
+        },
+        "switchToTasksSimple": {
+          "title": "Switch to Tasks (Simple)",
+          "description": "Switch to compact minimal tasks view for focused productivity"
         },
         "switchToSchedules": {
-          "title": "Switch to Schedules View",
-          "description": "Switch to schedules management view"
+          "title": "Switch to Schedules",
+          "description": "Switch to schedule management and automation view"
         },
         "toggleDarkMode": {
           "title": "Toggle Dark Mode",
           "description": "Switch between light and dark themes"
-        },
-        "toggleSlimMode": {
-          "title": "Toggle Slim Mode",
-          "description": "Switch between detailed and compact view"
         },
         "toggleAlwaysOnTop": {
           "title": "Toggle Always on Top",
