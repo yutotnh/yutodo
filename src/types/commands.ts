@@ -55,6 +55,10 @@ export interface CommandContext {
   onToggleSlimMode: () => void;
   onToggleAlwaysOnTop: () => void;
   onShowHelp: () => void;
+  // View handlers
+  onShowTasksDetailed?: () => void;
+  onShowTasksSimple?: () => void;
+  onShowSchedules?: () => void;
   // Schedule handlers
   onDeleteInactiveSchedules?: () => void;
   onCreateSchedule?: () => void;

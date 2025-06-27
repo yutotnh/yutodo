@@ -6,6 +6,7 @@ import { DataManager } from './DataManager';
 import { supportedLanguages } from '../i18n';
 import { useWindowDrag } from '../hooks/useWindowDrag';
 import { useFileSettings, fileSettingsToAppSettings, appSettingsToFileSettings } from '../hooks/useFileSettings';
+import { SettingsErrorBanner } from './SettingsErrorBanner';
 import logger from '../utils/logger';
 
 interface SettingsProps {
@@ -42,9 +43,11 @@ export const Settings: React.FC<SettingsProps> = ({
   const {
     settings: fileSettings,
     keybindings,
+    settingsErrors,
     updateSettings: updateFileSettings,
     openSettingsFile,
-    openKeybindingsFile
+    openKeybindingsFile,
+    clearError
   } = useFileSettings();
   
   // Window drag functionality
@@ -440,6 +443,19 @@ export const Settings: React.FC<SettingsProps> = ({
             {t('settings.tabs.keybindings')}
           </button>
         </div>
+        
+        {/* TOML Error Banner */}
+        <SettingsErrorBanner
+          errors={settingsErrors}
+          onDismiss={clearError}
+          onOpenFile={async (filePath) => {
+            if (filePath.includes('keybindings')) {
+              await openKeybindingsFile();
+            } else {
+              await openSettingsFile();
+            }
+          }}
+        />
         
         <div className="settings-body">
           {renderTabContent()}

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { AppSettingsFile, Keybinding, SettingsChangeEvent } from '../types/settings';
+import { AppSettingsFile, Keybinding, SettingsChangeEvent, SettingsFileError } from '../types/settings';
 import { settingsManager } from '../config/SettingsManager';
 import logger from '../utils/logger';
 
@@ -8,11 +8,83 @@ function isTauriEnvironment(): boolean {
   return typeof window !== 'undefined' && (window as any).__TAURI_INTERNALS__ !== undefined;
 }
 
+// Helper function to parse SettingsError into SettingsFileError
+function parseSettingsError(settingsError: any): SettingsFileError | null {
+  try {
+    // Extract error details from the SettingsError
+    const originalError = settingsError.details;
+    const errorDetails: any = {};
+    
+    // Parse TOML parsing error for line/column information
+    if (originalError && typeof originalError.message === 'string') {
+      const errorMessage = originalError.message;
+      
+      // Try to extract line/column from TOML parsing error
+      const lineMatch = errorMessage.match(/line (\d+)/i);
+      const columnMatch = errorMessage.match(/column (\d+)/i);
+      const atLineMatch = errorMessage.match(/at line (\d+)/i);
+      
+      if (lineMatch || atLineMatch || columnMatch) {
+        errorDetails.line = lineMatch ? parseInt(lineMatch[1]) : (atLineMatch ? parseInt(atLineMatch[1]) : undefined);
+        errorDetails.column = columnMatch ? parseInt(columnMatch[1]) : undefined;
+        
+        // Extract problem text and context
+        if (errorMessage.includes('unexpected')) {
+          errorDetails.problemText = errorMessage.match(/unexpected (.+)/i)?.[1];
+        }
+        
+        // Provide suggestions based on common TOML errors
+        if (errorMessage.includes('escape')) {
+          errorDetails.suggestion = 'Remove backslash escape characters (\\) in string values';
+          errorDetails.expectedFormat = 'Use plain string without escapes: when = "!inputFocus"';
+        } else if (errorMessage.includes('invalid')) {
+          errorDetails.suggestion = 'Check TOML syntax - ensure proper quotes and formatting';
+        }
+      }
+    }
+    
+    // Determine file type from path
+    const filePath = settingsError.filePath || '';
+    const fileType = filePath.includes('keybindings') ? 'keybindings' : 'settings';
+    
+    // Generate user-friendly error messages
+    let userMessage = '';
+    if (fileType === 'keybindings') {
+      userMessage = 'Keyboard shortcuts configuration file has syntax errors.';
+    } else {
+      userMessage = 'Settings configuration file has syntax errors.';
+    }
+    
+    if (errorDetails.line) {
+      userMessage += ` Check line ${errorDetails.line}.`;
+    }
+    
+    if (errorDetails.suggestion) {
+      userMessage += ` ${errorDetails.suggestion}`;
+    }
+    
+    return {
+      type: fileType,
+      code: settingsError.code || 'PARSE_ERROR',
+      message: settingsError.message || 'Failed to parse configuration file',
+      userMessage,
+      filePath,
+      details: Object.keys(errorDetails).length > 0 ? errorDetails : undefined,
+      canAutoFix: errorDetails.suggestion?.includes('escape') || false,
+      severity: 'error'
+    };
+  } catch (parseError) {
+    logger.error('Failed to parse settings error:', parseError);
+    return null;
+  }
+}
+
 interface UseFileSettingsReturn {
   settings: AppSettingsFile | null;
   keybindings: Keybinding[];
   isLoading: boolean;
   error: Error | null;
+  settingsErrors: SettingsFileError[];
   lastChangeSource: 'app' | 'file' | null;
   updateSettings: (updates: Partial<AppSettingsFile>) => Promise<void>;
   addKeybinding: (keybinding: Keybinding) => Promise<void>;
@@ -20,6 +92,7 @@ interface UseFileSettingsReturn {
   resetToDefaults: () => Promise<void>;
   openSettingsFile: () => Promise<void>;
   openKeybindingsFile: () => Promise<void>;
+  clearError: (type: 'settings' | 'keybindings') => void;
 }
 
 /**
@@ -30,6 +103,7 @@ export function useFileSettings(): UseFileSettingsReturn {
   const [keybindings, setKeybindings] = useState<Keybinding[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const [settingsErrors, setSettingsErrors] = useState<SettingsFileError[]>([]);
   const [lastChangeSource, setLastChangeSource] = useState<'app' | 'file' | null>(null);
   
   // Initialize settings manager
@@ -79,6 +153,14 @@ export function useFileSettings(): UseFileSettingsReturn {
       } catch (err) {
         logger.error('Failed to initialize file settings:', err);
         if (mounted) {
+          // Handle SettingsError specifically for TOML parsing issues
+          if (err instanceof Error && err.name === 'SettingsError') {
+            const settingsError = err as any; // SettingsError type
+            const parsedError = parseSettingsError(settingsError);
+            if (parsedError) {
+              setSettingsErrors([parsedError]);
+            }
+          }
           setError(err as Error);
           setIsLoading(false);
         }
@@ -165,18 +247,25 @@ export function useFileSettings(): UseFileSettingsReturn {
     }
   }, []);
   
+  // Clear specific error type
+  const clearError = useCallback((type: 'settings' | 'keybindings') => {
+    setSettingsErrors(prev => prev.filter(error => error.type !== type));
+  }, []);
+  
   return {
     settings,
     keybindings,
     isLoading,
     error,
+    settingsErrors,
     lastChangeSource,
     updateSettings,
     addKeybinding,
     removeKeybinding,
     resetToDefaults,
     openSettingsFile,
-    openKeybindingsFile
+    openKeybindingsFile,
+    clearError
   };
 }
 

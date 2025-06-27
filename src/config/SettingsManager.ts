@@ -532,10 +532,14 @@ when = "!inputFocus && !editing"
 
 [[keybindings]]
 key = "Ctrl+1"
-command = "showTasks"
+command = "showTasksDetailed"
 
 [[keybindings]]
 key = "Ctrl+2"
+command = "showTasksSimple"
+
+[[keybindings]]
+key = "Ctrl+3"
 command = "showSchedules"
 
 # =====================================

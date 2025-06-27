@@ -1381,6 +1381,10 @@ function App() {
     },
     onToggleAlwaysOnTop: () => setSessionAlwaysOnTop(!sessionAlwaysOnTop),
     onShowHelp: () => setShowShortcutHelp(true),
+    // View handlers
+    onShowTasksDetailed: () => setSettings(prev => ({ ...prev, startupView: 'tasks-detailed' })),
+    onShowTasksSimple: () => setSettings(prev => ({ ...prev, startupView: 'tasks-simple' })),
+    onShowSchedules: () => setSettings(prev => ({ ...prev, startupView: 'schedules' })),
     // Schedule handlers
     onDeleteInactiveSchedules: handleDeleteInactiveSchedules,
     onCreateSchedule: handleCreateSchedule

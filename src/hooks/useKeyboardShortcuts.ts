@@ -30,7 +30,8 @@ export interface KeyboardShortcutHandlers {
   onShowHelp: () => void;
   
   // View switching
-  onShowTasks?: () => void;
+  onShowTasksDetailed?: () => void;
+  onShowTasksSimple?: () => void;
   onShowSchedules?: () => void;
   
   // Navigation
@@ -152,8 +153,9 @@ export const useKeyboardShortcuts = (
     { key: 'F2', command: 'editTask', when: 'taskSelected && !inputFocus' },
     { key: 'E', command: 'editTask', when: 'taskSelected && !inputFocus' },
     { key: 'Escape', command: 'cancelAction' },
-    { key: 'Ctrl+1', command: 'showTasks' },
-    { key: 'Ctrl+2', command: 'showSchedules' }
+    { key: 'Ctrl+1', command: 'showTasksDetailed' },
+    { key: 'Ctrl+2', command: 'showTasksSimple' },
+    { key: 'Ctrl+3', command: 'showSchedules' }
   ];
   
   const effectiveKeybindings = keybindings.length > 0 ? keybindings : fallbackKeybindings;
@@ -352,8 +354,11 @@ function executeCommand(command: string, handlers: KeyboardShortcutHandlers) {
       break;
       
     // View switching
-    case 'showTasks':
-      handlers.onShowTasks?.();
+    case 'showTasksDetailed':
+      handlers.onShowTasksDetailed?.();
+      break;
+    case 'showTasksSimple':
+      handlers.onShowTasksSimple?.();
       break;
     case 'showSchedules':
       handlers.onShowSchedules?.();
@@ -396,7 +401,8 @@ function getCommandDescription(command: string): string {
     toggleTaskComplete: 'Toggle completion',
     cancelAction: 'Cancel/Clear selection',
     showKeybindings: 'Show keyboard shortcuts',
-    showTasks: 'Show tasks view',
+    showTasksDetailed: 'Show tasks detailed view',
+    showTasksSimple: 'Show tasks simple view',
     showSchedules: 'Show schedules view',
     nextTask: 'Next task',
     previousTask: 'Previous task',

@@ -111,16 +111,34 @@ export const DEFAULT_KEYBINDINGS: Keybinding[] = [
   { key: 'End', command: 'lastTask', when: '!inputFocus && !editing' },
   
   // View commands
-  { key: 'Ctrl+1', command: 'showTasks' },
-  { key: 'Ctrl+Shift+1', command: 'showTasksDetailed' },
-  { key: 'Ctrl+Alt+1', command: 'showTasksSimple' },
-  { key: 'Ctrl+2', command: 'showSchedules' },
+  { key: 'Ctrl+1', command: 'showTasksDetailed' },
+  { key: 'Ctrl+2', command: 'showTasksSimple' },
+  { key: 'Ctrl+3', command: 'showSchedules' },
   
   // Help
   { key: 'F1', command: 'showHelp' }
 ];
 
 // Error types
+export interface ParseErrorDetails {
+  line?: number;
+  column?: number;
+  problemText?: string;
+  expectedFormat?: string;
+  suggestion?: string;
+}
+
+export interface SettingsFileError {
+  type: 'settings' | 'keybindings';
+  code: 'PARSE_ERROR' | 'VALIDATION_ERROR' | 'FILE_ERROR' | 'PERMISSION_ERROR';
+  message: string;
+  userMessage: string;
+  filePath: string;
+  details?: ParseErrorDetails;
+  canAutoFix?: boolean;
+  severity: 'error' | 'warning' | 'info';
+}
+
 export class SettingsError extends Error {
   constructor(
     message: string,

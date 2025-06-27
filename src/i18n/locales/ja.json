@@ -452,5 +452,15 @@
         }
       }
     }
+  },
+  "errors": {
+    "keybindingsFileError": "キーボードショートカットエラー",
+    "settingsFileError": "設定ファイルエラー", 
+    "dismiss": "閉じる",
+    "line": "行",
+    "problem": "問題",
+    "suggestion": "修正案",
+    "openFile": "ファイルを開く",
+    "autoFix": "自動修正"
   }
 }

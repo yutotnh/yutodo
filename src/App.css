@@ -5229,3 +5229,166 @@ body {
   border-bottom-color: #475569;
 }
 
+/* Settings Error Banner Styles */
+.settings-error-banner {
+  margin-bottom: 1rem;
+}
+
+.error-item {
+  margin-bottom: 0.75rem;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  border-left: 4px solid;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.error-item.error-error {
+  background-color: #fef2f2;
+  border-left-color: #ef4444;
+  color: #991b1b;
+}
+
+.error-item.error-warning {
+  background-color: #fffbeb;
+  border-left-color: #f59e0b;
+  color: #92400e;
+}
+
+.error-item.error-info {
+  background-color: #eff6ff;
+  border-left-color: #3b82f6;
+  color: #1e40af;
+}
+
+.error-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.error-icon {
+  margin-right: 0.5rem;
+  font-size: 1.2em;
+}
+
+.error-title {
+  font-weight: 600;
+  flex-grow: 1;
+}
+
+.error-dismiss {
+  background: none;
+  border: none;
+  font-size: 1.5em;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 0.25rem;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+.error-dismiss:hover {
+  opacity: 1;
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.error-message {
+  margin-bottom: 0.75rem;
+  line-height: 1.5;
+}
+
+.error-details {
+  margin-bottom: 0.75rem;
+  padding: 0.5rem;
+  background-color: rgba(0, 0, 0, 0.05);
+  border-radius: 0.25rem;
+  font-size: 0.9em;
+}
+
+.error-location {
+  display: inline-block;
+  margin-right: 1rem;
+  font-weight: 500;
+}
+
+.error-problem {
+  display: block;
+  margin-top: 0.25rem;
+  font-style: italic;
+}
+
+.error-suggestion {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background-color: rgba(0, 0, 0, 0.05);
+  border-radius: 0.25rem;
+  border-left: 3px solid #10b981;
+}
+
+.error-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.error-action-button {
+  padding: 0.5rem 1rem;
+  border: 1px solid currentColor;
+  background: transparent;
+  color: inherit;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  font-size: 0.9em;
+  transition: all 0.2s ease;
+}
+
+.error-action-button:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.error-action-button.auto-fix {
+  background-color: #10b981;
+  color: white;
+  border-color: #10b981;
+}
+
+.error-action-button.auto-fix:hover {
+  background-color: #059669;
+  border-color: #059669;
+}
+
+/* Dark mode for error banner */
+.app--dark .error-item.error-error {
+  background-color: #1f1416;
+  color: #fca5a5;
+}
+
+.app--dark .error-item.error-warning {
+  background-color: #1f1611;
+  color: #fbbf24;
+}
+
+.app--dark .error-item.error-info {
+  background-color: #0f1419;
+  color: #60a5fa;
+}
+
+.app--dark .error-details {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.app--dark .error-suggestion {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-left-color: #34d399;
+}
+
+.app--dark .error-dismiss:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.app--dark .error-action-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+

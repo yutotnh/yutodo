@@ -21,7 +21,8 @@ describe('useKeyboardShortcuts', () => {
     onToggleSelectedCompletion: vi.fn(),
     onClearSelection: vi.fn(),
     onShowHelp: vi.fn(),
-    onShowTasks: vi.fn(),
+    onShowTasksDetailed: vi.fn(),
+    onShowTasksSimple: vi.fn(),
     onShowSchedules: vi.fn(),
     onNextTask: vi.fn(),
     onPreviousTask: vi.fn(),
@@ -36,8 +37,9 @@ describe('useKeyboardShortcuts', () => {
     { key: 'Ctrl+Shift+P', command: 'openCommandPalette' },
     { key: 'Ctrl+A', command: 'selectAll', when: '!inputFocus' },
     { key: 'Ctrl+D', command: 'toggleTaskComplete', when: 'taskSelected && !inputFocus' },
-    { key: 'Ctrl+1', command: 'showTasks' },
-    { key: 'Ctrl+2', command: 'showSchedules' },
+    { key: 'Ctrl+1', command: 'showTasksDetailed' },
+    { key: 'Ctrl+2', command: 'showTasksSimple' },
+    { key: 'Ctrl+3', command: 'showSchedules' },
     { key: 'Delete', command: 'deleteSelected', when: 'taskSelected && !inputFocus' },
     { key: 'Escape', command: 'cancelAction' },
     { key: 'Ctrl+K Ctrl+S', command: 'showKeybindings' }
@@ -52,13 +54,15 @@ describe('useKeyboardShortcuts', () => {
       keybindings: mockKeybindings,
       isLoading: false,
       error: null,
+      settingsErrors: [],
       lastChangeSource: null,
       updateSettings: vi.fn(),
       addKeybinding: vi.fn(),
       removeKeybinding: vi.fn(),
       resetToDefaults: vi.fn(),
       openSettingsFile: vi.fn(),
-      openKeybindingsFile: vi.fn()
+      openKeybindingsFile: vi.fn(),
+      clearError: vi.fn()
     });
 
     // Reset document
@@ -258,13 +262,15 @@ describe('useKeyboardShortcuts', () => {
         keybindings: [], // Empty keybindings
         isLoading: false,
         error: null,
+        settingsErrors: [],
         lastChangeSource: null,
         updateSettings: vi.fn(),
         addKeybinding: vi.fn(),
         removeKeybinding: vi.fn(),
         resetToDefaults: vi.fn(),
         openSettingsFile: vi.fn(),
-        openKeybindingsFile: vi.fn()
+        openKeybindingsFile: vi.fn(),
+        clearError: vi.fn()
       });
       
       const { result } = renderHook(() => useKeyboardShortcuts(mockHandlers));
@@ -327,13 +333,15 @@ describe('useKeyboardShortcuts', () => {
         keybindings: customKeybindings,
         isLoading: false,
         error: null,
+        settingsErrors: [],
         lastChangeSource: null,
         updateSettings: vi.fn(),
         addKeybinding: vi.fn(),
         removeKeybinding: vi.fn(),
         resetToDefaults: vi.fn(),
         openSettingsFile: vi.fn(),
-        openKeybindingsFile: vi.fn()
+        openKeybindingsFile: vi.fn(),
+        clearError: vi.fn()
       });
       
       renderHook(() => useKeyboardShortcuts(mockHandlers));
@@ -397,17 +405,24 @@ describe('useKeyboardShortcuts', () => {
       });
       expect(mockHandlers.onToggleSelectedCompletion).toHaveBeenCalled();
       
-      // Test showTasks (Ctrl+1)
+      // Test showTasksDetailed (Ctrl+1)
       vi.clearAllMocks();
       act(() => {
         simulateKeyDown('1', { ctrlKey: true });
       });
-      expect(mockHandlers.onShowTasks).toHaveBeenCalled();
+      expect(mockHandlers.onShowTasksDetailed).toHaveBeenCalled();
       
-      // Test showSchedules (Ctrl+2)
+      // Test showTasksSimple (Ctrl+2)
       vi.clearAllMocks();
       act(() => {
         simulateKeyDown('2', { ctrlKey: true });
+      });
+      expect(mockHandlers.onShowTasksSimple).toHaveBeenCalled();
+      
+      // Test showSchedules (Ctrl+3)
+      vi.clearAllMocks();
+      act(() => {
+        simulateKeyDown('3', { ctrlKey: true });
       });
       expect(mockHandlers.onShowSchedules).toHaveBeenCalled();
     });
@@ -430,13 +445,15 @@ describe('useKeyboardShortcuts', () => {
         keybindings: specialKeybindings,
         isLoading: false,
         error: null,
+        settingsErrors: [],
         lastChangeSource: null,
         updateSettings: vi.fn(),
         addKeybinding: vi.fn(),
         removeKeybinding: vi.fn(),
         resetToDefaults: vi.fn(),
         openSettingsFile: vi.fn(),
-        openKeybindingsFile: vi.fn()
+        openKeybindingsFile: vi.fn(),
+        clearError: vi.fn()
       });
       
       renderHook(() => useKeyboardShortcuts(mockHandlers));

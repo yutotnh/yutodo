@@ -83,9 +83,9 @@ export const MenuBar: React.FC<MenuBarProps> = ({
       label: t('menu.view'),
       accessKey: 'V',
       items: [
-        { id: 'show-tasks-detailed', label: settings.startupView === 'tasks-detailed' ? t('menu.showingTasksDetailed') : t('menu.showTasksDetailed'), action: () => onViewChange('tasks-detailed') },
-        { id: 'show-tasks-simple', label: settings.startupView === 'tasks-simple' ? t('menu.showingTasksSimple') : t('menu.showTasksSimple'), action: () => onViewChange('tasks-simple') },
-        { id: 'show-schedules', label: settings.startupView === 'schedules' ? t('menu.showingSchedules') : t('menu.showSchedules'), action: () => onViewChange('schedules') },
+        { id: 'show-tasks-detailed', label: settings.startupView === 'tasks-detailed' ? t('menu.showingTasksDetailed') : t('menu.showTasksDetailed'), shortcut: 'Ctrl+1', action: () => onViewChange('tasks-detailed') },
+        { id: 'show-tasks-simple', label: settings.startupView === 'tasks-simple' ? t('menu.showingTasksSimple') : t('menu.showTasksSimple'), shortcut: 'Ctrl+2', action: () => onViewChange('tasks-simple') },
+        { id: 'show-schedules', label: settings.startupView === 'schedules' ? t('menu.showingSchedules') : t('menu.showSchedules'), shortcut: 'Ctrl+3', action: () => onViewChange('schedules') },
         { id: 'separator-1', separator: true },
         { id: 'always-on-top', prefix: sessionAlwaysOnTop ? '✓ ' : '  ', label: t('menu.alwaysOnTop'), action: onToggleAlwaysOnTop }
       ] as MenuItemData[]

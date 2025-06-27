@@ -453,5 +453,15 @@
         }
       }
     }
+  },
+  "errors": {
+    "keybindingsFileError": "Keyboard Shortcuts Error",
+    "settingsFileError": "Settings File Error",
+    "dismiss": "Dismiss",
+    "line": "Line",
+    "problem": "Problem",
+    "suggestion": "Suggestion",
+    "openFile": "Open File",
+    "autoFix": "Auto Fix"
   }
 }
