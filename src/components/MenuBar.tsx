@@ -44,7 +44,7 @@ export const MenuBar: React.FC<MenuBarProps> = ({
   isAltKeyActive = false,
   onViewChange
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [isAltPressed, setIsAltPressed] = useState(false);
   const [selectedItemIndex, setSelectedItemIndex] = useState<number>(-1);
@@ -52,6 +52,9 @@ export const MenuBar: React.FC<MenuBarProps> = ({
   const [isHamburgerMode, setIsHamburgerMode] = useState(false);
   const [showHamburgerMenu, setShowHamburgerMenu] = useState(false);
   const [activeSubmenu, setActiveSubmenu] = useState<string | null>(null);
+  const [menuFocusIndex, setMenuFocusIndex] = useState<number>(-1);
+  const [isMenuFocusMode, setIsMenuFocusMode] = useState(false);
+  const [altPressStartTime, setAltPressStartTime] = useState<number>(0);
   const menuRef = useRef<HTMLDivElement>(null);
 
   // 親コンポーネントからのAltキー状態を反映
@@ -103,6 +106,15 @@ export const MenuBar: React.FC<MenuBarProps> = ({
       ] as MenuItemData[]
     }
   }), [t, onNewTask, onImportTasks, onExportTasks, onShowSettings, onQuit, onSelectAll, onDeleteSelected, onShowShortcuts, onShowAbout, onToggleAlwaysOnTop, onViewChange, settings.alwaysOnTop, settings.startupView]);
+
+  // メニューキーのリスト
+  const menuKeys = useMemo(() => Object.keys(menus), [menus]);
+
+  // 言語に応じてアクセスキーを括弧で表示する必要があるかチェック
+  const shouldShowAccessKeyInParens = useMemo(() => {
+    const currentLanguage = i18n.language;
+    return currentLanguage === 'ja';
+  }, [i18n.language]);
 
 
   // 外部クリックでメニューを閉じる
@@ -164,20 +176,54 @@ export const MenuBar: React.FC<MenuBarProps> = ({
   // キーボードイベントハンドラー（Alt+キー、ESC、矢印キー）
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      // Altキーの状態を追跡
-      if (event.key === 'Alt') {
+      // Alt単体押下の検出（他の修飾キーが押されていない場合）
+      if (event.key === 'Alt' && !event.ctrlKey && !event.shiftKey && !event.metaKey) {
+        if (!isMenuFocusMode && !activeMenu) {
+          setAltPressStartTime(Date.now());
+        }
         setIsAltPressed(true);
         return;
       }
 
-      // ESCキーでメニューを閉じる
+      // ESCキーでメニューを閉じる、またはフォーカスモードを解除
       if (event.key === 'Escape') {
-        setActiveMenu(null);
+        if (isMenuFocusMode) {
+          setIsMenuFocusMode(false);
+          setMenuFocusIndex(-1);
+        } else {
+          setActiveMenu(null);
+        }
         setIsAltPressed(false);
         setSelectedItemIndex(-1);
         setIsKeyboardNavigation(false);
         onMenuStateChange?.(false);
         return;
+      }
+
+      // メニューフォーカスモード中の処理
+      if (isMenuFocusMode) {
+        switch (event.key) {
+          case 'ArrowLeft':
+            event.preventDefault();
+            setMenuFocusIndex(prev => prev > 0 ? prev - 1 : menuKeys.length - 1);
+            return;
+          case 'ArrowRight':
+            event.preventDefault();
+            setMenuFocusIndex(prev => prev < menuKeys.length - 1 ? prev + 1 : 0);
+            return;
+          case 'Enter':
+            if (menuFocusIndex >= 0) {
+              event.preventDefault();
+              const menuKey = menuKeys[menuFocusIndex];
+              setActiveMenu(menuKey);
+              setIsMenuFocusMode(false);
+              setMenuFocusIndex(-1);
+              setSelectedItemIndex(0);
+              setIsKeyboardNavigation(true);
+              onMenuStateChange?.(true);
+            }
+            return;
+        }
       }
 
       // メニューが開いている時の矢印キーナビゲーション
@@ -261,7 +307,22 @@ export const MenuBar: React.FC<MenuBarProps> = ({
     const handleKeyUp = (event: KeyboardEvent) => {
       // Altキーが離されたときの処理
       if (event.key === 'Alt') {
+        const pressDuration = Date.now() - altPressStartTime;
+        const isShortPress = pressDuration < 500 && pressDuration > 0;
+        
+        // Alt単体短押し → メニューフォーカスモード切り替え
+        if (isShortPress && !activeMenu && !event.ctrlKey && !event.shiftKey && !event.metaKey) {
+          if (!isMenuFocusMode) {
+            setIsMenuFocusMode(true);
+            setMenuFocusIndex(0); // 最初のメニューにフォーカス
+          } else {
+            setIsMenuFocusMode(false);
+            setMenuFocusIndex(-1);
+          }
+        }
+        
         setIsAltPressed(false);
+        setAltPressStartTime(0);
       }
     };
 
@@ -272,13 +333,20 @@ export const MenuBar: React.FC<MenuBarProps> = ({
       document.removeEventListener('keydown', handleKeyDown);
       document.removeEventListener('keyup', handleKeyUp);
     };
-  }, [activeMenu, selectedItemIndex, onMenuStateChange, menus]);
+  }, [activeMenu, selectedItemIndex, onMenuStateChange, menus, menuKeys, isMenuFocusMode, menuFocusIndex, altPressStartTime]);
 
   const handleMenuClick = (menuKey: string, event?: React.MouseEvent) => {
     if (event) {
       event.preventDefault();
       event.stopPropagation(); // Stop propagation to prevent window dragging interference
     }
+    
+    // マウスクリックでフォーカスモードを解除
+    if (isMenuFocusMode) {
+      setIsMenuFocusMode(false);
+      setMenuFocusIndex(-1);
+    }
+    
     const newActiveMenu = activeMenu === menuKey ? null : menuKey;
     setActiveMenu(newActiveMenu);
     setSelectedItemIndex(-1); // マウス操作時は選択状態をリセット
@@ -330,22 +398,37 @@ export const MenuBar: React.FC<MenuBarProps> = ({
     setActiveSubmenu(null);
   };
 
-  // アクセスキーをハイライト表示するヘルパー関数
-  const renderLabelWithAccessKey = (label: string, accessKey: string) => {
-    const accessKeyIndex = label.toLowerCase().indexOf(accessKey.toLowerCase());
-    if (accessKeyIndex === -1) {
-      return <span>{label}</span>;
+  // メニューラベルを表示するヘルパー関数（言語別アクセスキー対応）
+  const renderMenuLabel = (label: string, accessKey: string) => {
+    // 日本語など、アクセスキーを括弧で表示する必要がある言語
+    if (shouldShowAccessKeyInParens) {
+      return (
+        <span>
+          {label}
+          <span className="menu-access-key-suffix">({accessKey.toLowerCase()})</span>
+        </span>
+      );
     }
     
-    return (
-      <span>
-        {label.slice(0, accessKeyIndex)}
-        <span className={`menu-access-key ${isAltPressed ? 'menu-access-key--visible' : ''}`}>
-          {label[accessKeyIndex]}
+    // 英語など、Alt押下時のみアンダーライン表示
+    if (isAltPressed) {
+      const accessKeyIndex = label.toLowerCase().indexOf(accessKey.toLowerCase());
+      if (accessKeyIndex === -1) {
+        return <span>{label}</span>;
+      }
+      
+      return (
+        <span>
+          {label.slice(0, accessKeyIndex)}
+          <span className="menu-access-key menu-access-key--visible">
+            {label[accessKeyIndex]}
+          </span>
+          {label.slice(accessKeyIndex + 1)}
         </span>
-        {label.slice(accessKeyIndex + 1)}
-      </span>
-    );
+      );
+    }
+    
+    return <span>{label}</span>;
   };
 
   return (
@@ -413,54 +496,61 @@ export const MenuBar: React.FC<MenuBarProps> = ({
         </div>
       ) : (
         // 通常メニューモード
-        Object.entries(menus).map(([key, menu]) => (
-          <div key={key} className="menu-item">
-            <button
-              data-testid={`menu-${key}`}
-              className={`menu-button ${activeMenu === key ? 'menu-button--active' : ''}`}
-              onClick={(e) => handleMenuClick(key, e)}
-              onMouseEnter={() => activeMenu && setActiveMenu(key)}
-              title={`${menu.label} (Alt+${menu.accessKey})`}
-            >
-              {renderLabelWithAccessKey(menu.label, menu.accessKey)}
-              <ChevronDown size={10} />
-            </button>
-            
-            {activeMenu === key && (
-              <div data-testid={`menu-${key}-dropdown`} className="menu-dropdown">
-                {menu.items.map((item, index) => {
-                  if (item.separator) {
-                    return <div key={`${item.id}-${index}`} className="menu-separator" />;
+        Object.entries(menus).map(([key, menu], index) => {
+          const isFocused = isMenuFocusMode && menuFocusIndex === index;
+          return (
+            <div key={key} className="menu-item">
+              <button
+                data-testid={`menu-${key}`}
+                className={`menu-button ${activeMenu === key ? 'menu-button--active' : ''} ${isFocused ? 'menu-button--focused' : ''}`}
+                onClick={(e) => handleMenuClick(key, e)}
+                onMouseEnter={() => {
+                  if (activeMenu && !isMenuFocusMode) {
+                    setActiveMenu(key);
                   }
+                }}
+                title={`${menu.label} (Alt+${menu.accessKey})`}
+              >
+                {renderMenuLabel(menu.label, menu.accessKey)}
+                <ChevronDown size={10} />
+              </button>
+            
+              {activeMenu === key && (
+                <div data-testid={`menu-${key}-dropdown`} className="menu-dropdown">
+                  {menu.items.map((item, index) => {
+                    if (item.separator) {
+                      return <div key={`${item.id}-${index}`} className="menu-separator" />;
+                    }
 
-                  // セパレーターを除いた実際のメニュー項目のインデックスを計算
-                  const validItems = menu.items.filter(i => !i.separator);
-                  const validItemIndex = validItems.findIndex(i => i.id === item.id);
-                  const isSelected = isKeyboardNavigation && selectedItemIndex === validItemIndex;
+                    // セパレーターを除いた実際のメニュー項目のインデックスを計算
+                    const validItems = menu.items.filter(i => !i.separator);
+                    const validItemIndex = validItems.findIndex(i => i.id === item.id);
+                    const isSelected = isKeyboardNavigation && selectedItemIndex === validItemIndex;
 
-                  return (
-                    <button
-                      key={item.id}
-                      data-testid={`menu-item-${item.id}`}
-                      className={`menu-dropdown-item ${isSelected ? 'menu-dropdown-item--selected' : ''}`}
-                      onClick={(e) => handleMenuItemClick(item.action, e)}
-                      onMouseEnter={() => {
-                        // マウスが項目に入ったときはキーボードナビゲーションをリセット
-                        if (isKeyboardNavigation) {
-                          setIsKeyboardNavigation(false);
-                          setSelectedItemIndex(-1);
-                        }
-                      }}
-                    >
-                      <span>{item.label}</span>
-                      {item.shortcut && <span className="menu-shortcut">{item.shortcut}</span>}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        ))
+                    return (
+                      <button
+                        key={item.id}
+                        data-testid={`menu-item-${item.id}`}
+                        className={`menu-dropdown-item ${isSelected ? 'menu-dropdown-item--selected' : ''}`}
+                        onClick={(e) => handleMenuItemClick(item.action, e)}
+                        onMouseEnter={() => {
+                          // マウスが項目に入ったときはキーボードナビゲーションをリセット
+                          if (isKeyboardNavigation) {
+                            setIsKeyboardNavigation(false);
+                            setSelectedItemIndex(-1);
+                          }
+                        }}
+                      >
+                        <span>{item.label}</span>
+                        {item.shortcut && <span className="menu-shortcut">{item.shortcut}</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })
       )}
     </div>
   );

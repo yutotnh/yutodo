@@ -3320,6 +3320,31 @@ body {
   text-decoration-color: currentColor;
 }
 
+/* 日本語向けアクセスキー括弧表示 */
+.menu-access-key-suffix {
+  color: #888;
+  font-size: 0.9em;
+  margin-left: 2px;
+  opacity: 0.7;
+}
+
+/* メニューフォーカス状態 */
+.menu-button--focused {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+  background-color: rgba(59, 130, 246, 0.1);
+}
+
+/* ダークモード対応 */
+.app--dark .menu-access-key-suffix {
+  color: #9ca3af;
+}
+
+.app--dark .menu-button--focused {
+  outline-color: #60a5fa;
+  background-color: rgba(96, 165, 250, 0.1);
+}
+
 /* ハンバーガーメニュー用スタイル */
 .menu-button--hamburger {
   padding: 0.5rem;
