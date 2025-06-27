@@ -5,6 +5,7 @@ import { AppSettings } from '../types/todo';
 
 interface MenuBarProps {
   settings: AppSettings;
+  localAlwaysOnTop: boolean;
   onNewTask: () => void;
   onSelectAll: () => void;
   onDeleteSelected: () => void;
@@ -30,6 +31,7 @@ interface MenuItemData {
 
 export const MenuBar: React.FC<MenuBarProps> = ({
   settings,
+  localAlwaysOnTop,
   onNewTask,
   onSelectAll,
   onDeleteSelected,
@@ -85,7 +87,7 @@ export const MenuBar: React.FC<MenuBarProps> = ({
         { id: 'show-tasks-simple', label: settings.startupView === 'tasks-simple' ? t('menu.showingTasksSimple') : t('menu.showTasksSimple'), action: () => onViewChange('tasks-simple') },
         { id: 'show-schedules', label: settings.startupView === 'schedules' ? t('menu.showingSchedules') : t('menu.showSchedules'), action: () => onViewChange('schedules') },
         { id: 'separator-1', separator: true },
-        { id: 'always-on-top', prefix: settings.alwaysOnTop ? '✓ ' : '  ', label: t('menu.alwaysOnTop'), action: onToggleAlwaysOnTop }
+        { id: 'always-on-top', prefix: localAlwaysOnTop ? '✓ ' : '  ', label: t('menu.alwaysOnTop'), action: onToggleAlwaysOnTop }
       ] as MenuItemData[]
     },
     help: {
@@ -97,7 +99,7 @@ export const MenuBar: React.FC<MenuBarProps> = ({
         { id: 'about', label: t('menu.about'), action: onShowAbout }
       ] as MenuItemData[]
     }
-  }), [t, onNewTask, onImportTasks, onExportTasks, onShowSettings, onQuit, onSelectAll, onDeleteSelected, onShowShortcuts, onShowAbout, onToggleAlwaysOnTop, onViewChange, settings.alwaysOnTop, settings.startupView]);
+  }), [t, onNewTask, onImportTasks, onExportTasks, onShowSettings, onQuit, onSelectAll, onDeleteSelected, onShowShortcuts, onShowAbout, onToggleAlwaysOnTop, onViewChange, localAlwaysOnTop, settings.startupView]);
 
 
   // 言語に応じてアクセスキーを括弧で表示する必要があるかチェック

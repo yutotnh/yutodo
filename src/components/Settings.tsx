@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Settings as SettingsIcon, X, Monitor, Palette, Server, List, Moon, FileText, Shield, Globe, ExternalLink, Keyboard } from 'lucide-react';
-import { getCurrentWindow } from '@tauri-apps/api/window';
 import { useTranslation } from 'react-i18next';
 import { AppSettings, Todo } from '../types/todo';
 import { DataManager } from './DataManager';
@@ -11,7 +10,9 @@ import logger from '../utils/logger';
 
 interface SettingsProps {
   settings: AppSettings;
+  localAlwaysOnTop: boolean;
   onSettingsChange: (settings: AppSettings) => void;
+  onLocalAlwaysOnTopChange: (alwaysOnTop: boolean) => void;
   onClose: () => void;
   todos?: Todo[];
   onImportTodos?: (todos: Todo[]) => void;
@@ -23,7 +24,9 @@ type SettingsTab = 'general' | 'appearance' | 'server' | 'data' | 'keybindings';
 
 export const Settings: React.FC<SettingsProps> = ({ 
   settings, 
+  localAlwaysOnTop,
   onSettingsChange, 
+  onLocalAlwaysOnTopChange,
   onClose, 
   todos = [], 
   onImportTodos, 
@@ -111,29 +114,12 @@ export const Settings: React.FC<SettingsProps> = ({
   };
 
   const handleAlwaysOnTopChange = async (alwaysOnTop: boolean) => {
-    const previousSettings = { ...localSettings };
-    
-    const newSettings = { ...localSettings, alwaysOnTop };
-    setLocalSettings(newSettings);
-    
     try {
-      if (typeof window !== 'undefined' && (window as any).__TAURI_INTERNALS__) {
-        logger.debug('Setting always on top:', alwaysOnTop);
-        const appWindow = getCurrentWindow();
-        await appWindow.setAlwaysOnTop(alwaysOnTop);
-        logger.debug('Always on top set successfully');
-      }
-      
-      // Update file settings
-      if (fileSettings) {
-        await updateFileSettings({ app: { ...fileSettings.app, alwaysOnTop } });
-      }
-      
-      onSettingsChange(newSettings);
+      // ローカル状態のみ変更、設定ファイルには保存しない
+      onLocalAlwaysOnTopChange(alwaysOnTop);
+      logger.debug('Always on top state changed to:', alwaysOnTop);
     } catch (error) {
-      logger.error('Failed to set always on top:', error);
-      setLocalSettings(previousSettings);
-      alert(`Failed to set always on top: ${error}`);
+      logger.error('Failed to change always on top state:', error);
     }
   };
 
@@ -151,7 +137,7 @@ export const Settings: React.FC<SettingsProps> = ({
               <label className="setting-item">
                 <input
                   type="checkbox"
-                  checked={localSettings.alwaysOnTop}
+                  checked={localAlwaysOnTop}
                   onChange={(e) => handleAlwaysOnTopChange(e.target.checked)}
                 />
                 <span>{t('settings.window.alwaysOnTop')}</span>

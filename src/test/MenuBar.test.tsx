@@ -36,7 +36,7 @@ describe('MenuBar', () => {
     onImportTasks: vi.fn(),
     onExportTasks: vi.fn(),
     onMenuStateChange: vi.fn(),
-    isAltKeyActive: false,
+    localAlwaysOnTop: false,
     onViewChange: vi.fn(),
   };
 

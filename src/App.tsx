@@ -120,6 +120,7 @@ function App() {
     message: string;
   }>({ isOpen: false, todoIds: [], title: '', message: '' });
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [localAlwaysOnTop, setLocalAlwaysOnTop] = useState(false);
   const [isCompletedExpanded, setIsCompletedExpanded] = useState(true);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [editingSchedule, setEditingSchedule] = useState<Schedule | null>(null);
@@ -178,6 +179,9 @@ function App() {
       
       const finalSettings = { ...DEFAULT_SETTINGS, ...appSettings };
       setSettings(finalSettings);
+      
+      // Always on Top状態をローカル状態として初期化（設定ファイルからの初期値のみ）
+      setLocalAlwaysOnTop(fileSettings.app.alwaysOnTop || false);
       
       // 言語設定を明示的に適用
       if (finalSettings.language === 'auto') {
@@ -246,7 +250,7 @@ function App() {
   }, [settings.language]); // 言語変更時のみ
 
 
-  // Tauri環境でAlways On Topを適用
+  // Tauri環境でAlways On Topを適用（ローカル状態から）
   useEffect(() => {
     const applyAlwaysOnTop = async () => {
       if (!isInitialized) return;
@@ -254,9 +258,9 @@ function App() {
       try {
         // Tauri環境でのみ実行
         if (typeof window !== 'undefined' && (window as any).__TAURI_INTERNALS__) {
-          logger.debug('Applying always on top setting:', settings.alwaysOnTop);
+          logger.debug('Applying always on top setting:', localAlwaysOnTop);
           const appWindow = getCurrentWindow();
-          await appWindow.setAlwaysOnTop(settings.alwaysOnTop);
+          await appWindow.setAlwaysOnTop(localAlwaysOnTop);
           logger.debug('Always on top applied successfully');
         }
       } catch (error) {
@@ -265,7 +269,7 @@ function App() {
     };
 
     applyAlwaysOnTop();
-  }, [settings.alwaysOnTop, isInitialized]);
+  }, [localAlwaysOnTop, isInitialized]);
 
   useEffect(() => {
     if (settings.customCss) {
@@ -600,7 +604,13 @@ function App() {
   // メニューアクションハンドラー
 
   const handleToggleAlwaysOnTop = () => {
-    handleSettingsChange({ ...settings, alwaysOnTop: !settings.alwaysOnTop });
+    // ローカル状態のみ変更、設定ファイルには保存しない
+    setLocalAlwaysOnTop(prev => !prev);
+  };
+
+  const handleLocalAlwaysOnTopChange = (alwaysOnTop: boolean) => {
+    // ローカル状態のみ変更、設定ファイルには保存しない
+    setLocalAlwaysOnTop(alwaysOnTop);
   };
 
   const handleShowAbout = () => {
@@ -1382,6 +1392,7 @@ function App() {
         <div className="header-left">
           <MenuBar
             settings={settings}
+            localAlwaysOnTop={localAlwaysOnTop}
             onNewTask={keyboardHandlers.onNewTask}
             onSelectAll={keyboardHandlers.onSelectAll}
             onDeleteSelected={keyboardHandlers.onDeleteSelected}
@@ -1402,10 +1413,10 @@ function App() {
           <button
             data-testid="always-on-top-button"
             onClick={handleToggleAlwaysOnTop}
-            className={`window-control always-on-top-btn ${settings.alwaysOnTop ? 'active' : ''}`}
-            title={settings.alwaysOnTop ? t('app.unpinWindow') : t('app.pinWindow')}
+            className={`window-control always-on-top-btn ${localAlwaysOnTop ? 'active' : ''}`}
+            title={localAlwaysOnTop ? t('app.unpinWindow') : t('app.pinWindow')}
           >
-            {settings.alwaysOnTop ? <Pin size={12} /> : <PinOff size={12} />}
+            {localAlwaysOnTop ? <Pin size={12} /> : <PinOff size={12} />}
           </button>
           <button
             data-testid="minimize-button"
@@ -1631,7 +1642,9 @@ function App() {
       {showSettings && (
         <Settings
           settings={settings}
+          localAlwaysOnTop={localAlwaysOnTop}
           onSettingsChange={handleSettingsChange}
+          onLocalAlwaysOnTopChange={handleLocalAlwaysOnTopChange}
           onClose={() => setShowSettings(false)}
           todos={todos}
           onImportTodos={handleImportTodos}
