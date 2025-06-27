@@ -1,4 +1,3 @@
-import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { SettingsErrorBanner } from '../components/SettingsErrorBanner';
@@ -18,9 +17,17 @@ vi.mock('../utils/logger', () => ({
   }
 }));
 
+// Mock TomlAutoFixer
+vi.mock('../utils/tomlAutoFixer', () => ({
+  TomlAutoFixer: {
+    canAutoFix: vi.fn(() => true)
+  }
+}));
+
 describe('SettingsErrorBanner', () => {
   const mockOnDismiss = vi.fn();
   const mockOnOpenFile = vi.fn();
+  const mockOnAutoFix = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -60,6 +67,7 @@ describe('SettingsErrorBanner', () => {
         errors={[error]}
         onDismiss={mockOnDismiss}
         onOpenFile={mockOnOpenFile}
+        onAutoFix={mockOnAutoFix}
       />
     );
 

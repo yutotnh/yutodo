@@ -93,6 +93,7 @@ interface UseFileSettingsReturn {
   openSettingsFile: () => Promise<void>;
   openKeybindingsFile: () => Promise<void>;
   clearError: (type: 'settings' | 'keybindings') => void;
+  autoFixFile: (error: SettingsFileError) => Promise<boolean>;
 }
 
 /**
@@ -251,6 +252,31 @@ export function useFileSettings(): UseFileSettingsReturn {
   const clearError = useCallback((type: 'settings' | 'keybindings') => {
     setSettingsErrors(prev => prev.filter(error => error.type !== type));
   }, []);
+
+  // Auto-fix file errors
+  const autoFixFile = useCallback(async (error: SettingsFileError): Promise<boolean> => {
+    try {
+      logger.info('Starting auto-fix for error:', error.type, error.code);
+      
+      // Use SettingsManager's auto-fix functionality
+      const success = await settingsManager.autoFixFile(error.filePath, {
+        message: error.message
+      });
+      
+      if (success) {
+        // Clear the error since it should be fixed
+        clearError(error.type);
+        logger.info('Auto-fix completed successfully');
+      } else {
+        logger.warn('Auto-fix failed to resolve the error');
+      }
+      
+      return success;
+    } catch (error) {
+      logger.error('Auto-fix process failed:', error);
+      return false;
+    }
+  }, [clearError]);
   
   return {
     settings,
@@ -265,7 +291,8 @@ export function useFileSettings(): UseFileSettingsReturn {
     resetToDefaults,
     openSettingsFile,
     openKeybindingsFile,
-    clearError
+    clearError,
+    autoFixFile
   };
 }
 

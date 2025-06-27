@@ -462,6 +462,17 @@
     "problem": "Problem",
     "suggestion": "Suggestion",
     "openFile": "Open File",
-    "autoFix": "Auto Fix"
+    "autoFix": "Auto Fix",
+    "autoFixing": "Fixing..."
+  },
+  "autoFix": {
+    "confirmTitle": "Confirm Auto Fix",
+    "description": "This will automatically fix common syntax errors in your configuration file.",
+    "file": "File",
+    "issue": "Issue",
+    "fix": "Fix",
+    "safetyNotice": "A backup will be created before making changes.",
+    "cancel": "Cancel",
+    "confirm": "Fix Now"
   }
 }

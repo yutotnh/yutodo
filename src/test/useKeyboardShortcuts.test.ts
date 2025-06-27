@@ -62,7 +62,8 @@ describe('useKeyboardShortcuts', () => {
       resetToDefaults: vi.fn(),
       openSettingsFile: vi.fn(),
       openKeybindingsFile: vi.fn(),
-      clearError: vi.fn()
+      clearError: vi.fn(),
+      autoFixFile: vi.fn()
     });
 
     // Reset document
@@ -270,7 +271,8 @@ describe('useKeyboardShortcuts', () => {
         resetToDefaults: vi.fn(),
         openSettingsFile: vi.fn(),
         openKeybindingsFile: vi.fn(),
-        clearError: vi.fn()
+        clearError: vi.fn(),
+        autoFixFile: vi.fn()
       });
       
       const { result } = renderHook(() => useKeyboardShortcuts(mockHandlers));
@@ -341,7 +343,8 @@ describe('useKeyboardShortcuts', () => {
         resetToDefaults: vi.fn(),
         openSettingsFile: vi.fn(),
         openKeybindingsFile: vi.fn(),
-        clearError: vi.fn()
+        clearError: vi.fn(),
+        autoFixFile: vi.fn()
       });
       
       renderHook(() => useKeyboardShortcuts(mockHandlers));
@@ -453,7 +456,8 @@ describe('useKeyboardShortcuts', () => {
         resetToDefaults: vi.fn(),
         openSettingsFile: vi.fn(),
         openKeybindingsFile: vi.fn(),
-        clearError: vi.fn()
+        clearError: vi.fn(),
+        autoFixFile: vi.fn()
       });
       
       renderHook(() => useKeyboardShortcuts(mockHandlers));

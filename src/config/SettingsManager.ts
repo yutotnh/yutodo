@@ -1483,6 +1483,110 @@ command = "showHelp"
   }
   
   /**
+   * Auto-fix TOML parsing errors in configuration files
+   */
+  async autoFixFile(filePath: string, error: any): Promise<boolean> {
+    try {
+      logger.info('Starting auto-fix for file:', filePath);
+      
+      // Read current file content
+      const originalContent = await readTextFile(filePath);
+      
+      // Import auto-fixer
+      const { TomlAutoFixer } = await import('../utils/tomlAutoFixer');
+      
+      // Create error object for auto-fixer
+      const errorDetails = {
+        type: filePath.includes('keybindings') ? 'keybindings' as const : 'settings' as const,
+        code: 'PARSE_ERROR' as const,
+        message: error.message || 'Failed to parse TOML',
+        userMessage: `Configuration file has syntax errors`,
+        filePath,
+        details: this.parseTomlError(error.message || ''),
+        canAutoFix: true,
+        severity: 'error' as const
+      };
+      
+      // Attempt auto-fix
+      const fixResult = await TomlAutoFixer.autoFix(originalContent, errorDetails, {
+        createBackup: true,
+        confirmBeforeFix: false // Already confirmed by user
+      });
+      
+      if (!fixResult.success || !fixResult.fixedContent) {
+        logger.warn('Auto-fix failed:', fixResult.errors);
+        return false;
+      }
+      
+      // Create backup
+      if (fixResult.backupContent) {
+        const backupPath = TomlAutoFixer.generateBackupFilename(filePath);
+        await writeTextFile(backupPath, fixResult.backupContent);
+        logger.info('Created backup at:', backupPath);
+      }
+      
+      // Write fixed content
+      await writeTextFile(filePath, fixResult.fixedContent);
+      logger.info('Auto-fix completed successfully. Fixes applied:', fixResult.fixesApplied);
+      
+      // Update our cached content
+      if (filePath.includes('keybindings')) {
+        this.keybindingsFileContent = fixResult.fixedContent;
+      } else {
+        this.settingsFileContent = fixResult.fixedContent;
+      }
+      
+      // Reload the fixed file
+      if (filePath.includes('keybindings')) {
+        await this.loadOrCreateKeybindings();
+      } else {
+        await this.loadOrCreateSettings();
+      }
+      
+      return true;
+      
+    } catch (error) {
+      logger.error('Auto-fix process failed:', error);
+      return false;
+    }
+  }
+  
+  /**
+   * Parse TOML error message to extract line/column information
+   */
+  private parseTomlError(errorMessage: string): any {
+    const details: any = {};
+    
+    // Extract line number
+    const lineMatch = errorMessage.match(/line (\d+)/i);
+    const atLineMatch = errorMessage.match(/at line (\d+)/i);
+    
+    if (lineMatch || atLineMatch) {
+      details.line = lineMatch ? parseInt(lineMatch[1]) : parseInt(atLineMatch![1]);
+    }
+    
+    // Extract column if available
+    const columnMatch = errorMessage.match(/column (\d+)/i);
+    if (columnMatch) {
+      details.column = parseInt(columnMatch[1]);
+    }
+    
+    // Extract problem text
+    if (errorMessage.includes('Bad basic string')) {
+      details.problemText = 'invalid escape sequence';
+      details.suggestion = 'Remove backslash escape characters (\\) in string values';
+      details.expectedFormat = 'Use plain string without escapes: when = "!inputFocus"';
+    } else if (errorMessage.includes('unexpected')) {
+      const unexpectedMatch = errorMessage.match(/unexpected (.+)/i);
+      if (unexpectedMatch) {
+        details.problemText = `unexpected ${unexpectedMatch[1]}`;
+      }
+    }
+    
+    return Object.keys(details).length > 0 ? details : undefined;
+  }
+
+  /**
    * Cleanup resources
    */
   async dispose(): Promise<void> {
