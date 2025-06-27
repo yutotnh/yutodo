@@ -7,6 +7,9 @@ import { AppSettings } from '../types/todo';
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string) => key,
+    i18n: {
+      language: 'en'
+    }
   }),
 }));
 
@@ -144,8 +147,11 @@ describe('MenuBar', () => {
     expect(defaultProps.onMenuStateChange).toHaveBeenCalledWith(true);
   });
 
-  it('shows keyboard shortcuts when Alt key is active', () => {
-    render(<MenuBar {...defaultProps} isAltKeyActive={true} />);
+  it('shows keyboard shortcuts when Alt key is pressed', () => {
+    render(<MenuBar {...defaultProps} />);
+    
+    // Simulate Alt key press
+    fireEvent.keyDown(document, { key: 'Alt' });
     
     expect(screen.getByText('f')).toBeInTheDocument(); // File menu shortcut
     expect(screen.getByText('e')).toBeInTheDocument(); // Edit menu shortcut
@@ -153,10 +159,10 @@ describe('MenuBar', () => {
     expect(screen.getByText('h')).toBeInTheDocument(); // Help menu shortcut
   });
 
-  it('does not show keyboard shortcuts when Alt key is not active', () => {
-    render(<MenuBar {...defaultProps} isAltKeyActive={false} />);
+  it('does not show keyboard shortcuts initially', () => {
+    render(<MenuBar {...defaultProps} />);
     
-    // Shortcuts should not be visible
+    // Shortcuts should not be visible initially
     expect(screen.queryByText('F')).not.toBeInTheDocument();
     expect(screen.queryByText('E')).not.toBeInTheDocument();
     expect(screen.queryByText('V')).not.toBeInTheDocument();

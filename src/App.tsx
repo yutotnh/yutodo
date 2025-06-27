@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Minus, X } from 'lucide-react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { useTranslation } from 'react-i18next';
@@ -120,7 +120,6 @@ function App() {
     message: string;
   }>({ isOpen: false, todoIds: [], title: '', message: '' });
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isAltKeyActive, setIsAltKeyActive] = useState(false);
   const [isCompletedExpanded, setIsCompletedExpanded] = useState(true);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [editingSchedule, setEditingSchedule] = useState<Schedule | null>(null);
@@ -416,7 +415,7 @@ function App() {
     const handleMouseMove = (e: MouseEvent) => {
       const threshold = 30;
       // メニューが開いている時またはAltキーが押されている時はヘッダーを隠さない
-      if (!isMenuOpen && !isAltKeyActive) {
+      if (!isMenuOpen) {
         setShowHeader(e.clientY <= threshold);
       }
     };
@@ -427,34 +426,34 @@ function App() {
 
     const handleMouseLeave = () => {
       // メニューが開いている時またはAltキーが押されている時はヘッダーを隠さない
-      if (!isMenuOpen && !isAltKeyActive) {
+      if (!isMenuOpen) {
         setShowHeader(false);
       }
     };
 
     // Tauri環境での追加対応
     const handleWindowBlur = () => {
-      if (!isMenuOpen && !isAltKeyActive) {
+      if (!isMenuOpen) {
         setShowHeader(false);
       }
     };
 
     const handleVisibilityChange = () => {
-      if (document.hidden && !isMenuOpen && !isAltKeyActive) {
+      if (document.hidden && !isMenuOpen) {
         setShowHeader(false);
       }
     };
 
     // bodyレベルでもマウス追跡を追加
     const handleBodyMouseLeave = () => {
-      if (!isMenuOpen && !isAltKeyActive) {
+      if (!isMenuOpen) {
         setShowHeader(false);
       }
     };
 
     // htmlレベルでのマウス追跡
     const handleDocumentMouseLeave = () => {
-      if (!isMenuOpen && !isAltKeyActive) {
+      if (!isMenuOpen) {
         setShowHeader(false);
       }
     };
@@ -462,7 +461,7 @@ function App() {
     // ウィンドウレベルでのマウス追跡
     const handleWindowMouseOut = (e: MouseEvent) => {
       // マウスがウィンドウから完全に出た場合
-      if (!e.relatedTarget && !isMenuOpen && !isAltKeyActive) {
+      if (!e.relatedTarget && !isMenuOpen) {
         setShowHeader(false);
       }
     };
@@ -486,7 +485,7 @@ function App() {
       window.removeEventListener('blur', handleWindowBlur);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [isMenuOpen, isAltKeyActive]);
+  }, [isMenuOpen]);
 
   // ウィンドウフォーカス状態を監視
   useEffect(() => {
@@ -825,15 +824,6 @@ function App() {
 
 
 
-  // MenuBarからのAltキー状態変更ハンドラー
-  const handleAltKeyChange = useCallback((isActive: boolean) => {
-    setIsAltKeyActive(isActive);
-  }, []);
-
-  // MenuBarからのヘッダー表示変更ハンドラー
-  const handleHeaderVisibilityChange = useCallback((isVisible: boolean) => {
-    setShowHeader(isVisible);
-  }, []);
 
 
   // 実際のダークモード状態を計算
@@ -1402,9 +1392,6 @@ function App() {
             onImportTasks={handleImportTasksFromMenu}
             onExportTasks={handleExportTasksFromMenu}
             onMenuStateChange={setIsMenuOpen}
-            isAltKeyActive={isAltKeyActive}
-            onAltKeyChange={handleAltKeyChange}
-            onHeaderVisibilityChange={handleHeaderVisibilityChange}
             onViewChange={handleViewChange}
           />
         </div>
