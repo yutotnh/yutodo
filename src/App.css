@@ -568,6 +568,24 @@ body {
   color: #dc2626;
 }
 
+.app--slim .always-on-top-btn:hover {
+  background: #dbeafe;
+  border-color: #93c5fd;
+  color: #2563eb;
+}
+
+.app--slim .always-on-top-btn.active {
+  background: #3b82f6;
+  border-color: #2563eb;
+  color: white;
+}
+
+.app--slim .always-on-top-btn.active:hover {
+  background: #2563eb;
+  border-color: #1d4ed8;
+  color: white;
+}
+
 /* 空の状態もスタイリッシュに */
 .app--slim .empty-state {
   color: #94a3b8;
@@ -723,6 +741,24 @@ body {
   background: rgba(254, 226, 226, 0.9);
   color: #dc2626;
   border-color: rgba(220, 38, 38, 0.3);
+}
+
+.always-on-top-btn:hover {
+  background: rgba(219, 234, 254, 0.9);
+  color: #2563eb;
+  border-color: rgba(147, 197, 253, 0.4);
+}
+
+.always-on-top-btn.active {
+  background: rgba(59, 130, 246, 0.9);
+  color: white;
+  border-color: rgba(37, 99, 235, 0.6);
+}
+
+.always-on-top-btn.active:hover {
+  background: rgba(37, 99, 235, 0.9);
+  color: white;
+  border-color: rgba(29, 78, 216, 0.6);
 }
 
 .connection-status {
@@ -2288,6 +2324,24 @@ body {
   border-color: rgba(220, 38, 38, 0.4);
 }
 
+.app--dark .always-on-top-btn:hover {
+  background: rgba(30, 58, 138, 0.8);
+  color: #60a5fa;
+  border-color: rgba(37, 99, 235, 0.4);
+}
+
+.app--dark .always-on-top-btn.active {
+  background: rgba(37, 99, 235, 0.9);
+  color: white;
+  border-color: rgba(59, 130, 246, 0.6);
+}
+
+.app--dark .always-on-top-btn.active:hover {
+  background: rgba(29, 78, 216, 0.9);
+  color: white;
+  border-color: rgba(37, 99, 235, 0.8);
+}
+
 .app--dark .add-todo-form {
   background: #1e293b;
   border-bottom-color: #334155;
@@ -2452,6 +2506,24 @@ body {
   background: #7f1d1d;
   border-color: #991b1b;
   color: #ef4444;
+}
+
+.app--dark.app--slim .always-on-top-btn:hover {
+  background: #1e3a8a;
+  border-color: #1d4ed8;
+  color: #60a5fa;
+}
+
+.app--dark.app--slim .always-on-top-btn.active {
+  background: #1d4ed8;
+  border-color: #2563eb;
+  color: white;
+}
+
+.app--dark.app--slim .always-on-top-btn.active:hover {
+  background: #1e40af;
+  border-color: #1d4ed8;
+  color: white;
 }
 
 .app--dark .settings-panel {

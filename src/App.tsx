@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Minus, X } from 'lucide-react';
+import { Minus, X, Pin, PinOff } from 'lucide-react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { useTranslation } from 'react-i18next';
 import {
@@ -1399,6 +1399,14 @@ function App() {
           {/* Connection status now handled by overlay */}
         </div>
         <div className="header-right">
+          <button
+            data-testid="always-on-top-button"
+            onClick={handleToggleAlwaysOnTop}
+            className={`window-control always-on-top-btn ${settings.alwaysOnTop ? 'active' : ''}`}
+            title={settings.alwaysOnTop ? t('app.unpinWindow') : t('app.pinWindow')}
+          >
+            {settings.alwaysOnTop ? <Pin size={12} /> : <PinOff size={12} />}
+          </button>
           <button
             data-testid="minimize-button"
             onClick={handleMinimize}

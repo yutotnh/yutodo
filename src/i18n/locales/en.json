@@ -2,7 +2,9 @@
   "app": {
     "title": "YuToDo",
     "minimize": "Minimize",
-    "close": "Close"
+    "close": "Close",
+    "pinWindow": "Pin Window",
+    "unpinWindow": "Unpin Window"
   },
   "tasks": {
     "search": "Search tasks...",
