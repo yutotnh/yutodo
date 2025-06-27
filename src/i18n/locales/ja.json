@@ -218,6 +218,7 @@
     "toggleTheme": "テーマ切り替え",
     "enableAlwaysOnTop": "常に最前面を有効",
     "disableAlwaysOnTop": "常に最前面を無効",
+    "alwaysOnTop": "常に最前面",
     "showTasksDetailed": "タスクを表示（詳細）",
     "showTasksSimple": "タスクを表示（簡易）",
     "showSchedules": "スケジュールを表示",

@@ -25,6 +25,7 @@ interface MenuItemData {
   shortcut?: string;
   action: () => void;
   separator?: boolean;
+  prefix?: string;
 }
 
 export const MenuBar: React.FC<MenuBarProps> = ({
@@ -84,7 +85,7 @@ export const MenuBar: React.FC<MenuBarProps> = ({
         { id: 'show-tasks-simple', label: settings.startupView === 'tasks-simple' ? t('menu.showingTasksSimple') : t('menu.showTasksSimple'), action: () => onViewChange('tasks-simple') },
         { id: 'show-schedules', label: settings.startupView === 'schedules' ? t('menu.showingSchedules') : t('menu.showSchedules'), action: () => onViewChange('schedules') },
         { id: 'separator-1', separator: true },
-        { id: 'always-on-top', label: settings.alwaysOnTop ? t('menu.disableAlwaysOnTop') : t('menu.enableAlwaysOnTop'), action: onToggleAlwaysOnTop }
+        { id: 'always-on-top', prefix: settings.alwaysOnTop ? '✓ ' : '  ', label: t('menu.alwaysOnTop'), action: onToggleAlwaysOnTop }
       ] as MenuItemData[]
     },
     help: {
@@ -419,7 +420,7 @@ export const MenuBar: React.FC<MenuBarProps> = ({
                         className="menu-dropdown-item side-menu-subitem"
                         onClick={(e) => handleHamburgerItemClick(item.action, e)}
                       >
-                        <span>{item.label}</span>
+                        <span>{item.prefix || ''}{item.label}</span>
                         {item.shortcut && <span className="menu-shortcut">{item.shortcut}</span>}
                       </button>
                     );
@@ -474,7 +475,7 @@ export const MenuBar: React.FC<MenuBarProps> = ({
                           }
                         }}
                       >
-                        <span>{item.label}</span>
+                        <span>{item.prefix || ''}{item.label}</span>
                         {item.shortcut && <span className="menu-shortcut">{item.shortcut}</span>}
                       </button>
                     );

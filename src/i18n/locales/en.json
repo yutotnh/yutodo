@@ -218,6 +218,7 @@
     "toggleTheme": "Toggle Theme",
     "enableAlwaysOnTop": "Enable Always on Top",
     "disableAlwaysOnTop": "Disable Always on Top",
+    "alwaysOnTop": "Always on Top",
     "showTasksDetailed": "Show Tasks (Detailed)",
     "showTasksSimple": "Show Tasks (Simple)",
     "showSchedules": "Show Schedules", 
