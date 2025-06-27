@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { ChevronDown, Menu } from 'lucide-react';
+import { Menu } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { AppSettings } from '../types/todo';
 
@@ -446,7 +446,6 @@ export const MenuBar: React.FC<MenuBarProps> = ({
                 title={`${menu.label} (Alt+${menu.accessKey})`}
               >
                 {renderMenuLabel(menu.label, menu.accessKey)}
-                <ChevronDown size={10} />
               </button>
             
               {activeMenu === key && (
