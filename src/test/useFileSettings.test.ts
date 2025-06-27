@@ -2,11 +2,9 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { useFileSettings, fileSettingsToAppSettings, appSettingsToFileSettings } from '../hooks/useFileSettings';
 import { settingsManager } from '../config/SettingsManager';
-import { isMigrationNeeded, getMigrationData, completeMigration, isTauriEnvironment } from '../config/migrationUtils';
 
 // Mock dependencies
 vi.mock('../config/SettingsManager');
-vi.mock('../config/migrationUtils');
 vi.mock('@tauri-apps/plugin-opener', () => ({
   openPath: vi.fn()
 }));
@@ -44,10 +42,10 @@ describe('useFileSettings', () => {
     vi.clearAllMocks();
     
     // Mock Tauri environment
-    vi.mocked(isTauriEnvironment).mockReturnValue(true);
-    vi.mocked(isMigrationNeeded).mockResolvedValue(false);
-    vi.mocked(getMigrationData).mockReturnValue(null);
-    vi.mocked(completeMigration).mockResolvedValue();
+    Object.defineProperty(window, '__TAURI_INTERNALS__', {
+      value: {},
+      writable: true
+    });
     
     // Mock settingsManager
     vi.mocked(settingsManager.initialize).mockResolvedValue();
@@ -67,7 +65,7 @@ describe('useFileSettings', () => {
 
   describe('Initialization', () => {
     it('should skip initialization when not in Tauri environment', async () => {
-      vi.mocked(isTauriEnvironment).mockReturnValue(false);
+      delete (window as any).__TAURI_INTERNALS__;
       
       const { result } = renderHook(() => useFileSettings());
       
@@ -78,25 +76,6 @@ describe('useFileSettings', () => {
       expect(result.current.settings).toBeNull();
       expect(result.current.keybindings).toEqual([]);
       expect(settingsManager.initialize).not.toHaveBeenCalled();
-    });
-
-    it('should perform migration if needed', async () => {
-      vi.mocked(isMigrationNeeded).mockResolvedValue(true);
-      vi.mocked(getMigrationData).mockReturnValue({
-        settings: mockSettings,
-        keybindings: mockKeybindings
-      });
-      
-      renderHook(() => useFileSettings());
-      
-      await waitFor(() => {
-        expect(getMigrationData).toHaveBeenCalled();
-      });
-      
-      await waitFor(() => {
-        expect(settingsManager.updateSettings).toHaveBeenCalledWith(mockSettings);
-        expect(completeMigration).toHaveBeenCalled();
-      });
     });
 
     it('should initialize settings manager and load settings', async () => {

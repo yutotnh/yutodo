@@ -222,13 +222,6 @@ export class SettingsManager {
     return 'linux';
   }
   
-  /**
-   * Get home directory
-   */
-  private async getHomeDirectory(): Promise<string> {
-    // Use the already imported homeDir function
-    return await homeDir();
-  }
 
   /**
    * Setup file paths based on OS

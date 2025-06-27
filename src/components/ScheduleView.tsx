@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Plus, Calendar, Clock, Repeat, Edit, Trash2, Zap, RefreshCw, ChevronDown, ChevronRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Schedule } from '../types/todo';
-import { getPriorityText, getPriorityClassSuffix, priorityToNumber } from '../utils/priorityUtils';
+import { getPriorityText, getPriorityClassSuffix } from '../utils/priorityUtils';
 
 interface ScheduleViewProps {
   schedules: Schedule[];
@@ -233,7 +233,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
               <span>{schedule.time}</span>
             </div>
           )}
-          {priorityToNumber(schedule.priority) > 0 && (
+          {schedule.priority !== 'low' && (
             <div className="schedule-detail">
               <Zap size={14} className="schedule-detail-icon" />
               <span className={`schedule-priority-inline schedule-priority--${getPriorityClassSuffix(schedule.priority)}`}>
