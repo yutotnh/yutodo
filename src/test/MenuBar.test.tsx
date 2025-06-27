@@ -15,7 +15,7 @@ vi.mock('react-i18next', () => ({
 
 describe('MenuBar', () => {
   const mockSettings: AppSettings = {
-    alwaysOnTop: false,
+    startupAlwaysOnTop: false,
     darkMode: 'auto',
     confirmDelete: true,
     customCss: '',
@@ -26,6 +26,7 @@ describe('MenuBar', () => {
 
   const defaultProps = {
     settings: mockSettings,
+    sessionAlwaysOnTop: false,
     onNewTask: vi.fn(),
     onSelectAll: vi.fn(),
     onDeleteSelected: vi.fn(),
@@ -36,7 +37,6 @@ describe('MenuBar', () => {
     onImportTasks: vi.fn(),
     onExportTasks: vi.fn(),
     onMenuStateChange: vi.fn(),
-    localAlwaysOnTop: false,
     onViewChange: vi.fn(),
   };
 

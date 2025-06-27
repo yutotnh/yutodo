@@ -15,7 +15,7 @@ export interface Todo {
 }
 
 export interface AppSettings {
-  alwaysOnTop: boolean;
+  startupAlwaysOnTop: boolean; // アプリ起動時のAlways on Top初期状態
   darkMode: 'auto' | 'light' | 'dark';
   confirmDelete: boolean;
   customCss: string;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Settings as SettingsIcon, X, Monitor, Palette, Server, List, Moon, FileText, Shield, Globe, ExternalLink, Keyboard } from 'lucide-react';
+import { Settings as SettingsIcon, X, Monitor, Palette, Server, List, Moon, FileText, Shield, Globe, ExternalLink, Keyboard, Pin, PinOff } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { AppSettings, Todo } from '../types/todo';
 import { DataManager } from './DataManager';
@@ -10,9 +10,9 @@ import logger from '../utils/logger';
 
 interface SettingsProps {
   settings: AppSettings;
-  localAlwaysOnTop: boolean;
+  sessionAlwaysOnTop: boolean;
   onSettingsChange: (settings: AppSettings) => void;
-  onLocalAlwaysOnTopChange: (alwaysOnTop: boolean) => void;
+  onSessionAlwaysOnTopChange: (alwaysOnTop: boolean) => void;
   onClose: () => void;
   todos?: Todo[];
   onImportTodos?: (todos: Todo[]) => void;
@@ -24,9 +24,9 @@ type SettingsTab = 'general' | 'appearance' | 'server' | 'data' | 'keybindings';
 
 export const Settings: React.FC<SettingsProps> = ({ 
   settings, 
-  localAlwaysOnTop,
+  sessionAlwaysOnTop,
   onSettingsChange, 
-  onLocalAlwaysOnTopChange,
+  onSessionAlwaysOnTopChange,
   onClose, 
   todos = [], 
   onImportTodos, 
@@ -113,13 +113,15 @@ export const Settings: React.FC<SettingsProps> = ({
     onSettingsChange(newSettings);
   };
 
-  const handleAlwaysOnTopChange = async (alwaysOnTop: boolean) => {
+  const handleStartupAlwaysOnTopChange = async (startupAlwaysOnTop: boolean) => {
     try {
-      // ローカル状態のみ変更、設定ファイルには保存しない
-      onLocalAlwaysOnTopChange(alwaysOnTop);
-      logger.debug('Always on top state changed to:', alwaysOnTop);
+      // 起動時設定値を変更（設定ファイルに保存される）
+      const newSettings = { ...localSettings, startupAlwaysOnTop };
+      setLocalSettings(newSettings);
+      onSettingsChange(newSettings);
+      logger.debug('Startup always on top setting changed to:', startupAlwaysOnTop);
     } catch (error) {
-      logger.error('Failed to change always on top state:', error);
+      logger.error('Failed to change startup always on top setting:', error);
     }
   };
 
@@ -134,14 +136,56 @@ export const Settings: React.FC<SettingsProps> = ({
                 <Monitor size={16} />
                 {t('settings.window.title')}
               </h3>
-              <label className="setting-item">
-                <input
-                  type="checkbox"
-                  checked={localAlwaysOnTop}
-                  onChange={(e) => handleAlwaysOnTopChange(e.target.checked)}
-                />
-                <span>{t('settings.window.alwaysOnTop')}</span>
-              </label>
+              
+              {/* Startup behavior */}
+              <div className="setting-section">
+                <div className="setting-section-title">
+                  {t('settings.window.startup.title', 'Startup Behavior')}
+                </div>
+                <label className="setting-item">
+                  <input
+                    type="checkbox"
+                    checked={localSettings.startupAlwaysOnTop}
+                    onChange={(e) => handleStartupAlwaysOnTopChange(e.target.checked)}
+                  />
+                  <span>{t('settings.window.startup.alwaysOnTop', 'Always on Top on startup')}</span>
+                  <small className="setting-description">
+                    {t('settings.window.startup.description', 'Window will be pinned on top when app starts')}
+                  </small>
+                </label>
+              </div>
+              
+              {/* Current session control */}
+              <div className="setting-section setting-section--current">
+                <div className="current-session-header">
+                  <span className="current-session-label">
+                    {t('settings.window.session.title', 'Current Session')}
+                  </span>
+                  <span className={`session-status ${sessionAlwaysOnTop ? 'pinned' : 'unpinned'}`}>
+                    {sessionAlwaysOnTop 
+                      ? t('settings.window.session.pinned', 'Pinned') 
+                      : t('settings.window.session.unpinned', 'Not pinned')
+                    }
+                  </span>
+                </div>
+                <button 
+                  type="button"
+                  onClick={() => onSessionAlwaysOnTopChange(!sessionAlwaysOnTop)}
+                  className={`session-toggle-btn ${sessionAlwaysOnTop ? 'unpin' : 'pin'}`}
+                >
+                  {sessionAlwaysOnTop ? (
+                    <>
+                      <PinOff size={16} />
+                      {t('settings.window.session.unpin', 'Unpin now')}
+                    </>
+                  ) : (
+                    <>
+                      <Pin size={16} />
+                      {t('settings.window.session.pin', 'Pin now')}
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
 
             {/* Language Settings */}

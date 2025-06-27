@@ -5,7 +5,7 @@ export interface AppSettingsFile {
   app: {
     theme: 'auto' | 'light' | 'dark';
     language: 'auto' | 'en' | 'ja';
-    alwaysOnTop: boolean;
+    startupAlwaysOnTop: boolean;
     confirmDelete: boolean;
     startupView: 'tasks-detailed' | 'tasks-simple' | 'schedules';
   };
@@ -63,7 +63,7 @@ export const DEFAULT_APP_SETTINGS: AppSettingsFile = {
   app: {
     theme: 'auto',
     language: 'auto',
-    alwaysOnTop: false,
+    startupAlwaysOnTop: false,
     confirmDelete: true,
     startupView: 'tasks-detailed'
   },

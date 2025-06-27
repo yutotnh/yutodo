@@ -41,7 +41,7 @@ import './App.css';
 import './components/CommandPalette.css';
 
 const DEFAULT_SETTINGS: AppSettings = {
-  alwaysOnTop: false,
+  startupAlwaysOnTop: false,
   darkMode: 'auto',
   confirmDelete: true,
   customCss: '',
@@ -120,7 +120,7 @@ function App() {
     message: string;
   }>({ isOpen: false, todoIds: [], title: '', message: '' });
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [localAlwaysOnTop, setLocalAlwaysOnTop] = useState(false);
+  const [sessionAlwaysOnTop, setSessionAlwaysOnTop] = useState(false);
   const [isCompletedExpanded, setIsCompletedExpanded] = useState(true);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [editingSchedule, setEditingSchedule] = useState<Schedule | null>(null);
@@ -168,7 +168,7 @@ function App() {
       
       // ファイル設定からAppSettings形式に変換
       const appSettings: AppSettings = {
-        alwaysOnTop: fileSettings.app.alwaysOnTop,
+        startupAlwaysOnTop: fileSettings.app.startupAlwaysOnTop,
         darkMode: fileSettings.app.theme,
         confirmDelete: fileSettings.app.confirmDelete,
         customCss: fileSettings.appearance.customCss,
@@ -180,8 +180,8 @@ function App() {
       const finalSettings = { ...DEFAULT_SETTINGS, ...appSettings };
       setSettings(finalSettings);
       
-      // Always on Top状態をローカル状態として初期化（設定ファイルからの初期値のみ）
-      setLocalAlwaysOnTop(fileSettings.app.alwaysOnTop || false);
+      // セッションAlways on Top状態を起動時設定で初期化
+      setSessionAlwaysOnTop(fileSettings.app.startupAlwaysOnTop || false);
       
       // 言語設定を明示的に適用
       if (finalSettings.language === 'auto') {
@@ -250,7 +250,7 @@ function App() {
   }, [settings.language]); // 言語変更時のみ
 
 
-  // Tauri環境でAlways On Topを適用（ローカル状態から）
+  // Tauri環境でAlways On Topを適用（セッション状態から）
   useEffect(() => {
     const applyAlwaysOnTop = async () => {
       if (!isInitialized) return;
@@ -258,9 +258,9 @@ function App() {
       try {
         // Tauri環境でのみ実行
         if (typeof window !== 'undefined' && (window as any).__TAURI_INTERNALS__) {
-          logger.debug('Applying always on top setting:', localAlwaysOnTop);
+          logger.debug('Applying always on top setting:', sessionAlwaysOnTop);
           const appWindow = getCurrentWindow();
-          await appWindow.setAlwaysOnTop(localAlwaysOnTop);
+          await appWindow.setAlwaysOnTop(sessionAlwaysOnTop);
           logger.debug('Always on top applied successfully');
         }
       } catch (error) {
@@ -269,7 +269,7 @@ function App() {
     };
 
     applyAlwaysOnTop();
-  }, [localAlwaysOnTop, isInitialized]);
+  }, [sessionAlwaysOnTop, isInitialized]);
 
   useEffect(() => {
     if (settings.customCss) {
@@ -540,7 +540,7 @@ function App() {
           app: {
             theme: newSettings.darkMode as 'auto' | 'light' | 'dark',
             language: newSettings.language,
-            alwaysOnTop: newSettings.alwaysOnTop,
+            startupAlwaysOnTop: newSettings.startupAlwaysOnTop,
             confirmDelete: newSettings.confirmDelete,
             startupView: newSettings.startupView
           },
@@ -604,13 +604,13 @@ function App() {
   // メニューアクションハンドラー
 
   const handleToggleAlwaysOnTop = () => {
-    // ローカル状態のみ変更、設定ファイルには保存しない
-    setLocalAlwaysOnTop(prev => !prev);
+    // セッション状態のみ変更、設定ファイルには保存しない
+    setSessionAlwaysOnTop(prev => !prev);
   };
 
-  const handleLocalAlwaysOnTopChange = (alwaysOnTop: boolean) => {
-    // ローカル状態のみ変更、設定ファイルには保存しない
-    setLocalAlwaysOnTop(alwaysOnTop);
+  const handleSessionAlwaysOnTopChange = (alwaysOnTop: boolean) => {
+    // セッション状態のみ変更、設定ファイルには保存しない
+    setSessionAlwaysOnTop(alwaysOnTop);
   };
 
   const handleShowAbout = () => {
@@ -1379,7 +1379,7 @@ function App() {
         setSettings(prev => ({ ...prev, startupView: newView }));
       }
     },
-    onToggleAlwaysOnTop: () => setSettings(prev => ({ ...prev, alwaysOnTop: !settings.alwaysOnTop })),
+    onToggleAlwaysOnTop: () => setSessionAlwaysOnTop(!sessionAlwaysOnTop),
     onShowHelp: () => setShowShortcutHelp(true),
     // Schedule handlers
     onDeleteInactiveSchedules: handleDeleteInactiveSchedules,
@@ -1392,7 +1392,7 @@ function App() {
         <div className="header-left">
           <MenuBar
             settings={settings}
-            localAlwaysOnTop={localAlwaysOnTop}
+            sessionAlwaysOnTop={sessionAlwaysOnTop}
             onNewTask={keyboardHandlers.onNewTask}
             onSelectAll={keyboardHandlers.onSelectAll}
             onDeleteSelected={keyboardHandlers.onDeleteSelected}
@@ -1413,10 +1413,10 @@ function App() {
           <button
             data-testid="always-on-top-button"
             onClick={handleToggleAlwaysOnTop}
-            className={`window-control always-on-top-btn ${localAlwaysOnTop ? 'active' : ''}`}
-            title={localAlwaysOnTop ? t('app.unpinWindow') : t('app.pinWindow')}
+            className={`window-control always-on-top-btn ${sessionAlwaysOnTop ? 'active' : ''}`}
+            title={sessionAlwaysOnTop ? t('app.unpinWindow') : t('app.pinWindow')}
           >
-            {localAlwaysOnTop ? <Pin size={12} /> : <PinOff size={12} />}
+            {sessionAlwaysOnTop ? <Pin size={12} /> : <PinOff size={12} />}
           </button>
           <button
             data-testid="minimize-button"
@@ -1642,9 +1642,9 @@ function App() {
       {showSettings && (
         <Settings
           settings={settings}
-          localAlwaysOnTop={localAlwaysOnTop}
+          sessionAlwaysOnTop={sessionAlwaysOnTop}
           onSettingsChange={handleSettingsChange}
-          onLocalAlwaysOnTopChange={handleLocalAlwaysOnTopChange}
+          onSessionAlwaysOnTopChange={handleSessionAlwaysOnTopChange}
           onClose={() => setShowSettings(false)}
           todos={todos}
           onImportTodos={handleImportTodos}
@@ -1709,7 +1709,7 @@ function App() {
             app: {
               theme: newSettings.darkMode,
               language: newSettings.language,
-              alwaysOnTop: newSettings.alwaysOnTop,
+              startupAlwaysOnTop: newSettings.startupAlwaysOnTop,
               confirmDelete: newSettings.confirmDelete,
               startupView: newSettings.startupView
             },

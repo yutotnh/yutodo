@@ -14,7 +14,7 @@ describe('useFileSettings', () => {
     app: {
       theme: 'dark' as const,
       language: 'en' as const,
-      alwaysOnTop: true,
+      startupAlwaysOnTop: true,
       confirmDelete: true,
       startupView: 'tasks-detailed' as const
     },
@@ -65,7 +65,9 @@ describe('useFileSettings', () => {
 
   describe('Initialization', () => {
     it('should skip initialization when not in Tauri environment', async () => {
-      delete (window as any).__TAURI_INTERNALS__;
+      // Save original value and temporarily set to undefined
+      const originalTauriInternals = (window as any).__TAURI_INTERNALS__;
+      (window as any).__TAURI_INTERNALS__ = undefined;
       
       const { result } = renderHook(() => useFileSettings());
       
@@ -76,6 +78,9 @@ describe('useFileSettings', () => {
       expect(result.current.settings).toBeNull();
       expect(result.current.keybindings).toEqual([]);
       expect(settingsManager.initialize).not.toHaveBeenCalled();
+      
+      // Restore original value
+      (window as any).__TAURI_INTERNALS__ = originalTauriInternals;
     });
 
     it('should initialize settings manager and load settings', async () => {
@@ -269,7 +274,7 @@ describe('Conversion functions', () => {
         app: {
           theme: 'dark' as const,
           language: 'ja' as const,
-          alwaysOnTop: true,
+          startupAlwaysOnTop: true,
           detailedMode: false,
           confirmDelete: false,
           startupView: 'schedules' as const
@@ -292,7 +297,7 @@ describe('Conversion functions', () => {
       const appSettings = fileSettingsToAppSettings(fileSettings);
       
       expect(appSettings).toEqual({
-        alwaysOnTop: true,
+        startupAlwaysOnTop: true,
         darkMode: 'dark',
         confirmDelete: false,
         customCss: '.custom { color: blue; }',
@@ -306,7 +311,7 @@ describe('Conversion functions', () => {
   describe('appSettingsToFileSettings', () => {
     it('should convert app settings to file settings format', () => {
       const appSettings = {
-        alwaysOnTop: true,
+        startupAlwaysOnTop: true,
         darkMode: 'light' as const,
         confirmDelete: true,
         customCss: '.todo { color: green; }',
@@ -319,7 +324,7 @@ describe('Conversion functions', () => {
       
       expect(fileSettings).toEqual({
         app: {
-          alwaysOnTop: true,
+          startupAlwaysOnTop: true,
           theme: 'light',
           confirmDelete: true,
           language: 'en',

@@ -5093,3 +5093,139 @@ body {
   }
 }
 
+/* Enhanced Settings Window Options UI */
+.setting-section {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.setting-section:last-child {
+  margin-bottom: 0;
+}
+
+.setting-section-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.setting-section--current {
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  border: 1px solid #0ea5e9;
+  box-shadow: 0 2px 4px rgba(14, 165, 233, 0.1);
+}
+
+.current-session-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.current-session-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.session-status {
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.session-status.pinned {
+  background: #dcfce7;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+
+.session-status.unpinned {
+  background: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+.session-toggle-btn {
+  width: 100%;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.session-toggle-btn.pin {
+  background: #3b82f6;
+  color: white;
+}
+
+.session-toggle-btn.pin:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+}
+
+.session-toggle-btn.unpin {
+  background: #ef4444;
+  color: white;
+}
+
+.session-toggle-btn.unpin:hover {
+  background: #dc2626;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3);
+}
+
+.session-toggle-btn:active {
+  transform: translateY(0);
+}
+
+/* Dark mode support */
+.app--dark .setting-section {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+.app--dark .setting-section--current {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  border-color: #0ea5e9;
+}
+
+.app--dark .current-session-label {
+  color: #f1f5f9;
+}
+
+.app--dark .session-status.pinned {
+  background: #14532d;
+  color: #86efac;
+  border-color: #16a34a;
+}
+
+.app--dark .session-status.unpinned {
+  background: #7f1d1d;
+  color: #fca5a5;
+  border-color: #dc2626;
+}
+
+.app--dark .setting-section-title {
+  color: #f1f5f9;
+  border-bottom-color: #475569;
+}
+

@@ -185,7 +185,7 @@ export function useFileSettings(): UseFileSettingsReturn {
  */
 export function fileSettingsToAppSettings(fileSettings: AppSettingsFile): any {
   return {
-    alwaysOnTop: fileSettings.app.alwaysOnTop,
+    startupAlwaysOnTop: fileSettings.app.startupAlwaysOnTop,
     darkMode: fileSettings.app.theme,
     confirmDelete: fileSettings.app.confirmDelete,
     customCss: fileSettings.appearance.customCss,
@@ -201,9 +201,9 @@ export function fileSettingsToAppSettings(fileSettings: AppSettingsFile): any {
 export function appSettingsToFileSettings(appSettings: any): Partial<AppSettingsFile> {
   const updates: any = {};
   
-  if (appSettings.alwaysOnTop !== undefined) {
+  if (appSettings.startupAlwaysOnTop !== undefined) {
     updates.app = updates.app || {};
-    updates.app.alwaysOnTop = appSettings.alwaysOnTop;
+    updates.app.startupAlwaysOnTop = appSettings.startupAlwaysOnTop;
   }
   
   

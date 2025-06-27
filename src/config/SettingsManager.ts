@@ -380,8 +380,8 @@ theme = "auto"
 # Language: "auto" | "en" | "ja"
 language = "auto"
 
-# Window always on top
-alwaysOnTop = false
+# Window always on top on startup
+startupAlwaysOnTop = false
 
 # Confirm before deleting tasks
 confirmDelete = true
