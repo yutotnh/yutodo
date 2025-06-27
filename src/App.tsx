@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Minus, X } from 'lucide-react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { useTranslation } from 'react-i18next';
@@ -825,38 +825,15 @@ function App() {
 
 
 
-  // Altキーの状態を監視してヘッダー表示を制御
-  useEffect(() => {
-    const handleGlobalKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Alt') {
-        setIsAltKeyActive(true);
-        setShowHeader(true); // Altキーが押されたらヘッダーを表示
-      }
-    };
+  // MenuBarからのAltキー状態変更ハンドラー
+  const handleAltKeyChange = useCallback((isActive: boolean) => {
+    setIsAltKeyActive(isActive);
+  }, []);
 
-    const handleGlobalKeyUp = (event: KeyboardEvent) => {
-      if (event.key === 'Alt') {
-        setIsAltKeyActive(false);
-        // Altキーが離されたときの処理（メニューが開いていない場合はヘッダーを隠す）
-        if (!isMenuOpen) {
-          // 少し遅延してからヘッダーを隠す（メニュー操作の時間を確保）
-          setTimeout(() => {
-            if (!isMenuOpen) {
-              setShowHeader(false);
-            }
-          }, 500);
-        }
-      }
-    };
-
-    document.addEventListener('keydown', handleGlobalKeyDown);
-    document.addEventListener('keyup', handleGlobalKeyUp);
-
-    return () => {
-      document.removeEventListener('keydown', handleGlobalKeyDown);
-      document.removeEventListener('keyup', handleGlobalKeyUp);
-    };
-  }, [isMenuOpen]);
+  // MenuBarからのヘッダー表示変更ハンドラー
+  const handleHeaderVisibilityChange = useCallback((isVisible: boolean) => {
+    setShowHeader(isVisible);
+  }, []);
 
 
   // 実際のダークモード状態を計算
@@ -1426,6 +1403,8 @@ function App() {
             onExportTasks={handleExportTasksFromMenu}
             onMenuStateChange={setIsMenuOpen}
             isAltKeyActive={isAltKeyActive}
+            onAltKeyChange={handleAltKeyChange}
+            onHeaderVisibilityChange={handleHeaderVisibilityChange}
             onViewChange={handleViewChange}
           />
         </div>
