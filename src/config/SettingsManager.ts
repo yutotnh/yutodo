@@ -18,6 +18,7 @@ export class SettingsManager {
   private paths: SettingsPaths | null = null;
   private isInitialized: boolean = false;
   private initializationError: Error | null = null;
+  private parseErrors: any[] = [];
   
   // Tauri v2 file watchers (UnwatchFn type)
   private settingsWatcher: (() => void) | null = null;
@@ -320,12 +321,17 @@ export class SettingsManager {
       }
     } catch (error) {
       logger.error('Error loading settings:', error);
-      throw new SettingsError(
-        'Failed to load settings',
-        'PARSE_ERROR',
-        this.paths.settingsFile,
+      
+      // Store parse error for UI display but continue with defaults
+      this.parseErrors.push({
+        type: 'settings',
+        filePath: this.paths.settingsFile,
         error
-      );
+      });
+      
+      // Use default settings and continue initialization
+      this.settings = { ...DEFAULT_APP_SETTINGS };
+      logger.warn('Using default settings due to parse error');
     }
   }
   
@@ -352,12 +358,17 @@ export class SettingsManager {
       }
     } catch (error) {
       logger.error('Error loading keybindings:', error);
-      throw new SettingsError(
-        'Failed to load keybindings',
-        'PARSE_ERROR',
-        this.paths.keybindingsFile,
+      
+      // Store parse error for UI display but continue with defaults
+      this.parseErrors.push({
+        type: 'keybindings',
+        filePath: this.paths.keybindingsFile,
         error
-      );
+      });
+      
+      // Use default keybindings and continue initialization
+      this.keybindings = [...DEFAULT_KEYBINDINGS];
+      logger.warn('Using default keybindings due to parse error');
     }
   }
   
@@ -1035,6 +1046,20 @@ command = "showHelp"
    */
   getKeybindings(): Keybinding[] {
     return [...this.keybindings];
+  }
+  
+  /**
+   * Get parse errors for UI display
+   */
+  getParseErrors(): any[] {
+    return [...this.parseErrors];
+  }
+  
+  /**
+   * Clear parse errors
+   */
+  clearParseErrors(): void {
+    this.parseErrors = [];
   }
   
   /**

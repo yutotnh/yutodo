@@ -130,10 +130,22 @@ export function useFileSettings(): UseFileSettingsReturn {
         // Get initial values
         const initialSettings = settingsManager.getSettings();
         const initialKeybindings = settingsManager.getKeybindings();
-        
+        const initialParseErrors = settingsManager.getParseErrors();
         
         setSettings(initialSettings);
         setKeybindings(initialKeybindings);
+        
+        // Convert parse errors to SettingsFileError format
+        if (initialParseErrors.length > 0) {
+          const convertedErrors = initialParseErrors.map(parseError => parseSettingsError({
+            code: 'PARSE_ERROR',
+            message: parseError.error.message || 'Failed to parse configuration file',
+            filePath: parseError.filePath,
+            details: parseError.error
+          })).filter(Boolean) as SettingsFileError[];
+          
+          setSettingsErrors(convertedErrors);
+        }
         
         // Subscribe to changes
         unsubscribe = settingsManager.onChange((event: SettingsChangeEvent) => {
@@ -264,7 +276,10 @@ export function useFileSettings(): UseFileSettingsReturn {
       });
       
       if (success) {
-        // Clear the error since it should be fixed
+        // Clear the specific error from SettingsManager
+        settingsManager.clearParseErrors();
+        
+        // Clear the error from our state since it should be fixed
         clearError(error.type);
         logger.info('Auto-fix completed successfully');
       } else {
