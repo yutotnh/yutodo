@@ -1,22 +1,29 @@
-# Release Please workflow - manual trigger only
+# Release Please workflow - automated release management
 name: Release Please
 
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       release_type:
-        description: 'Type of release'
-        required: true
-        default: 'minor'
+        description: 'Type of release (for manual trigger)'
+        required: false
+        default: 'auto'
         type: choice
         options:
+        - auto
         - patch
         - minor
         - major
+        - prerelease
 
 permissions:
   contents: write
   pull-requests: write
+  issues: write
+  repository-projects: write
 
 jobs:
   release-please:
@@ -27,25 +34,9 @@ jobs:
     steps:
       - name: Release Please
         id: release
-        uses: google-github-actions/release-please-action@v4
+        uses: googleapis/release-please-action@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          release-type: node
-          package-name: yutodo
-          changelog-sections: |
-            [
-              {"type":"feat","section":"Features"},
-              {"type":"fix","section":"Bug Fixes"},
-              {"type":"perf","section":"Performance Improvements"},
-              {"type":"deps","section":"Dependencies"},
-              {"type":"revert","section":"Reverts"},
-              {"type":"docs","section":"Documentation"},
-              {"type":"style","section":"Styles"},
-              {"type":"refactor","section":"Code Refactoring"},
-              {"type":"test","section":"Tests"},
-              {"type":"build","section":"Build System"},
-              {"type":"ci","section":"Continuous Integration"}
-            ]
 
   build-and-release:
     if: ${{ needs.release-please.outputs.release_created }}

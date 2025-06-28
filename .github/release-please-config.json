@@ -1,0 +1,47 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "packages": {
+    ".": {
+      "release-type": "node",
+      "package-name": "yutodo",
+      "changelog-sections": [
+        {"type": "feat", "section": "✨ Features"},
+        {"type": "fix", "section": "🐛 Bug Fixes"},
+        {"type": "perf", "section": "⚡ Performance Improvements"},
+        {"type": "deps", "section": "📦 Dependencies"},
+        {"type": "revert", "section": "⏪ Reverts"},
+        {"type": "docs", "section": "📚 Documentation"},
+        {"type": "style", "section": "💄 Styles"},
+        {"type": "refactor", "section": "♻️ Code Refactoring"},
+        {"type": "test", "section": "✅ Tests"},
+        {"type": "build", "section": "🔧 Build System"},
+        {"type": "ci", "section": "🔄 Continuous Integration"},
+        {"type": "chore", "section": "🧹 Chores"},
+        {"type": "security", "section": "🔒 Security"}
+      ],
+      "extra-files": [
+        "package.json",
+        "server/package.json",
+        "src-tauri/tauri.conf.json"
+      ],
+      "include-component-in-tag": false,
+      "include-v-in-tag": true,
+      "tag-separator": "",
+      "separate-pull-requests": false,
+      "label": "🚀 release",
+      "release-label": "🚀 autorelease: tagged",
+      "prerelease": false,
+      "prerelease-type": "alpha",
+      "bump-minor-pre-major": true,
+      "bump-patch-for-minor-pre-major": false,
+      "draft": false,
+      "draft-pull-request": false
+    }
+  },
+  "bootstrap-sha": "09b4061",
+  "last-release-sha": "09b4061",
+  "always-link-local": false,
+  "group-pull-request-title-pattern": "chore: release${component} ${version}",
+  "release-search-depth": 400,
+  "commit-search-depth": 500
+}
