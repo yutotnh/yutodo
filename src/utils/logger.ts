@@ -1,6 +1,6 @@
 /**
  * Enhanced structured logger utility for frontend
- * Integrates with backend observability systems
+ * Maintains compatibility with existing usage patterns
  */
 
 const isDevelopment = import.meta.env.DEV;
@@ -53,87 +53,57 @@ export const logger = {
       message,
       context,
       service: 'yutodo-frontend',
-      version: import.meta.env.VITE_APP_VERSION || '1.0.0',
+      version: '1.0.0',
       environment: isDevelopment ? 'development' : 'production',
       userAgent: navigator.userAgent
     };
   },
 
   /**
-   * Enhanced debug logs with structured context
+   * Enhanced debug logs with flexible input types
    */
-  debug: (message: string, context?: FrontendLogContext) => {
+  debug: (message: any, ...args: any[]) => {
     if (isDevelopment) {
-      const logEntry = logger.createStructuredLog('debug', message, context);
-      if (context) {
-        console.log('[DEBUG]', message, logEntry);
-      } else {
-        console.log('[DEBUG]', message);
-      }
+      console.log('[DEBUG]', message, ...args);
     }
   },
 
   /**
-   * Enhanced info logs with structured context
+   * Enhanced info logs with flexible input types
    */
-  info: (message: string, context?: FrontendLogContext) => {
-    const logEntry = logger.createStructuredLog('info', message, context);
-    if (context) {
-      console.info('[INFO]', message, logEntry);
-    } else {
-      console.info('[INFO]', message);
-    }
+  info: (message: any, ...args: any[]) => {
+    console.info('[INFO]', message, ...args);
   },
 
   /**
-   * Enhanced warning logs with structured context
+   * Enhanced warning logs with flexible input types
    */
-  warn: (message: string, context?: FrontendLogContext) => {
-    const logEntry = logger.createStructuredLog('warn', message, context);
-    if (context) {
-      console.warn('[WARN]', message, logEntry);
-    } else {
-      console.warn('[WARN]', message);
-    }
+  warn: (message: any, ...args: any[]) => {
+    console.warn('[WARN]', message, ...args);
   },
 
   /**
-   * Enhanced error logs with structured context
+   * Enhanced error logs with flexible input types
    */
-  error: (message: string, context?: FrontendLogContext) => {
-    const logEntry = logger.createStructuredLog('error', message, context);
-    if (context) {
-      console.error('[ERROR]', message, logEntry);
-    } else {
-      console.error('[ERROR]', message);
-    }
+  error: (message: any, ...args: any[]) => {
+    console.error('[ERROR]', message, ...args);
   },
 
   /**
-   * Enhanced network logs with structured context
+   * Enhanced network logs with flexible input types
    */
-  network: (message: string, context?: FrontendLogContext) => {
+  network: (message: any, ...args: any[]) => {
     if (isDevelopment) {
-      const logEntry = logger.createStructuredLog('network', message, context);
-      if (context) {
-        console.log('[NETWORK]', message, logEntry);
-      } else {
-        console.log('[NETWORK]', message);
-      }
+      console.log('[NETWORK]', message, ...args);
     }
   },
 
   /**
-   * Enhanced UI logs with structured context
+   * Enhanced UI logs with flexible input types
    */
-  ui: (message: string, context?: FrontendLogContext) => {
+  ui: (message: any, ...args: any[]) => {
     if (isDevelopment) {
-      const logEntry = logger.createStructuredLog('ui', message, context);
-      if (context) {
-        console.log('[UI]', message, logEntry);
-      } else {
-        console.log('[UI]', message);
-      }
+      console.log('[UI]', message, ...args);
     }
   },
 
@@ -197,7 +167,10 @@ export const logger = {
         //   headers: { 'Content-Type': 'application/json' },
         //   body: JSON.stringify(logEntry)
         // });
-      } catch (error) {
+        
+        // Avoid unused parameter warning
+        void logEntry;
+      } catch {
         // Fail silently to avoid log loops
       }
     }
