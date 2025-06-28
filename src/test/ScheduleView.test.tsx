@@ -414,7 +414,7 @@ describe('ScheduleView', () => {
       render(<ScheduleView {...defaultProps} schedules={sampleSchedules} />);
       
       // Active schedule should show the specific next execution date and time
-      expect(screen.getByText((content, element) => {
+      expect(screen.getByText((_, element) => {
         return element?.textContent?.includes('2024/1/15') && element?.textContent?.includes('18:00') || false;
       })).toBeInTheDocument();
       
