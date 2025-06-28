@@ -86,16 +86,11 @@ export class SecurityMiddleware {
     return rateLimit({
       windowMs: this.config.rateLimiting.windowMs,
       max: this.config.rateLimiting.maxRequests,
-      message: {
-        error: 'Too many requests',
-        message: this.config.rateLimiting.message,
-        retryAfter: Math.ceil(this.config.rateLimiting.windowMs / 1000)
-      },
       standardHeaders: true,
       legacyHeaders: false,
       skipSuccessfulRequests: this.config.rateLimiting.skipSuccessfulRequests,
       skipFailedRequests: this.config.rateLimiting.skipFailedRequests,
-      onLimitReached: (req: Request) => {
+      handler: (req: Request, res: Response) => {
         this.stats.rateLimitHits++;
         this.logSecurityEvent('rate_limit_exceeded', req);
         
@@ -103,6 +98,13 @@ export class SecurityMiddleware {
         if (req.ip) {
           this.suspiciousIPs.add(req.ip);
         }
+        
+        // デフォルトのレスポンスを送信
+        res.status(429).json({
+          error: 'Too many requests',
+          message: this.config.rateLimiting.message,
+          retryAfter: Math.ceil(this.config.rateLimiting.windowMs / 1000)
+        });
       }
     });
   }
