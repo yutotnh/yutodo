@@ -5,6 +5,8 @@ A modern, feature-rich todo list application built with Tauri, React, and TypeSc
 [![Tauri](https://img.shields.io/badge/Tauri-v2-blue?logo=tauri)](https://tauri.app/)
 [![React](https://img.shields.io/badge/React-18-blue?logo=react)](https://reactjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript)](https://www.typescriptlang.org/)
+[![Multi-Platform](https://img.shields.io/badge/Multi--Platform-ARM64%20%7C%20AMD64-brightgreen?logo=docker)](docs/MULTI_PLATFORM.md)
+[![Kubernetes](https://img.shields.io/badge/Kubernetes-Ready-blue?logo=kubernetes)](k8s/README.md)
 [![Tests](https://img.shields.io/badge/Tests-400%2B%20passing-green)](https://github.com)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
@@ -27,6 +29,9 @@ A modern, feature-rich todo list application built with Tauri, React, and TypeSc
 - [Database Architecture](#database-architecture)
 - [API Endpoints](#api-endpoints)
 - [Technology Stack](#technology-stack)
+- [Docker Containerization](#docker-containerization)
+- [Multi-Platform Support](#multi-platform-support)
+- [Kubernetes Deployment](#kubernetes-deployment)
 - [E2E Testing](#e2e-testing)
 - [WSLg Environment Support](#wslg-environment-support)
 - [Contributing](#contributing)
@@ -515,6 +520,105 @@ The application automatically handles database setup with no manual configuratio
 - **React Testing Library** - Component testing
 - **WebdriverIO** - E2E testing with Tauri WebDriver
 - **@testing-library/user-event** - User interaction simulation
+
+## Docker Containerization
+
+YuToDo Server is containerized with multi-platform Docker support for easy deployment.
+
+### Quick Docker Start
+
+```bash
+# Pull and run from GitHub Container Registry
+docker run -d \
+  --name yutodo-server \
+  -p 3001:3001 \
+  -v yutodo-data:/data \
+  ghcr.io/your-org/yutodo-server:latest
+
+# Using Docker Compose
+docker-compose up -d
+```
+
+### Available Images
+
+| Tag | Platform | Description |
+|-----|----------|-------------|
+| `latest` | Multi-platform | Latest stable release |
+| `v1.x.x` | Multi-platform | Specific version |
+| `main` | Multi-platform | Development build |
+
+### Docker Compose Configurations
+
+- **Development**: `docker-compose.yml` - Local development with hot reload
+- **Production**: `docker-compose.prod.yml` - Optimized for production
+- **Observability**: `docker-compose.observability.yml` - With monitoring stack
+
+## Multi-Platform Support
+
+YuToDo provides comprehensive cross-platform support for both containers and desktop applications.
+
+### Docker Platforms
+
+✅ **linux/amd64** (x86_64) - Primary production platform  
+✅ **linux/arm64** (ARM64/AArch64) - Cloud-native, ARM processors  
+⚠️ **linux/arm/v7** (ARM32v7) - Experimental support for IoT devices  
+
+### Desktop Platforms
+
+| Platform | Architecture | Formats |
+|----------|-------------|---------|
+| **macOS** | Intel + Apple Silicon | `.dmg`, `.app` |
+| **Windows** | x64 + ARM64 | `.msi`, `.exe` |  
+| **Linux** | x64 + ARM64 | `.deb`, `.AppImage` |
+
+### Multi-Platform Docker Usage
+
+```bash
+# Build for multiple platforms
+docker buildx build \
+  --platform linux/amd64,linux/arm64 \
+  --tag yutodo-server:multi \
+  --push .
+
+# Run on specific platform
+docker run --platform linux/arm64 \
+  ghcr.io/your-org/yutodo-server:latest
+```
+
+**For detailed platform support, see [Multi-Platform Guide](docs/MULTI_PLATFORM.md)**
+
+## Kubernetes Deployment
+
+YuToDo includes enterprise-grade Kubernetes deployment with Helm charts.
+
+### Quick Kubernetes Deploy
+
+```bash
+# Deploy to development
+./k8s/scripts/deploy.sh --environment development
+
+# Deploy to production
+./k8s/scripts/deploy.sh --environment production --upgrade --verify
+```
+
+### Helm Chart Features
+
+- 🏗️ **Multi-environment**: Development, staging, production configurations
+- 🔒 **Security**: Pod security standards, network policies, RBAC
+- 📊 **Monitoring**: Prometheus ServiceMonitor, Grafana dashboards
+- 📈 **Scaling**: Horizontal Pod Autoscaler, resource management
+- 🔄 **High Availability**: Anti-affinity, pod disruption budgets
+- 💾 **Persistence**: PostgreSQL, Redis, persistent volumes
+
+### Supported Environments
+
+| Environment | Replicas | Database | Autoscaling | Security |
+|-------------|----------|----------|-------------|----------|
+| Development | 1 | SQLite | Disabled | Baseline |
+| Staging | 2 | PostgreSQL | Limited | Standard |
+| Production | 5+ | PostgreSQL + Redis | Full | Restricted |
+
+**For complete Kubernetes setup, see [k8s/README.md](k8s/README.md)**
 
 ## E2E Testing
 

@@ -79,6 +79,15 @@ npm run test:e2e           # Run all E2E tests headlessly
 npm run test:e2e:ui        # Run E2E tests with visible browser (HEADED=true)
 npm run test:e2e:headed    # Alternative command for headed mode
 npm run setup:e2e          # Install tauri-driver and WebDriver dependencies
+
+# Docker-based E2E testing (from e2e directory)
+cd e2e
+npm run test:docker        # Run E2E tests in Docker environment (sequential)
+npm run test:docker:parallel  # Run E2E tests in parallel (faster)
+npm run test:docker:dev    # Start development environment for debugging
+npm run test:docker:clean  # Clean up Docker containers and volumes
+npm run docker:build       # Build E2E Docker image
+npm run docker:shell       # Interactive Docker shell for debugging
 ```
 
 ## Development Workflow
@@ -188,6 +197,25 @@ Claude Code evaluates each change and makes CHANGELOG.md update decisions at com
 - **Helper Functions**: Reusable test utilities in `e2e/helpers/tauri-helpers.js`
 - **Requirements**: `tauri-driver`, platform-specific WebDriver (webkit2gtk-driver for Linux, Edge WebDriver for Windows)
 
+### Docker E2E Testing (Containerized Environment)
+- **Framework**: Docker-based E2E testing with full environment isolation
+- **Architecture**: Complete containerized server + E2E test runner setup
+- **Orchestration**: Docker Compose with `docker-compose.e2e.yml`
+- **Environment**: 
+  - `yutodo-server-e2e`: Isolated server instance with test configuration
+  - `yutodo-e2e`: Test runner container with Xvfb, tauri-driver, and WebDriver
+  - `yutodo-e2e-dev`: Development container for debugging
+- **Features**:
+  - **Parallel Execution**: Configurable parallel test runs with `E2E_PARALLEL=true`
+  - **Health Checks**: Server readiness verification before test execution
+  - **Artifact Collection**: Automated test reports, screenshots, and logs collection
+  - **Debug Support**: Interactive debugging shell and volume export for failed tests
+- **Scripts**: 
+  - `docker-e2e-setup.sh`: Environment setup and dependency installation
+  - `docker-e2e-run.sh`: Test execution with comprehensive logging and cleanup
+  - `health-check.sh`: Container health verification
+- **CI Integration**: GitHub Actions job for Docker-based E2E testing with artifact upload
+
 ### Test Files Structure
 ```
 src/test/
@@ -228,7 +256,13 @@ e2e/
 │   ├── todo-operations.spec.ts # Todo CRUD operation tests
 │   ├── keyboard-shortcuts.spec.ts # Keyboard shortcut tests
 │   └── window-operations.spec.ts # Window management tests
-└── screenshots/                # Test failure screenshots
+├── scripts/                    # Docker E2E automation scripts
+│   ├── docker-e2e-setup.sh    # Environment setup and dependency installation
+│   ├── docker-e2e-run.sh      # Test execution with logging and cleanup
+│   └── health-check.sh         # Container health verification
+├── Dockerfile                  # E2E testing container image
+├── screenshots/                # Test failure screenshots
+└── test-output/                # Docker test artifacts and reports
 ```
 
 ### Testing Patterns
@@ -1057,6 +1091,702 @@ cors_origins = [
 ```
 
 **Technical Implementation**: The server uses Socket.IO's dynamic origin validation to support wildcards properly, overcoming the limitation where `["*"]` wouldn't work with Socket.IO's default configuration.
+
+## Docker Containerization
+
+The YuToDo Server can be run in Docker containers for improved portability, scalability, and deployment consistency. The containerization preserves the existing architecture where the Tauri desktop app connects to the server via WebSocket.
+
+### Docker Architecture
+
+- **Server Container**: Node.js Express + Socket.IO server with SQLite database
+- **Client Application**: Native Tauri desktop app (runs on host, connects to containerized server)  
+- **Communication**: WebSocket (Socket.IO) connection between client and server
+- **Data Persistence**: SQLite database stored in Docker volumes
+
+### Quick Start
+
+#### Development Environment
+```bash
+# Start containerized server for development
+docker-compose up -d
+
+# Start Tauri desktop app (connects to containerized server)
+npm run tauri dev
+```
+
+#### Production Environment
+```bash
+# Start production server container
+docker-compose -f docker-compose.prod.yml up -d
+
+# Desktop app connects to production server
+npm run tauri build  # Build desktop app
+```
+
+### Container Configuration
+
+#### Development (docker-compose.yml)
+- **Purpose**: Local development with debug logging and flexible CORS
+- **Environment**: `NODE_ENV=development`, debug mode enabled
+- **CORS**: Wildcard allowed (`*`) for development flexibility
+- **Volumes**: Named volumes for data persistence
+- **Port**: 3001 (mapped to host)
+
+#### Production (docker-compose.prod.yml)  
+- **Purpose**: Production deployment with security and performance optimization
+- **Environment**: `NODE_ENV=production`, optimized logging
+- **CORS**: Explicit origins only (security)
+- **Security**: Resource limits, security options, read-only filesystem where possible
+- **Volumes**: Bind mounts for better backup control
+- **Health Checks**: Enhanced monitoring for production reliability
+
+### Environment Variables
+
+The containerized server supports comprehensive environment variable configuration:
+
+#### **Core Server Settings**
+```bash
+YUTODO_SERVER_HOST=0.0.0.0          # Bind to all interfaces (required for containers)
+YUTODO_SERVER_PORT=3001             # Server port
+YUTODO_DB_PATH=/data/todos.db        # Database location in container
+YUTODO_CONFIG_DIR=/config            # Configuration directory
+```
+
+#### **Security & CORS**
+```bash
+YUTODO_CORS_ORIGINS="*"                                    # Development wildcard
+YUTODO_CORS_ORIGINS="http://localhost:1420,https://app.example.com"  # Production origins
+```
+
+#### **Performance & Debugging**
+```bash
+YUTODO_LOG_LEVEL=info               # Logging level (debug, info, warn, error)
+YUTODO_DB_CACHE_SIZE=5000           # SQLite cache size for performance
+YUTODO_SCHEDULE_INTERVAL=30         # Schedule check interval (seconds)
+YUTODO_ENABLE_DEBUG=false           # Debug mode toggle
+```
+
+### Docker Commands
+
+#### Building and Running
+```bash
+# Development environment
+docker-compose up -d                # Start in background
+docker-compose logs yutodo-server   # View logs  
+docker-compose down                 # Stop and remove containers
+
+# Production environment
+docker-compose -f docker-compose.prod.yml up -d
+docker-compose -f docker-compose.prod.yml down
+
+# Manual container build
+cd server && docker build -t yutodo-server .
+docker run -d -p 3001:3001 -v yutodo-data:/data yutodo-server
+```
+
+#### Data Management
+```bash
+# View volumes
+docker volume ls | grep yutodo
+
+# Backup database
+docker cp yutodo-server-dev:/data/todos.db ./backup/
+
+# View container config
+docker exec yutodo-server-dev cat /config/server-config.toml
+```
+
+#### Monitoring and Debugging
+```bash
+# Container health and status
+docker ps | grep yutodo
+docker exec yutodo-server-dev node -e "console.log('Health check')"
+
+# Live logs
+docker-compose logs -f yutodo-server
+
+# Container shell access
+docker exec -it yutodo-server-dev sh
+```
+
+### Production Deployment
+
+#### Environment Setup
+```bash
+# Create production environment file
+cat > .env.prod << 'EOF'
+YUTODO_HOST_PORT=3001
+YUTODO_LOG_LEVEL=info
+YUTODO_CORS_ORIGINS=https://your-domain.com
+YUTODO_DATA_DIR=/opt/yutodo/data
+YUTODO_LOGS_DIR=/opt/yutodo/logs
+YUTODO_CONFIG_PATH=/opt/yutodo/config/production.toml
+EOF
+
+# Start with environment file
+docker-compose -f docker-compose.prod.yml --env-file .env.prod up -d
+```
+
+#### Backup Strategy
+```bash
+# Automated database backup
+docker exec yutodo-server-prod cp /data/todos.db /data/backup/todos-$(date +%Y%m%d).db
+
+# Volume backup
+docker run --rm -v yutodo-prod-data:/data -v $(pwd)/backup:/backup alpine \
+  tar czf /backup/yutodo-data-$(date +%Y%m%d).tar.gz -C /data .
+```
+
+### Integration with Existing Workflow
+
+#### Development Workflow
+1. **Start containerized server**: `docker-compose up -d`
+2. **Develop Tauri app**: `npm run tauri dev` (connects to container)
+3. **Server logs**: Available via `docker-compose logs yutodo-server`
+4. **Configuration**: Server settings via environment variables or volume-mounted config
+
+#### Testing with Containers
+```bash
+# Backend tests (in container)
+docker-compose exec yutodo-server npm test
+
+# Frontend tests (host, connecting to container)
+npm test
+
+# E2E tests (with containerized server)
+docker-compose up -d && npm run test:e2e
+```
+
+### Container Benefits
+
+- **Environment Consistency**: Identical server environment across development, testing, and production
+- **Easy Deployment**: Single container image works across different platforms
+- **Resource Isolation**: Container resource limits prevent resource conflicts
+- **Backup Simplicity**: Database and configuration stored in managed volumes
+- **Scalability Ready**: Foundation for future horizontal scaling (with external database)
+- **Security**: Container isolation and configurable security policies
+
+### Limitations and Considerations
+
+- **SQLite Constraint**: Current architecture supports single instance only (no horizontal scaling)
+- **Database Migration**: Moving from host SQLite to container requires data migration
+- **Network Configuration**: Ensure client can reach containerized server (especially in complex network setups)
+- **Volume Management**: Database persistence requires proper volume backup strategy
+
+### Migration from Host to Container
+
+```bash
+# 1. Stop existing host server
+cd server && npm run build  # Ensure latest build
+
+# 2. Backup existing database
+cp ~/.local/share/yutodo-server/todos.db ./backup/
+
+# 3. Start containerized server
+docker-compose up -d
+
+# 4. Copy database to container (if needed)
+docker cp ./backup/todos.db yutodo-server-dev:/data/todos.db
+
+# 5. Verify client connection
+npm run tauri dev  # Should connect to containerized server
+```
+
+## CI/CD Integration & GitHub Container Registry
+
+The project includes comprehensive CI/CD automation for Docker image building and publishing to GitHub Container Registry (GHCR):
+
+### GitHub Actions Workflows
+
+#### **CI Pipeline** (`ci.yml`)
+- **Docker Build Test**: Validates Dockerfile and docker-compose configurations
+- **Container Health Check**: Tests server startup and basic functionality
+- **Multi-environment Testing**: Tests both development and production Docker configurations
+
+#### **Docker Publish** (`docker-publish.yml`)
+- **Automated Publishing**: Publishes to GitHub Container Registry on releases and main branch pushes
+- **Multi-platform Builds**: Supports AMD64 and ARM64 architectures
+- **Smart Tagging**: Semantic versioning with latest tags
+- **Image Testing**: Validates published images before deployment
+
+#### **Release Integration** (`release-please.yml`)
+- **Coordinated Releases**: Docker images published alongside Tauri app releases
+- **Release Notes**: Automatic Docker image information in GitHub releases
+
+### GitHub Container Registry Setup
+
+#### **Automatic Authentication**
+GitHub Container Registry integration is automatic - no additional secrets required:
+
+- **Authentication**: Uses built-in `GITHUB_TOKEN` automatically
+- **Permissions**: Requires `packages: write` permission (already configured)
+- **Repository**: Images are published to `ghcr.io/<owner>/<repo>/server`
+
+#### **Repository Visibility**
+- **Public Repositories**: Container images are public by default
+- **Private Repositories**: Container images inherit repository visibility
+- **Manual Visibility**: Can be changed in GitHub Package settings
+
+### Published Docker Images
+
+#### **Available Tags**
+```bash
+# Latest stable release
+docker pull ghcr.io/<owner>/<repo>/server:latest
+
+# Specific version
+docker pull ghcr.io/<owner>/<repo>/server:1.0.0
+docker pull ghcr.io/<owner>/<repo>/server:1.0
+docker pull ghcr.io/<owner>/<repo>/server:1
+
+# Development builds (main branch)
+docker pull ghcr.io/<owner>/<repo>/server:main-<commit-sha>
+```
+
+#### **Multi-platform Support**
+Images are built for multiple architectures:
+- **AMD64**: Intel/AMD x86_64 processors
+- **ARM64**: Apple Silicon, ARM servers, Raspberry Pi
+
+#### **Using Published Images**
+
+Replace the build configuration in `docker-compose.prod.yml`:
+
+```yaml
+services:
+  yutodo-server:
+    # Use published image instead of building locally
+    image: ghcr.io/<owner>/<repo>/server:latest
+    # image: ghcr.io/<owner>/<repo>/server:1.0.0  # For specific version
+    # 
+    # Comment out build configuration:
+    # build:
+    #   context: ./server
+    #   dockerfile: Dockerfile
+```
+
+### Local Development with Published Images
+
+#### **Quick Start with Published Image**
+```bash
+# Create minimal docker-compose for published image
+cat > docker-compose.published.yml << 'EOF'
+version: '3.8'
+services:
+  yutodo-server:
+    image: ghcr.io/<owner>/<repo>/server:latest
+    container_name: yutodo-server-published
+    environment:
+      - YUTODO_CORS_ORIGINS=*
+    ports:
+      - "3001:3001"
+    volumes:
+      - yutodo-data:/data
+volumes:
+  yutodo-data:
+EOF
+
+# Login to GHCR (for private repositories)
+echo $GITHUB_TOKEN | docker login ghcr.io -u <username> --password-stdin
+
+# Start with published image
+docker-compose -f docker-compose.published.yml up -d
+
+# Connect with Tauri app
+npm run tauri dev
+```
+
+#### **Hybrid Development**
+```bash
+# Use published server image for stable backend
+docker-compose -f docker-compose.published.yml up -d
+
+# Develop frontend against stable containerized server
+npm run dev  # Frontend development server
+npm run tauri dev  # Tauri app development
+```
+
+### Image Management
+
+#### **Image Information**
+```bash
+# Inspect image metadata
+docker inspect ghcr.io/<owner>/<repo>/server:latest
+
+# View image layers and size
+docker history ghcr.io/<owner>/<repo>/server:latest
+
+# List all packages for a repository (via GitHub CLI)
+gh api /orgs/<owner>/packages?package_type=container
+```
+
+#### **Local Cache Management**
+```bash
+# Update to latest version
+docker pull ghcr.io/<owner>/<repo>/server:latest
+
+# Clean old versions
+docker image prune -f
+
+# Remove specific version
+docker rmi ghcr.io/<owner>/<repo>/server:1.0.0
+```
+
+### Security & Best Practices
+
+#### **Image Security**
+- **Non-root User**: Images run as `yutodo` user (UID 1001)
+- **Minimal Base**: Alpine Linux for reduced attack surface
+- **Security Scanning**: Automated vulnerability scanning in CI
+- **Multi-stage Build**: Reduces final image size and complexity
+
+#### **Production Usage**
+```bash
+# Always pin to specific versions in production
+image: ghcr.io/<owner>/<repo>/server:1.0.0  # Good
+# image: ghcr.io/<owner>/<repo>/server:latest  # Avoid in production
+
+# Use environment-specific configurations
+YUTODO_CORS_ORIGINS=https://your-domain.com  # Specific origins only
+YUTODO_LOG_LEVEL=info  # Appropriate logging level
+```
+
+#### **GHCR Benefits**
+- **Integrated Authentication**: Uses GitHub tokens, no separate credential management
+- **Private Repository Support**: Free private container images with private repositories
+- **Access Control**: Inherits GitHub repository permissions and teams
+- **Package Management**: Integrated with GitHub Packages for unified dependency management
+- **Security Scanning**: Automatic vulnerability scanning and security advisories
+
+### Local Docker Development Script
+
+The `scripts/docker-local.sh` script provides convenient commands for local Docker development and testing:
+
+#### **Available Commands**
+```bash
+# Build Docker image locally
+./scripts/docker-local.sh build --tag test
+
+# Run container with development settings
+./scripts/docker-local.sh run
+
+# Run container with production settings  
+./scripts/docker-local.sh run --env prod
+
+# Test complete Docker setup (build + run + health check)
+./scripts/docker-local.sh test --cleanup
+
+# Test publishing workflow with local registry
+./scripts/docker-local.sh publish
+
+# View container logs
+./scripts/docker-local.sh logs
+
+# Open shell in running container
+./scripts/docker-local.sh shell
+
+# Clean up Docker resources
+./scripts/docker-local.sh clean
+```
+
+#### **Script Options**
+- `--tag TAG`: Specify Docker image tag (default: latest)
+- `--env ENV`: Environment mode - `dev` or `prod` (default: dev)
+- `--cleanup`: Clean up resources after operation
+- `--help`: Show usage information
+
+#### **Development Workflow Examples**
+```bash
+# Quick development setup
+./scripts/docker-local.sh build
+./scripts/docker-local.sh run
+npm run tauri dev  # Connect Tauri app
+
+# Test production build
+./scripts/docker-local.sh run --env prod --cleanup
+
+# Debug container issues
+./scripts/docker-local.sh test
+./scripts/docker-local.sh logs
+./scripts/docker-local.sh shell
+
+# Clean up everything
+./scripts/docker-local.sh clean
+```
+
+### Integration with Package.json
+
+Add these convenience scripts to your `package.json`:
+
+```json
+{
+  "scripts": {
+    "docker:build": "./scripts/docker-local.sh build",
+    "docker:dev": "./scripts/docker-local.sh run",
+    "docker:prod": "./scripts/docker-local.sh run --env prod",
+    "docker:test": "./scripts/docker-local.sh test --cleanup",
+    "docker:clean": "./scripts/docker-local.sh clean"
+  }
+}
+```
+
+Then use with npm:
+```bash
+npm run docker:dev    # Start development container
+npm run docker:test   # Run full Docker test suite
+npm run docker:clean  # Clean up resources
+```
+
+## Development Containers (VS Code)
+
+The project includes full VS Code Development Container support for a consistent, reproducible development environment across all platforms.
+
+### Quick Start
+
+#### **Prerequisites**
+- [VS Code](https://code.visualstudio.com/)
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+- [Dev Containers Extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
+
+#### **Getting Started**
+```bash
+# 1. Clone the repository
+git clone <repository-url>
+cd yutodo
+
+# 2. Open in VS Code
+code .
+
+# 3. When prompted, click "Reopen in Container"
+# Or use Command Palette: "Dev Containers: Reopen in Container"
+```
+
+### Container Features
+
+#### **Development Environment**
+- **Base Image**: Ubuntu 22.04 with development tools
+- **Node.js**: v20 with npm, yarn, and common global packages
+- **Rust**: Latest stable toolchain with cargo, clippy, rustfmt
+- **Tauri Dependencies**: All required system libraries pre-installed
+- **Docker-in-Docker**: Full Docker CLI access for container development
+
+#### **Pre-installed Tools**
+```bash
+# Development Utilities
+git, curl, wget, tree, htop, vim, nano, jq, ripgrep, fd-find, bat, exa
+
+# Tauri System Dependencies  
+libwebkit2gtk-4.1-dev, libappindicator3-dev, librsvg2-dev, patchelf
+
+# Testing & E2E
+tauri-driver, webkit2gtk-driver, xvfb (virtual display)
+
+# Rust Tools
+cargo-edit, cargo-audit, cargo-outdated, cargo-tree, tauri-cli
+
+# Node.js Global Packages
+typescript, ts-node, eslint, prettier, concurrently, nodemon
+```
+
+#### **VS Code Extensions**
+Automatically installs and configures:
+- **Rust**: rust-analyzer, LLDB debugger, crates manager
+- **TypeScript**: Advanced TypeScript support, ESLint, Prettier
+- **React**: React snippets, auto-rename-tag, path intellisense
+- **Tauri**: Official Tauri extension
+- **Testing**: Jest, Vitest explorers
+- **Docker**: Docker extension for container management
+- **Git**: GitHub integration, Copilot support
+
+### Development Workflow
+
+#### **Container Startup**
+1. **Post-Create** (runs once): Installs all dependencies, builds projects
+2. **Post-Start** (runs on each start): Environment setup, service checks
+
+#### **Development Commands**
+```bash
+# Quick aliases (automatically configured)
+yt-dev         # Start Tauri development server
+yt-server      # Start backend server  
+yt-test        # Run frontend tests
+yt-test-server # Run backend tests
+yt-test-e2e    # Run E2E tests
+yt-lint        # Run linting
+yt-docker      # Docker development utilities
+
+# Project management
+dev-setup      # Install all dependencies
+dev-clean      # Clean all node_modules and caches
+dev-fresh      # Clean + setup from scratch
+
+# Git shortcuts
+gst, gco, gcb, gpl, gps, glog
+```
+
+#### **Integrated Development**
+```bash
+# Terminal 1: Start the server
+yt-server
+
+# Terminal 2: Start Tauri app (in container)
+yt-dev
+
+# Terminal 3: Run tests
+yt-test --watch
+```
+
+### Advanced Configuration
+
+#### **Container Composition**
+The development environment uses docker-compose with multiple services:
+
+```yaml
+services:
+  yutodo-dev:        # Main development container
+  yutodo-server:     # Containerized server (optional)
+```
+
+#### **Volume Optimization**
+- **Cargo Cache**: Persistent Rust build cache
+- **Node Modules**: Separate caches for root, server, e2e
+- **Target Directory**: Persistent Rust compilation cache
+- **Source Code**: Bind mount with cached performance
+
+#### **Port Forwarding**
+- **1420**: Tauri development server
+- **3001**: YuToDo backend server
+- **5173**: Vite development server
+
+#### **GUI Application Support**
+```bash
+# X11 forwarding for native development
+export DISPLAY=:0
+
+# Virtual display for headless testing
+Xvfb :0 -screen 0 1920x1080x24
+```
+
+### Container vs Local Development
+
+#### **Container Advantages**
+- **Consistent Environment**: Same setup across Windows, macOS, Linux
+- **Pre-configured Tools**: All dependencies and extensions ready
+- **Isolation**: No conflicts with host system packages
+- **Team Onboarding**: New developers productive immediately
+- **CI/CD Parity**: Development environment matches build environment
+
+#### **When to Use Local Development**
+- **Performance**: Native compilation can be faster
+- **System Integration**: Better access to system services
+- **Resource Usage**: Lower memory/CPU overhead
+- **Existing Setup**: Already have working local environment
+
+### Troubleshooting
+
+#### **Common Issues**
+
+**Container won't start:**
+```bash
+# Check Docker daemon
+docker info
+
+# Restart Docker Desktop
+# Windows/Mac: Restart Docker Desktop app
+# Linux: sudo systemctl restart docker
+```
+
+**Extensions not loading:**
+```bash
+# Reload window
+Ctrl+Shift+P > "Developer: Reload Window"
+
+# Rebuild container
+Ctrl+Shift+P > "Dev Containers: Rebuild Container"
+```
+
+**Port conflicts:**
+```bash
+# Check port usage
+netstat -tulpn | grep :3001
+
+# Kill conflicting processes
+sudo lsof -ti:3001 | xargs sudo kill -9
+```
+
+**Slow performance:**
+```bash
+# Check Docker resources in Docker Desktop settings
+# Increase memory allocation (recommended: 8GB+)
+# Enable file sharing optimization
+```
+
+#### **Performance Optimization**
+
+```bash
+# Use named volumes for better I/O performance
+docker volume create yutodo-cargo-cache
+docker volume create yutodo-node-modules
+
+# Enable BuildKit for faster builds
+export DOCKER_BUILDKIT=1
+
+# Use Docker Desktop with WSL 2 backend on Windows
+```
+
+### Integration with CI/CD
+
+The development container configuration ensures:
+- **Environment Parity**: Same base image and tools as CI
+- **Dependency Consistency**: Lock files work identically
+- **Test Reliability**: Same testing environment as GitHub Actions
+- **Docker Integration**: Same containerized server setup
+
+### Custom Configuration
+
+#### **User Customization**
+Create `.devcontainer/devcontainer.local.json` for personal settings:
+
+```json
+{
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "your-personal-extension"
+      ],
+      "settings": {
+        "your.personal.setting": "value"
+      }
+    }
+  }
+}
+```
+
+#### **Environment Variables**
+Override via `.devcontainer/.env`:
+```bash
+RUST_LOG=trace
+NODE_ENV=development
+YUTODO_DEV_MODE=true
+```
+
+### Migration Guide
+
+#### **From Local to Container Development**
+
+1. **Backup Current Work**: Commit all changes
+2. **Open in Container**: VS Code will prompt automatically
+3. **Wait for Setup**: Post-create script installs everything
+4. **Verify Environment**: Run `yt-test` to ensure everything works
+5. **Continue Development**: All aliases and tools are ready
+
+#### **Container to Local (if needed)**
+
+1. **Export Dependencies**: `npm list --depth=0` in each directory
+2. **Install Local Tools**: Follow main README installation guide
+3. **Copy Configuration**: Transfer `.vscode/settings.json` settings
+
+The development container provides the optimal development experience with minimal setup time and maximum consistency.
 
 # important-instruction-reminders
 Do what has been asked; nothing more, nothing less.
