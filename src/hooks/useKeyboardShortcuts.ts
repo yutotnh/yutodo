@@ -34,6 +34,11 @@ export interface KeyboardShortcutHandlers {
   onShowTasksSimple?: () => void;
   onShowSchedules?: () => void;
   
+  // Legacy view switching handlers for backward compatibility
+  onViewTasksDetailed?: () => void;
+  onViewTasksSimple?: () => void;
+  onViewSchedules?: () => void;
+  
   // Navigation
   onNextTask?: () => void;
   onPreviousTask?: () => void;
@@ -364,6 +369,17 @@ function executeCommand(command: string, handlers: KeyboardShortcutHandlers) {
       handlers.onShowSchedules?.();
       break;
       
+    // Legacy view switching commands for backward compatibility  
+    case 'viewTasksDetailed':
+      handlers.onViewTasksDetailed?.();
+      break;
+    case 'viewTasksSimple':
+      handlers.onViewTasksSimple?.();
+      break;
+    case 'viewSchedules':
+      handlers.onViewSchedules?.();
+      break;
+      
     // Navigation
     case 'nextTask':
       handlers.onNextTask?.();
@@ -404,6 +420,9 @@ function getCommandDescription(command: string): string {
     showTasksDetailed: 'Show tasks detailed view',
     showTasksSimple: 'Show tasks simple view',
     showSchedules: 'Show schedules view',
+    viewTasksDetailed: 'Switch to detailed tasks view',
+    viewTasksSimple: 'Switch to simple tasks view', 
+    viewSchedules: 'Switch to schedules view',
     nextTask: 'Next task',
     previousTask: 'Previous task',
     firstTask: 'First task',

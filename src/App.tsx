@@ -1271,7 +1271,23 @@ function App() {
     onShowTasks: () => {
       handleSettingsChange({ ...settings, startupView: 'tasks-detailed' });
     },
+    onShowTasksDetailed: () => {
+      handleSettingsChange({ ...settings, startupView: 'tasks-detailed' });
+    },
+    onShowTasksSimple: () => {
+      handleSettingsChange({ ...settings, startupView: 'tasks-simple' });
+    },
     onShowSchedules: () => {
+      handleSettingsChange({ ...settings, startupView: 'schedules' });
+    },
+    // Legacy handlers for backward compatibility
+    onViewTasksDetailed: () => {
+      handleSettingsChange({ ...settings, startupView: 'tasks-detailed' });
+    },
+    onViewTasksSimple: () => {
+      handleSettingsChange({ ...settings, startupView: 'tasks-simple' });
+    },
+    onViewSchedules: () => {
       handleSettingsChange({ ...settings, startupView: 'schedules' });
     },
     // Navigation (TODO: implement these)

@@ -82,6 +82,29 @@ export const keyboardShortcuts: KeyboardShortcut[] = [
     category: 'basic'
   },
   
+  // View switching
+  {
+    id: 'view-tasks-detailed',
+    key: 'Ctrl+1',
+    description: 'Switch to detailed tasks view',
+    handler: 'onShowTasksDetailed',
+    category: 'navigation'
+  },
+  {
+    id: 'view-tasks-simple',
+    key: 'Ctrl+2',
+    description: 'Switch to simple tasks view',
+    handler: 'onShowTasksSimple',
+    category: 'navigation'
+  },
+  {
+    id: 'view-schedules',
+    key: 'Ctrl+3',
+    description: 'Switch to schedules view',
+    handler: 'onShowSchedules',
+    category: 'navigation'
+  },
+  
   // Task operations
   {
     id: 'select-all',
