@@ -313,6 +313,16 @@ export class ServerConfigManager {
       this.config.database.location = env.YUTODO_DB_PATH;
       console.log('🔧 Database path overridden by environment variable:', env.YUTODO_DB_PATH);
     }
+    
+    // CORS許可オリジンのオーバーライド
+    if (env.YUTODO_CORS_ORIGINS) {
+      // カンマ区切りの文字列を配列に変換（前後の空白を除去）
+      this.config.security.cors_origins = env.YUTODO_CORS_ORIGINS
+        .split(',')
+        .map(origin => origin.trim())
+        .filter(origin => origin.length > 0);
+      console.log('🔧 CORS origins overridden by environment variable:', this.config.security.cors_origins);
+    }
   }
 
   /**

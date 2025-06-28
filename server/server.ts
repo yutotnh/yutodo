@@ -8,6 +8,7 @@ import { homedir } from 'os';
 import { existsSync, mkdirSync } from 'fs';
 import { serverConfigManager } from './src/config/ServerConfigManager';
 import { ServerConfig } from './src/types/config';
+import { ObservabilityManager, initializeObservability, getObservability } from './src/observability/ObservabilityManager';
 
 // Initialize configuration (will be properly set up after config loading)
 let config: ServerConfig;
@@ -16,6 +17,7 @@ let server: any;
 let io: SocketIOServer;
 let db: sqlite3.Database;
 let scheduleExecutor: ScheduleExecutor;
+let observabilityManager: ObservabilityManager;
 
 // Function to initialize server with configuration
 async function initializeServer() {
@@ -29,6 +31,15 @@ async function initializeServer() {
   console.log(`  CORS Origins: ${config.security.cors_origins.join(', ')}`);
   console.log(`  Database: ${config.database.location}`);
   console.log(`  Schedule Interval: ${config.schedules.check_interval}s`);
+  
+  // Initialize observability systems (before database and app initialization)
+  observabilityManager = initializeObservability(
+    {
+      logging: config.logging,
+      observability: config.observability
+    }
+    // Database connection will be set later via updateDatabaseConnection
+  );
   
   app = express();
   server = createServer(app);
@@ -361,15 +372,55 @@ interface Schedule {
 function setupSocketHandlers() {
   io.on('connection', (socket) => {
   console.log('Client connected:', socket.id);
+  
+  // Monitor socket connection
+  if (observabilityManager) {
+    observabilityManager.monitorSocketConnection('connect', {
+      socketId: socket.id,
+      userAgent: socket.handshake.headers['user-agent']
+    });
+  }
 
   // Send all todos to newly connected client
   socket.on('get-todos', () => {
+    const startTime = Date.now();
     console.log('📤 Client requested todos');
+    
+    // Monitor socket event
+    if (observabilityManager) {
+      observabilityManager.monitorSocketEvent('get-todos', 'inbound', null, {
+        socketId: socket.id
+      });
+    }
+    const dbStartTime = Date.now();
     db.all('SELECT * FROM todos ORDER BY order_index ASC, createdAt DESC', (err, rows) => {
+      const duration = Date.now() - startTime;
+      const dbDuration = Date.now() - dbStartTime;
+      
       if (err) {
         console.error('❌ Database error:', err);
         socket.emit('error', err.message);
+        
+        // Monitor database error
+        if (observabilityManager) {
+          observabilityManager.monitorError(err, {
+            socketId: socket.id,
+            operation: 'get-todos',
+            component: 'database'
+          });
+        }
         return;
+      }
+      
+      // Monitor database query
+      if (observabilityManager) {
+        observabilityManager.monitorDatabaseQuery(
+          'SELECT * FROM todos ORDER BY order_index ASC, createdAt DESC',
+          'todos',
+          'SELECT',
+          dbDuration,
+          { socketId: socket.id, recordCount: rows.length }
+        );
       }
       
       console.log(`📋 Found ${rows.length} todos in database`);
@@ -388,21 +439,63 @@ function setupSocketHandlers() {
       
       console.log('📤 Sending todos to client:', todos);
       socket.emit('todos', todos);
+      
+      // Monitor outbound socket event
+      if (observabilityManager) {
+        observabilityManager.monitorSocketEvent('todos', 'outbound', { count: todos.length }, {
+          socketId: socket.id,
+          duration: duration
+        });
+      }
     });
   });
 
   // Add new todo
   socket.on('add-todo', (todoData: Omit<Todo, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const startTime = Date.now();
     const id = uuidv4();
     const now = new Date().toISOString();
     
+    // Monitor socket event
+    if (observabilityManager) {
+      observabilityManager.monitorSocketEvent('add-todo', 'inbound', todoData, {
+        socketId: socket.id,
+        todoId: id
+      });
+    }
+    
+    const dbStartTime = Date.now();
     db.run(
       'INSERT INTO todos (id, title, description, completed, priority, scheduledFor, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
       [id, todoData.title, todoData.description, todoData.completed, todoData.priority, todoData.scheduledFor, now, now],
       function(err) {
+        const dbDuration = Date.now() - dbStartTime;
+        const totalDuration = Date.now() - startTime;
+        
         if (err) {
           socket.emit('error', err.message);
+          
+          // Monitor database error
+          if (observabilityManager) {
+            observabilityManager.monitorError(err, {
+              socketId: socket.id,
+              operation: 'add-todo',
+              component: 'database',
+              todoId: id
+            });
+          }
           return;
+        }
+        
+        // Monitor database operation
+        if (observabilityManager) {
+          observabilityManager.monitorDatabaseQuery(
+            'INSERT INTO todos',
+            'todos',
+            'INSERT',
+            dbDuration,
+            { socketId: socket.id, todoId: id }
+          );
         }
         
         const newTodo: Todo = {
@@ -415,6 +508,15 @@ function setupSocketHandlers() {
           createdAt: now,
           updatedAt: now
         };
+        
+        // Monitor todo creation
+        if (observabilityManager) {
+          observabilityManager.monitorTodoEvent('created', todoData.priority, {
+            socketId: socket.id,
+            todoId: id,
+            duration: totalDuration
+          });
+        }
         
         // Broadcast to all clients
         io.emit('todo-added', newTodo);
@@ -768,6 +870,13 @@ function setupSocketHandlers() {
 
   socket.on('disconnect', () => {
     console.log('Client disconnected:', socket.id);
+    
+    // Monitor socket disconnection
+    if (observabilityManager) {
+      observabilityManager.monitorSocketConnection('disconnect', {
+        socketId: socket.id
+      });
+    }
   });
 });
 }
@@ -1480,20 +1589,104 @@ function initializeDatabaseWithConfig(dbPath: string): void {
           console.error('❌ Failed to create schedules table:', err);
         } else {
           console.log('✅ Schedules table ready');
+          
+          // Initialize observability systems now that database is ready
+          initializeObservabilitySystemsAsync();
         }
       });
     });
   });
 }
 
+// 非同期で可観測性システムを初期化
+async function initializeObservabilitySystemsAsync(): Promise<void> {
+  try {
+    // Update observability manager with database connection
+    observabilityManager = initializeObservability(
+      {
+        logging: config.logging,
+        observability: config.observability
+      },
+      db // Pass database connection for health checks
+    );
+    
+    // Initialize all observability systems
+    await observabilityManager.initialize();
+    
+    // Log successful initialization
+    const logger = observabilityManager.getLogger();
+    if (logger) {
+      logger.info('YuToDo server fully initialized with observability', {
+        component: 'server',
+        operation: 'startup_complete',
+        port: config.server.port,
+        environment: process.env.NODE_ENV || 'development'
+      });
+    }
+    
+  } catch (error) {
+    console.error('❌ Failed to initialize observability systems:', error);
+    // Continue startup even if observability fails
+  }
+}
+
 // サーバーを開始
 startServer();
 
 // Graceful shutdown
-process.on('SIGINT', () => {
+process.on('SIGINT', async () => {
   console.log('Shutting down server...');
-  scheduleExecutor.stop();
-  db.close();
-  server.close();
-  process.exit(0);
+  
+  try {
+    // Stop observability systems first
+    if (observabilityManager) {
+      await observabilityManager.shutdown();
+    }
+    
+    // Stop other services
+    if (scheduleExecutor) {
+      scheduleExecutor.stop();
+    }
+    
+    if (db) {
+      db.close();
+    }
+    
+    if (server) {
+      server.close();
+    }
+    
+    console.log('✅ Server shutdown complete');
+    process.exit(0);
+  } catch (error) {
+    console.error('❌ Error during shutdown:', error);
+    process.exit(1);
+  }
+});
+
+process.on('SIGTERM', async () => {
+  console.log('Received SIGTERM, shutting down gracefully...');
+  
+  try {
+    if (observabilityManager) {
+      await observabilityManager.shutdown();
+    }
+    
+    if (scheduleExecutor) {
+      scheduleExecutor.stop();
+    }
+    
+    if (db) {
+      db.close();
+    }
+    
+    if (server) {
+      server.close();
+    }
+    
+    process.exit(0);
+  } catch (error) {
+    console.error('❌ Error during shutdown:', error);
+    process.exit(1);
+  }
 });

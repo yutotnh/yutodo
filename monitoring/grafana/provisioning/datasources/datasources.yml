@@ -1,0 +1,72 @@
+# Grafana Datasource Provisioning Configuration
+
+apiVersion: 1
+
+# List of datasources to be created/updated
+datasources:
+  # Prometheus - Metrics
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: true
+    jsonData:
+      timeInterval: "5s"
+      queryTimeout: "60s"
+      httpMethod: "GET"
+      manageAlerts: true
+      prometheusType: "Prometheus"
+      prometheusVersion: "2.47.0"
+      cacheLevel: "High"
+      incrementalQuerying: true
+      exemplarTraceIdDestinations:
+        - name: "traceID"
+          datasourceUid: "jaeger"
+
+  # Loki - Logs
+  - name: Loki
+    type: loki
+    access: proxy
+    url: http://loki:3100
+    editable: true
+    jsonData:
+      maxLines: 1000
+      timeout: 60
+      
+  # Jaeger - Tracing
+  - name: Jaeger
+    type: jaeger
+    access: proxy
+    url: http://jaeger:16686
+    uid: jaeger
+    editable: true
+    jsonData:
+      tracesToLogsV2:
+        datasourceUid: "loki"
+        tags: [{ key: "service.name", value: "service" }]
+        filterByTraceID: false
+        filterBySpanID: false
+      tracesToMetrics:
+        datasourceUid: "prometheus"
+        tags: [{ key: "service.name", value: "service" }]
+        queries:
+          - name: "Sample query"
+            query: "yutodo_http_request_duration_seconds_bucket{service=\"$service\"}"
+      nodeGraph:
+        enabled: true
+      search:
+        hide: false
+      spanBar:
+        type: "Tag"
+        tag: "http.path"
+
+  # Node Exporter Full Dashboard
+  - name: "Node Exporter Full"
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    uid: node-exporter
+    editable: false
+    jsonData:
+      timeInterval: "30s"

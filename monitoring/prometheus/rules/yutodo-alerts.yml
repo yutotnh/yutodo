@@ -1,0 +1,194 @@
+# YuToDo Application Alert Rules
+
+groups:
+  # Application Health Alerts
+  - name: yutodo.application.health
+    rules:
+      - alert: YuToDoServerDown
+        expr: up{job="yutodo-server"} == 0
+        for: 30s
+        labels:
+          severity: critical
+          service: yutodo-server
+        annotations:
+          summary: "YuToDo server is down"
+          description: "YuToDo server has been down for more than 30 seconds."
+          runbook_url: "https://github.com/your-org/yutodo/wiki/runbooks#server-down"
+
+      - alert: YuToDoHighErrorRate
+        expr: (yutodo_http_requests_total{status_code=~"5.."} / yutodo_http_requests_total) * 100 > 5
+        for: 2m
+        labels:
+          severity: warning
+          service: yutodo-server
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is {{ $value }}% for the last 2 minutes."
+
+      - alert: YuToDoSlowResponseTime
+        expr: histogram_quantile(0.95, yutodo_http_request_duration_seconds_bucket) > 2
+        for: 5m
+        labels:
+          severity: warning
+          service: yutodo-server
+        annotations:
+          summary: "Slow response times detected"
+          description: "95th percentile response time is {{ $value }}s for the last 5 minutes."
+
+  # Database Alerts
+  - name: yutodo.database
+    rules:
+      - alert: YuToDoDatabaseSlowQueries
+        expr: histogram_quantile(0.95, yutodo_database_query_duration_seconds_bucket) > 1
+        for: 3m
+        labels:
+          severity: warning
+          service: yutodo-database
+        annotations:
+          summary: "Database queries are slow"
+          description: "95th percentile database query time is {{ $value }}s."
+
+      - alert: YuToDoDatabaseErrors
+        expr: increase(yutodo_database_queries_total{status="error"}[5m]) > 10
+        for: 1m
+        labels:
+          severity: critical
+          service: yutodo-database
+        annotations:
+          summary: "High database error rate"
+          description: "{{ $value }} database errors in the last 5 minutes."
+
+  # System Resource Alerts
+  - name: yutodo.system.resources
+    rules:
+      - alert: YuToDoHighMemoryUsage
+        expr: yutodo_memory_usage_percent > 85
+        for: 5m
+        labels:
+          severity: warning
+          service: yutodo-server
+        annotations:
+          summary: "High memory usage"
+          description: "Memory usage is {{ $value }}% for the last 5 minutes."
+
+      - alert: YuToDoHighCpuUsage
+        expr: (1 - avg(irate(node_cpu_seconds_total{mode="idle",job="node-exporter"}[5m]))) * 100 > 80
+        for: 10m
+        labels:
+          severity: warning
+          service: system
+        annotations:
+          summary: "High CPU usage"
+          description: "CPU usage is {{ $value }}% for the last 10 minutes."
+
+      - alert: YuToDoDiskSpaceLow
+        expr: (node_filesystem_avail_bytes{job="node-exporter"} / node_filesystem_size_bytes{job="node-exporter"}) * 100 < 20
+        for: 5m
+        labels:
+          severity: critical
+          service: system
+        annotations:
+          summary: "Low disk space"
+          description: "Disk space is {{ $value }}% full on {{ $labels.device }}."
+
+  # Container Alerts
+  - name: yutodo.containers
+    rules:
+      - alert: YuToDoContainerHighMemory
+        expr: (container_memory_usage_bytes{name=~"yutodo.*"} / container_spec_memory_limit_bytes{name=~"yutodo.*"}) * 100 > 90
+        for: 5m
+        labels:
+          severity: warning
+          service: containers
+        annotations:
+          summary: "Container memory usage high"
+          description: "Container {{ $labels.name }} memory usage is {{ $value }}%."
+
+      - alert: YuToDoContainerRestarting
+        expr: increase(container_last_seen{name=~"yutodo.*"}[10m]) > 2
+        for: 1m
+        labels:
+          severity: warning
+          service: containers
+        annotations:
+          summary: "Container restarting frequently"
+          description: "Container {{ $labels.name }} has restarted {{ $value }} times in the last 10 minutes."
+
+  # Business Logic Alerts
+  - name: yutodo.business
+    rules:
+      - alert: YuToDoHighTodoCreationRate
+        expr: rate(yutodo_todos_created_total[5m]) > 10
+        for: 2m
+        labels:
+          severity: info
+          service: yutodo-app
+        annotations:
+          summary: "High todo creation rate"
+          description: "{{ $value }} todos created per second in the last 5 minutes."
+
+      - alert: YuToDoNoScheduleExecutions
+        expr: increase(yutodo_schedule_executions_total[1h]) == 0
+        for: 2h
+        labels:
+          severity: warning
+          service: yutodo-scheduler
+        annotations:
+          summary: "No schedule executions"
+          description: "No schedules have been executed in the last 2 hours."
+
+      - alert: YuToDoScheduleFailures
+        expr: (yutodo_schedule_executions_total{status="failure"} / yutodo_schedule_executions_total) * 100 > 10
+        for: 10m
+        labels:
+          severity: warning
+          service: yutodo-scheduler
+        annotations:
+          summary: "High schedule failure rate"
+          description: "{{ $value }}% of schedule executions are failing."
+
+  # WebSocket Connection Alerts
+  - name: yutodo.websockets
+    rules:
+      - alert: YuToDoHighSocketDisconnections
+        expr: rate(yutodo_socket_connections_total{event_type="disconnect"}[5m]) > 5
+        for: 3m
+        labels:
+          severity: warning
+          service: yutodo-websocket
+        annotations:
+          summary: "High WebSocket disconnection rate"
+          description: "{{ $value }} socket disconnections per second in the last 5 minutes."
+
+  # Observability Stack Health
+  - name: yutodo.observability
+    rules:
+      - alert: PrometheusDown
+        expr: up{job="prometheus"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: prometheus
+        annotations:
+          summary: "Prometheus is down"
+          description: "Prometheus monitoring is not working."
+
+      - alert: GrafanaDown
+        expr: up{job="grafana"} == 0
+        for: 1m
+        labels:
+          severity: warning
+          service: grafana
+        annotations:
+          summary: "Grafana is down"
+          description: "Grafana dashboards are not accessible."
+
+      - alert: AlertManagerDown
+        expr: up{job="alertmanager"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: alertmanager
+        annotations:
+          summary: "AlertManager is down"
+          description: "Alert notifications are not working."

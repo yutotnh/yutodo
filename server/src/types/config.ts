@@ -44,6 +44,55 @@ export interface ServerConfig {
     max_files: number;
     include_timestamp: boolean;
     include_level: boolean;
+    structured_format: boolean; // JSON形式のログ出力
+    include_trace_id: boolean; // トレースIDの含有
+  };
+  
+  // 可観測性・監視設定
+  observability: {
+    // メトリクス設定
+    metrics: {
+      enabled: boolean;
+      port: number; // Prometheusメトリクス公開ポート
+      path: string; // メトリクスエンドポイントパス (例: '/metrics')
+      collect_default_metrics: boolean; // デフォルトのNode.jsメトリクス
+      custom_metrics: boolean; // カスタムアプリケーションメトリクス
+      histogram_buckets: number[]; // レスポンス時間ヒストグラムのバケット
+    };
+    
+    // トレーシング設定
+    tracing: {
+      enabled: boolean;
+      exporter: 'jaeger' | 'zipkin' | 'otlp' | 'console';
+      endpoint?: string; // トレーシングバックエンドのエンドポイント
+      sample_rate: number; // サンプリング率 (0.0-1.0)
+      include_db_queries: boolean; // データベースクエリのトレース
+      include_http_requests: boolean; // HTTPリクエストのトレース
+    };
+    
+    // ヘルスチェック設定
+    health: {
+      enabled: boolean;
+      port: number; // ヘルスチェック用ポート（メインポートと分離可能）
+      path: string; // ヘルスチェックエンドポイント (例: '/health')
+      checks: {
+        database: boolean; // データベース接続チェック
+        memory: boolean; // メモリ使用量チェック
+        disk_space: boolean; // ディスク容量チェック
+        custom_checks: boolean; // カスタムヘルスチェック
+      };
+      timeout: number; // ヘルスチェックタイムアウト (ミリ秒)
+    };
+    
+    // アラート設定
+    alerts: {
+      enabled: boolean;
+      error_threshold: number; // エラー率閾値 (%)
+      response_time_threshold: number; // レスポンス時間閾値 (ms)
+      memory_threshold: number; // メモリ使用率閾値 (%)
+      disk_threshold: number; // ディスク使用率閾値 (%)
+      webhook_url?: string; // アラート通知用WebHook URL
+    };
   };
   
   // CORS・セキュリティ設定
@@ -113,6 +162,50 @@ export const ServerConfigSchema = z.object({
     max_files: z.number().int().min(1).max(100),
     include_timestamp: z.boolean(),
     include_level: z.boolean(),
+    structured_format: z.boolean(),
+    include_trace_id: z.boolean(),
+  }),
+  
+  observability: z.object({
+    metrics: z.object({
+      enabled: z.boolean(),
+      port: z.number().int().min(1024).max(65535),
+      path: z.string().regex(/^\/[a-zA-Z0-9\/_-]*$/),
+      collect_default_metrics: z.boolean(),
+      custom_metrics: z.boolean(),
+      histogram_buckets: z.array(z.number().positive()),
+    }),
+    
+    tracing: z.object({
+      enabled: z.boolean(),
+      exporter: z.enum(['jaeger', 'zipkin', 'otlp', 'console']),
+      endpoint: z.string().url().optional(),
+      sample_rate: z.number().min(0).max(1),
+      include_db_queries: z.boolean(),
+      include_http_requests: z.boolean(),
+    }),
+    
+    health: z.object({
+      enabled: z.boolean(),
+      port: z.number().int().min(1024).max(65535),
+      path: z.string().regex(/^\/[a-zA-Z0-9\/_-]*$/),
+      checks: z.object({
+        database: z.boolean(),
+        memory: z.boolean(),
+        disk_space: z.boolean(),
+        custom_checks: z.boolean(),
+      }),
+      timeout: z.number().int().min(1000).max(30000), // 1秒～30秒
+    }),
+    
+    alerts: z.object({
+      enabled: z.boolean(),
+      error_threshold: z.number().min(0).max(100),
+      response_time_threshold: z.number().int().min(100).max(30000), // 100ms～30秒
+      memory_threshold: z.number().min(0).max(100),
+      disk_threshold: z.number().min(0).max(100),
+      webhook_url: z.string().url().optional(),
+    }),
   }),
   
   security: z.object({
@@ -179,6 +272,50 @@ export const DEFAULT_SERVER_CONFIG: ServerConfig = {
     max_files: 5,
     include_timestamp: true,
     include_level: true,
+    structured_format: false, // 開発環境では読みやすい形式
+    include_trace_id: false,
+  },
+  
+  observability: {
+    metrics: {
+      enabled: true,
+      port: 9090, // Prometheus標準ポート
+      path: '/metrics',
+      collect_default_metrics: true,
+      custom_metrics: true,
+      histogram_buckets: [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10], // レスポンス時間バケット (秒)
+    },
+    
+    tracing: {
+      enabled: false, // デフォルトは無効
+      exporter: 'console',
+      endpoint: undefined,
+      sample_rate: 0.1, // 10%サンプリング
+      include_db_queries: true,
+      include_http_requests: true,
+    },
+    
+    health: {
+      enabled: true,
+      port: 8080, // ヘルスチェック専用ポート
+      path: '/health',
+      checks: {
+        database: true,
+        memory: true,
+        disk_space: true,
+        custom_checks: false,
+      },
+      timeout: 5000, // 5秒
+    },
+    
+    alerts: {
+      enabled: false, // デフォルトは無効
+      error_threshold: 5.0, // 5%エラー率
+      response_time_threshold: 2000, // 2秒
+      memory_threshold: 85.0, // 85%メモリ使用率
+      disk_threshold: 90.0, // 90%ディスク使用率
+      webhook_url: undefined,
+    },
   },
   
   security: {
@@ -225,6 +362,9 @@ export interface EnvironmentOverrides {
   YUTODO_LOG_LEVEL?: 'debug' | 'info' | 'warn' | 'error';
   YUTODO_SCHEDULE_INTERVAL?: string;
   
+  // セキュリティ設定
+  YUTODO_CORS_ORIGINS?: string;     // CORS許可オリジンのカンマ区切りリスト
+
   // 開発設定
   YUTODO_ENABLE_DEBUG?: string;
 }
