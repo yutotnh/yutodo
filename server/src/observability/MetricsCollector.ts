@@ -32,28 +32,28 @@ export class MetricsCollector {
   private app?: express.Application;
   
   // 基本メトリクス
-  private httpRequestsTotal: Counter<string>;
-  private httpRequestDuration: Histogram<string>;
-  private socketConnectionsTotal: Counter<string>;
-  private socketEventsTotal: Counter<string>;
-  private databaseQueriesTotal: Counter<string>;
-  private databaseQueryDuration: Histogram<string>;
-  private scheduleExecutionsTotal: Counter<string>;
-  private scheduleExecutionDuration: Histogram<string>;
+  private httpRequestsTotal!: Counter<string>;
+  private httpRequestDuration!: Histogram<string>;
+  private socketConnectionsTotal!: Counter<string>;
+  private socketEventsTotal!: Counter<string>;
+  private databaseQueriesTotal!: Counter<string>;
+  private databaseQueryDuration!: Histogram<string>;
+  private scheduleExecutionsTotal!: Counter<string>;
+  private scheduleExecutionDuration!: Histogram<string>;
   
   // アプリケーション固有メトリクス
-  private todosTotal: Gauge<string>;
-  private todosCreated: Counter<string>;
-  private todosCompleted: Counter<string>;
-  private todosDeleted: Counter<string>;
-  private schedulesTotal: Gauge<string>;
-  private schedulesActive: Gauge<string>;
-  private userSessions: Gauge<string>;
+  private todosTotal!: Gauge<string>;
+  private todosCreated!: Counter<string>;
+  private todosCompleted!: Counter<string>;
+  private todosDeleted!: Counter<string>;
+  private schedulesTotal!: Gauge<string>;
+  private schedulesActive!: Gauge<string>;
+  private userSessions!: Gauge<string>;
   
   // システムメトリクス
-  private memoryUsage: Gauge<string>;
-  private errorRate: Gauge<string>;
-  private responseTime: Gauge<string>;
+  private memoryUsage!: Gauge<string>;
+  private errorRate!: Gauge<string>;
+  private responseTime!: Gauge<string>;
 
   constructor(config: ServerConfig['observability']['metrics']) {
     this.config = config;

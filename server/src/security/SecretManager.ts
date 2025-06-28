@@ -121,7 +121,7 @@ export class SecretManager {
     }
 
     const iv = crypto.randomBytes(16);
-    const cipher = crypto.createCipher(this.config.encryption.algorithm, this.encryptionKey);
+    const cipher = crypto.createCipheriv('aes-256-cbc', this.encryptionKey, iv);
     let encrypted = cipher.update(text, 'utf8', 'hex');
     encrypted += cipher.final('hex');
     
@@ -138,7 +138,7 @@ export class SecretManager {
     const iv = Buffer.from(textParts.shift()!, 'hex');
     const encrypted = textParts.join(':');
     
-    const decipher = crypto.createDecipher(this.config.encryption.algorithm, this.encryptionKey);
+    const decipher = crypto.createDecipheriv('aes-256-cbc', this.encryptionKey, iv);
     let decrypted = decipher.update(encrypted, 'hex', 'utf8');
     decrypted += decipher.final('utf8');
     

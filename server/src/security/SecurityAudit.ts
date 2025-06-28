@@ -100,7 +100,7 @@ export class SecurityAudit {
   private auditDir: string;
   private rules: Map<string, SecurityRule> = new Map();
   private eventBuffer: AuditEvent[] = [];
-  private metrics: SecurityMetrics;
+  private metrics!: SecurityMetrics;
   private flushInterval?: NodeJS.Timeout;
 
   constructor(auditDir: string = './audit-logs') {
@@ -249,7 +249,7 @@ export class SecurityAudit {
       severity: this.determineSeverity(eventType, riskScore),
       source: 'yutodo-server',
       userId: details.userId,
-      sessionId: req.sessionID || details.sessionId,
+      sessionId: (req as any).sessionID || details.sessionId,
       ip: req.ip || 'unknown',
       userAgent: req.get('user-agent') || 'unknown',
       resource: details.resource || req.path,

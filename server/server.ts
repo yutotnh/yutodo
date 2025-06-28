@@ -511,7 +511,7 @@ function setupSocketHandlers() {
         
         // Monitor todo creation
         if (observabilityManager) {
-          observabilityManager.monitorTodoEvent('created', todoData.priority, {
+          observabilityManager.monitorTodoEvent('created', String(todoData.priority), {
             socketId: socket.id,
             todoId: id,
             duration: totalDuration

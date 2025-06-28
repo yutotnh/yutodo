@@ -71,15 +71,21 @@ export class TracingSystem {
             '@opentelemetry/instrumentation-http': {
               enabled: this.config.include_http_requests,
               requestHook: (span, request) => {
-                span.setAttributes({
-                  'http.request.header.user-agent': request.headers['user-agent'] || '',
-                  'http.request.header.content-type': request.headers['content-type'] || '',
-                });
+                const req = request as any;
+                if (req.headers) {
+                  span.setAttributes({
+                    'http.request.header.user-agent': req.headers['user-agent'] || '',
+                    'http.request.header.content-type': req.headers['content-type'] || '',
+                  });
+                }
               },
               responseHook: (span, response) => {
-                span.setAttributes({
-                  'http.response.header.content-type': response.headers['content-type'] || '',
-                });
+                const res = response as any;
+                if (res.headers) {
+                  span.setAttributes({
+                    'http.response.header.content-type': res.headers['content-type'] || '',
+                  });
+                }
               }
             },
             
@@ -88,10 +94,10 @@ export class TracingSystem {
               enabled: this.config.include_http_requests,
             },
             
-            // SQLite計装の設定（実験的）
-            '@opentelemetry/instrumentation-sqlite3': {
-              enabled: this.config.include_db_queries,
-            }
+            // データベース計装は無効化（SQLite3サポートが不完全）
+            // '@opentelemetry/instrumentation-sqlite3': {
+            //   enabled: this.config.include_db_queries,
+            // }
           })
         ],
         

@@ -367,6 +367,10 @@ export class ServerConfigManager {
         ...DEFAULT_SERVER_CONFIG.performance,
         ...config.performance,
       },
+      observability: {
+        ...DEFAULT_SERVER_CONFIG.observability,
+        ...config.observability,
+      },
       development: config.development ? {
         ...DEFAULT_SERVER_CONFIG.development!,
         ...config.development,
