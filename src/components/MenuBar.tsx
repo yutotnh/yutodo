@@ -2,6 +2,8 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Menu } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { AppSettings } from '../types/todo';
+import { useFileSettings } from '../hooks/useFileSettings';
+import { detectOS } from '../utils/osDetection';
 
 interface MenuBarProps {
   settings: AppSettings;
@@ -46,6 +48,42 @@ export const MenuBar: React.FC<MenuBarProps> = ({
   onViewChange
 }) => {
   const { t, i18n } = useTranslation();
+  const { keybindings } = useFileSettings();
+  
+  // コマンドからキーバインディングを取得するヘルパー関数
+  const getShortcutForCommand = useMemo(() => {
+    const commandMap = new Map<string, string>();
+    
+    // フォールバックキーバインディング
+    const fallbackKeybindings = [
+      { key: 'Ctrl+Shift+P', command: 'openCommandPalette' },
+      { key: 'Ctrl+N', command: 'newTask' },
+      { key: 'Ctrl+,', command: 'openSettings' },
+      { key: 'Ctrl+A', command: 'selectAll' },
+      { key: 'Delete', command: 'deleteSelected' },
+      { key: 'Ctrl+1', command: 'showTasksDetailed' },
+      { key: 'Ctrl+2', command: 'showTasksSimple' },
+      { key: 'Ctrl+3', command: 'showSchedules' },
+      { key: 'Ctrl+K Ctrl+S', command: 'showKeybindings' }
+    ];
+    
+    // 実際のキーバインディングがある場合はそれを使用、なければフォールバック
+    const effectiveKeybindings = keybindings.length > 0 ? keybindings : fallbackKeybindings;
+    
+    effectiveKeybindings.forEach(kb => {
+      commandMap.set(kb.command, kb.key);
+    });
+    
+    return (command: string): string | undefined => {
+      const key = commandMap.get(command);
+      if (!key) return undefined;
+      
+      // OS別の表示調整
+      const os = detectOS();
+      const modifierKey = os === 'mac' ? 'Cmd' : 'Ctrl';
+      return key.replace(/Ctrl/g, modifierKey);
+    };
+  }, [keybindings]);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [isAltPressed, setIsAltPressed] = useState(false);
   const [selectedItemIndex, setSelectedItemIndex] = useState<number>(-1);
@@ -56,18 +94,18 @@ export const MenuBar: React.FC<MenuBarProps> = ({
   const menuRef = useRef<HTMLDivElement>(null);
 
 
-  // メニュー定義
+  // メニュー定義（実際のキーバインディングから取得）
   const menus = useMemo(() => ({
     file: {
       label: t('menu.file'),
       accessKey: 'F',
       items: [
-        { id: 'new-task', label: t('menu.newTask'), shortcut: 'Ctrl+N', action: onNewTask },
+        { id: 'new-task', label: t('menu.newTask'), shortcut: getShortcutForCommand('newTask'), action: onNewTask },
         { id: 'separator-1', separator: true },
         { id: 'import', label: t('menu.importTasks'), action: onImportTasks },
         { id: 'export', label: t('menu.exportTasks'), action: onExportTasks },
         { id: 'separator-2', separator: true },
-        { id: 'preferences', label: t('menu.preferences'), shortcut: 'Ctrl+,', action: onShowSettings },
+        { id: 'preferences', label: t('menu.preferences'), shortcut: getShortcutForCommand('openSettings'), action: onShowSettings },
         ...(onQuit ? [{ id: 'separator-3', separator: true }, { id: 'quit', label: t('menu.quit'), shortcut: 'Ctrl+Q', action: onQuit }] : [])
       ] as MenuItemData[]
     },
@@ -75,17 +113,17 @@ export const MenuBar: React.FC<MenuBarProps> = ({
       label: t('menu.edit'),
       accessKey: 'E',
       items: [
-        { id: 'select-all', label: t('menu.selectAll'), shortcut: 'Ctrl+A', action: onSelectAll },
-        { id: 'delete-selected', label: t('menu.deleteSelected'), shortcut: 'Del', action: onDeleteSelected }
+        { id: 'select-all', label: t('menu.selectAll'), shortcut: getShortcutForCommand('selectAll'), action: onSelectAll },
+        { id: 'delete-selected', label: t('menu.deleteSelected'), shortcut: getShortcutForCommand('deleteSelected'), action: onDeleteSelected }
       ] as MenuItemData[]
     },
     view: {
       label: t('menu.view'),
       accessKey: 'V',
       items: [
-        { id: 'show-tasks-detailed', label: settings.startupView === 'tasks-detailed' ? t('menu.showingTasksDetailed') : t('menu.showTasksDetailed'), shortcut: 'Ctrl+1', action: () => onViewChange('tasks-detailed') },
-        { id: 'show-tasks-simple', label: settings.startupView === 'tasks-simple' ? t('menu.showingTasksSimple') : t('menu.showTasksSimple'), shortcut: 'Ctrl+2', action: () => onViewChange('tasks-simple') },
-        { id: 'show-schedules', label: settings.startupView === 'schedules' ? t('menu.showingSchedules') : t('menu.showSchedules'), shortcut: 'Ctrl+3', action: () => onViewChange('schedules') },
+        { id: 'show-tasks-detailed', label: settings.startupView === 'tasks-detailed' ? t('menu.showingTasksDetailed') : t('menu.showTasksDetailed'), shortcut: getShortcutForCommand('showTasksDetailed'), action: () => onViewChange('tasks-detailed') },
+        { id: 'show-tasks-simple', label: settings.startupView === 'tasks-simple' ? t('menu.showingTasksSimple') : t('menu.showTasksSimple'), shortcut: getShortcutForCommand('showTasksSimple'), action: () => onViewChange('tasks-simple') },
+        { id: 'show-schedules', label: settings.startupView === 'schedules' ? t('menu.showingSchedules') : t('menu.showSchedules'), shortcut: getShortcutForCommand('showSchedules'), action: () => onViewChange('schedules') },
         { id: 'separator-1', separator: true },
         { id: 'always-on-top', prefix: sessionAlwaysOnTop ? '✓ ' : '  ', label: t('menu.alwaysOnTop'), action: onToggleAlwaysOnTop }
       ] as MenuItemData[]
@@ -94,12 +132,12 @@ export const MenuBar: React.FC<MenuBarProps> = ({
       label: t('menu.help'),
       accessKey: 'H',
       items: [
-        { id: 'shortcuts', label: t('menu.keyboardShortcuts'), shortcut: 'Ctrl+K Ctrl+S', action: onShowShortcuts },
+        { id: 'shortcuts', label: t('menu.keyboardShortcuts'), shortcut: getShortcutForCommand('showKeybindings'), action: onShowShortcuts },
         { id: 'separator-1', separator: true },
         { id: 'about', label: t('menu.about'), action: onShowAbout }
       ] as MenuItemData[]
     }
-  }), [t, onNewTask, onImportTasks, onExportTasks, onShowSettings, onQuit, onSelectAll, onDeleteSelected, onShowShortcuts, onShowAbout, onToggleAlwaysOnTop, onViewChange, sessionAlwaysOnTop, settings.startupView]);
+  }), [t, getShortcutForCommand, onNewTask, onImportTasks, onExportTasks, onShowSettings, onQuit, onSelectAll, onDeleteSelected, onShowShortcuts, onShowAbout, onToggleAlwaysOnTop, onViewChange, sessionAlwaysOnTop, settings.startupView]);
 
 
   // 言語に応じてアクセスキーを括弧で表示する必要があるかチェック
