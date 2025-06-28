@@ -6,6 +6,12 @@
   "scripts": {
     "test": "wdio run wdio.conf.js",
     "test:headed": "HEADED=true wdio run wdio.conf.js",
+    "test:docker": "docker-compose -f ../docker-compose.e2e.yml up --build --abort-on-container-exit yutodo-e2e",
+    "test:docker:dev": "docker-compose -f ../docker-compose.e2e.yml up --build -d yutodo-e2e-dev",
+    "test:docker:parallel": "E2E_PARALLEL=true E2E_MAX_INSTANCES=2 npm run test:docker",
+    "test:docker:clean": "docker-compose -f ../docker-compose.e2e.yml down -v",
+    "docker:build": "docker build -t yutodo-e2e:latest .",
+    "docker:shell": "docker run -it --rm yutodo-e2e:latest bash",
     "install:quiet": "./scripts/install-quiet.sh",
     "postinstall": "echo '✅ E2E dependencies installed - Security vulnerabilities: 0'"
   },

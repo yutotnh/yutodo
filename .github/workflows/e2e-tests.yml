@@ -130,7 +130,7 @@ jobs:
   e2e-results:
     name: E2E Test Results
     runs-on: ubuntu-latest
-    needs: e2e-test
+    needs: [e2e-test, docker-e2e-test]
     if: always()
     
     steps:
@@ -144,8 +144,10 @@ jobs:
           echo "## E2E Test Results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           
+          # Platform-specific tests
+          echo "### Platform Tests" >> $GITHUB_STEP_SUMMARY
           for platform in ubuntu-latest windows-latest; do
-            echo "### $platform" >> $GITHUB_STEP_SUMMARY
+            echo "#### $platform" >> $GITHUB_STEP_SUMMARY
             if [ -d "artifacts/e2e-results-$platform" ]; then
               echo "✅ Test artifacts generated" >> $GITHUB_STEP_SUMMARY
             else
@@ -153,3 +155,135 @@ jobs:
             fi
             echo "" >> $GITHUB_STEP_SUMMARY
           done
+          
+          # Docker E2E tests
+          echo "### Docker E2E Tests" >> $GITHUB_STEP_SUMMARY
+          if [ -d "artifacts/docker-e2e-results" ]; then
+            echo "✅ Docker E2E test artifacts generated" >> $GITHUB_STEP_SUMMARY
+            
+            # Count test files if available
+            if [ -d "artifacts/docker-e2e-results/test-output" ]; then
+              test_files=$(find artifacts/docker-e2e-results/test-output -name "*.html" -o -name "*.json" | wc -l)
+              echo "📊 Test output files: $test_files" >> $GITHUB_STEP_SUMMARY
+            fi
+            
+            # Check for screenshots (indicates test execution)
+            if [ -d "artifacts/docker-e2e-results/screenshots" ] && [ "$(ls -A artifacts/docker-e2e-results/screenshots 2>/dev/null)" ]; then
+              screenshot_count=$(find artifacts/docker-e2e-results/screenshots -name "*.png" | wc -l)
+              echo "📷 Screenshots captured: $screenshot_count" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "❌ No Docker E2E test artifacts found" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Debug information if available
+          if [ -d "artifacts/docker-debug-volumes" ]; then
+            echo "### Debug Information" >> $GITHUB_STEP_SUMMARY
+            echo "🐛 Debug volumes exported for analysis" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  # Docker-based E2E tests
+  docker-e2e-test:
+    name: Docker E2E Test
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Install backend dependencies
+        run: |
+          cd server
+          npm ci
+
+      - name: Build Tauri application
+        run: npm run tauri build
+
+      # Build Docker images and run E2E tests
+      - name: Run Docker E2E tests
+        run: |
+          echo "🐳 Running E2E tests in Docker environment..."
+          
+          # Build and run E2E tests using docker-compose
+          cd e2e
+          npm run test:docker
+        env:
+          RUST_LOG: info
+          E2E_PARALLEL: false
+          HEADED: false
+
+      # Alternative: Run E2E tests in parallel
+      - name: Run Docker E2E tests (Parallel)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          echo "🚀 Running parallel E2E tests for main branch..."
+          cd e2e
+          npm run test:docker:parallel
+        env:
+          E2E_PARALLEL: true
+          E2E_MAX_INSTANCES: 2
+
+      # Clean up Docker containers
+      - name: Clean up Docker environment
+        if: always()
+        run: |
+          cd e2e
+          npm run test:docker:clean
+        continue-on-error: true
+
+      # Upload Docker E2E test results
+      - name: Upload Docker E2E results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-e2e-results
+          path: |
+            e2e/test-output/
+            e2e/screenshots/
+            e2e/logs/
+          retention-days: 7
+
+      # Upload Docker volumes (for debugging)
+      - name: Export Docker volumes (debugging)
+        if: failure()
+        run: |
+          echo "Exporting Docker volumes for debugging..."
+          docker volume ls | grep yutodo-e2e || true
+          mkdir -p debug-volumes
+          
+          # Export logs volume if it exists
+          if docker volume inspect yutodo-e2e-logs-test &>/dev/null; then
+            docker run --rm \
+              -v yutodo-e2e-logs-test:/source:ro \
+              -v $(pwd)/debug-volumes:/dest \
+              alpine cp -r /source/. /dest/logs/ || true
+          fi
+        continue-on-error: true
+
+      - name: Upload debug volumes
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-debug-volumes
+          path: debug-volumes/
+          retention-days: 3
+        continue-on-error: true
