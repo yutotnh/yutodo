@@ -53,8 +53,6 @@ A modern, feature-rich todo list application built with Tauri, React, and TypeSc
 ### TOML Error Handling
 ![Error Handling](docs/screenshots/error-handling.png)
 
-> **📸 Note**: Screenshots are placeholders. See [`docs/SCREENSHOT_GUIDE.md`](docs/SCREENSHOT_GUIDE.md) for instructions on capturing actual application screenshots.
-
 ## Features Overview
 
 **YuToDo** combines the power of modern web technologies with native desktop performance to deliver a comprehensive task management solution. The application features a clean, intuitive interface that adapts to your workflow, whether you prefer keyboard shortcuts, drag-and-drop interactions, or menu navigation.
