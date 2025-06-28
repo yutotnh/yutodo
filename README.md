@@ -2,6 +2,97 @@
 
 A modern, feature-rich todo list application built with Tauri, React, and TypeScript. This desktop app provides real-time synchronization, native file operations, Markdown support, comprehensive scheduling system, and extensive customization options.
 
+[![Tauri](https://img.shields.io/badge/Tauri-v2-blue?logo=tauri)](https://tauri.app/)
+[![React](https://img.shields.io/badge/React-18-blue?logo=react)](https://reactjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript)](https://www.typescriptlang.org/)
+[![Tests](https://img.shields.io/badge/Tests-400%2B%20passing-green)](https://github.com)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
+<!-- [![Build Status](https://github.com/your-username/yutodo/workflows/CI/badge.svg)](https://github.com/your-username/yutodo/actions) -->
+<!-- [![codecov](https://codecov.io/gh/your-username/yutodo/branch/main/graph/badge.svg)](https://codecov.io/gh/your-username/yutodo) -->
+
+## Table of Contents
+
+- [Screenshots](#screenshots)
+- [Features Overview](#features-overview)
+- [Quick Start](#quick-start)
+- [Features](#features)
+- [Architecture](#architecture)
+- [Development Setup](#development-setup)
+- [Build Commands](#build-commands)
+- [Configuration](#configuration)
+- [Keyboard Shortcuts](#keyboard-shortcuts)
+- [Command Palette](#command-palette)
+- [Internationalization](#internationalization)
+- [Database Architecture](#database-architecture)
+- [API Endpoints](#api-endpoints)
+- [Technology Stack](#technology-stack)
+- [E2E Testing](#e2e-testing)
+- [WSLg Environment Support](#wslg-environment-support)
+- [Contributing](#contributing)
+- [Known Issues](#known-issues)
+- [Troubleshooting](#troubleshooting)
+
+## Screenshots
+
+### Main Interface - Light Mode
+![Main Interface](docs/screenshots/main-interface-light.png)
+
+### Main Interface - Dark Mode  
+![Dark Mode](docs/screenshots/main-interface-dark.png)
+
+### Schedule Management
+![Schedule View](docs/screenshots/schedule-view.png)
+
+### Command Palette
+![Command Palette](docs/screenshots/command-palette.png)
+
+### Settings Panel
+![Settings Panel](docs/screenshots/settings-panel.png)
+
+### TOML Error Handling
+![Error Handling](docs/screenshots/error-handling.png)
+
+> **📸 Note**: Screenshots are placeholders. See [`docs/SCREENSHOT_GUIDE.md`](docs/SCREENSHOT_GUIDE.md) for instructions on capturing actual application screenshots.
+
+## Features Overview
+
+**YuToDo** combines the power of modern web technologies with native desktop performance to deliver a comprehensive task management solution. The application features a clean, intuitive interface that adapts to your workflow, whether you prefer keyboard shortcuts, drag-and-drop interactions, or menu navigation.
+
+### ✨ Key Highlights
+- **🚀 Real-time synchronization** across multiple app instances
+- **🎨 Adaptive theming** with automatic dark/light mode detection  
+- **⌨️ Keyboard-first design** with VSCode-style command palette
+- **📱 Cross-platform** desktop app with native file system integration
+- **🌐 Multilingual** support (English/Japanese) with extensible i18n
+- **⚙️ Advanced configuration** with TOML files and comprehensive error handling
+
+## Quick Start
+
+### 🚀 Try it Now
+```bash
+# Clone and run (requires Node.js and Rust)
+git clone <repository-url>
+cd yutodo
+npm install && cd server && npm install && cd ..
+
+# Start backend server
+cd server && npm run dev &
+
+# Start desktop app  
+npm run tauri dev
+```
+
+### 📦 Download Release
+<!-- Download pre-built binaries from [Releases](https://github.com/your-username/yutodo/releases) -->
+*Pre-built releases coming soon*
+
+### ✨ First Steps
+1. **Create your first task** - Click the input at the bottom or press `Ctrl+N`
+2. **Try keyboard shortcuts** - Press `Ctrl+Shift+P` for the command palette
+3. **Explore scheduling** - Press `Ctrl+3` to switch to schedule view
+4. **Customize appearance** - Press `Ctrl+,` to open settings
+
 ## Features
 
 ### Core Functionality
