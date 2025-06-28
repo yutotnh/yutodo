@@ -1,0 +1,138 @@
+# ======================================
+# Development Container Docker Compose
+# ======================================
+
+version: '3.8'
+
+services:
+  # Development Environment Container
+  yutodo-dev:
+    build:
+      context: ..
+      dockerfile: .devcontainer/Dockerfile
+    container_name: yutodo-dev-environment
+    
+    volumes:
+      # Mount the entire workspace
+      - ..:/workspace:cached
+      
+      # Cargo cache for Rust builds
+      - yutodo-cargo-cache:/usr/local/cargo/registry
+      - yutodo-target-cache:/workspace/src-tauri/target
+      
+      # Node modules cache
+      - yutodo-node-modules:/workspace/node_modules
+      - yutodo-server-node-modules:/workspace/server/node_modules
+      - yutodo-e2e-node-modules:/workspace/e2e/node_modules
+      
+      # Git config preservation
+      - ~/.gitconfig:/home/vscode/.gitconfig:ro
+      
+      # SSH keys (if available)
+      - ~/.ssh:/home/vscode/.ssh:ro
+      
+      # Docker socket for Docker-in-Docker
+      - /var/run/docker.sock:/var/run/docker-host.sock
+    
+    environment:
+      # Development environment variables
+      - NODE_ENV=development
+      - RUST_LOG=debug
+      - YUTODO_DEV_MODE=true
+      
+      # Tauri development
+      - DISPLAY=${DISPLAY:-:0}
+      - WAYLAND_DISPLAY=${WAYLAND_DISPLAY:-wayland-0}
+      
+      # Docker-in-Docker
+      - DOCKER_HOST=unix:///var/run/docker-host.sock
+    
+    # Network configuration
+    network_mode: "host"
+    
+    # Capabilities for GUI applications and Docker
+    cap_add:
+      - SYS_PTRACE
+    
+    security_opt:
+      - seccomp:unconfined
+    
+    # Keep container running
+    command: sleep infinity
+    
+    # Labels for development container identification
+    labels:
+      - "com.yutodo.container-type=development"
+      - "com.yutodo.environment=devcontainer"
+
+  # YuToDo Server (inherits from main docker-compose.yml)
+  yutodo-server:
+    extends:
+      file: ../docker-compose.yml
+      service: yutodo-server
+    container_name: yutodo-server-dev
+    
+    # Override for development
+    environment:
+      - NODE_ENV=development
+      - YUTODO_LOG_LEVEL=debug
+      - YUTODO_ENABLE_DEBUG=true
+      - YUTODO_CORS_ORIGINS=*
+      - YUTODO_SCHEDULE_INTERVAL=60
+    
+    # Development-specific volumes
+    volumes:
+      - yutodo-dev-data:/data
+      - yutodo-dev-logs:/logs
+    
+    # Network configuration for devcontainer
+    networks:
+      - yutodo-dev-network
+    
+    labels:
+      - "com.yutodo.container-type=server"
+      - "com.yutodo.environment=devcontainer"
+
+# Development-specific volumes
+volumes:
+  yutodo-cargo-cache:
+    driver: local
+    labels:
+      - "com.yutodo.description=Rust Cargo registry cache for development"
+  
+  yutodo-target-cache:
+    driver: local
+    labels:
+      - "com.yutodo.description=Rust target build cache for development"
+  
+  yutodo-node-modules:
+    driver: local
+    labels:
+      - "com.yutodo.description=Root Node.js modules cache"
+  
+  yutodo-server-node-modules:
+    driver: local
+    labels:
+      - "com.yutodo.description=Server Node.js modules cache"
+  
+  yutodo-e2e-node-modules:
+    driver: local
+    labels:
+      - "com.yutodo.description=E2E test Node.js modules cache"
+  
+  yutodo-dev-data:
+    driver: local
+    labels:
+      - "com.yutodo.description=Development database storage"
+  
+  yutodo-dev-logs:
+    driver: local
+    labels:
+      - "com.yutodo.description=Development server logs"
+
+# Development network
+networks:
+  yutodo-dev-network:
+    driver: bridge
+    labels:
+      - "com.yutodo.description=Development container network"

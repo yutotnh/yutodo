@@ -1,3 +1,55 @@
 {
-  "recommendations": ["tauri-apps.tauri-vscode", "rust-lang.rust-analyzer"]
+  "recommendations": [
+    // Development Containers
+    "ms-vscode-remote.remote-containers",
+    
+    // Rust Development
+    "rust-lang.rust-analyzer",
+    "vadimcn.vscode-lldb",
+    "serayuzgur.crates",
+    
+    // TypeScript & JavaScript
+    "ms-vscode.vscode-typescript-next",
+    "bradlc.vscode-tailwindcss",
+    "esbenp.prettier-vscode",
+    "dbaeumer.vscode-eslint",
+    
+    // React & Frontend
+    "ms-vscode.vscode-react-javascript",
+    "formulahendry.auto-rename-tag",
+    "christian-kohler.path-intellisense",
+    
+    // Tauri Development
+    "tauri-apps.tauri-vscode",
+    
+    // Docker & Containers
+    "ms-azuretools.vscode-docker",
+    
+    // Git & GitHub
+    "github.vscode-pull-request-github",
+    "github.copilot",
+    "github.copilot-chat",
+    
+    // Testing
+    "ms-vscode.vscode-jest",
+    "vitest.explorer",
+    
+    // Utilities
+    "ms-vscode.vscode-json",
+    "redhat.vscode-yaml",
+    "tamasfe.even-better-toml",
+    
+    // Markdown & Documentation
+    "yzhang.markdown-all-in-one",
+    "davidanson.vscode-markdownlint"
+  ],
+  
+  "unwantedRecommendations": [
+    // Avoid conflicting Rust extensions
+    "kalitaalexey.vscode-rust",
+    "rust-lang.rust",
+    
+    // Avoid conflicting TypeScript extensions
+    "ms-typescript.vscode-typescript-next"
+  ]
 }

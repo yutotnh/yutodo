@@ -1,0 +1,278 @@
+# Development Container Testing
+name: DevContainer Test
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - '.devcontainer/**'
+      - '.vscode/**'
+      - 'package.json'
+      - 'server/package.json'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - '.devcontainer/**'
+      - '.vscode/**'
+      - 'package.json'
+      - 'server/package.json'
+  workflow_dispatch:
+    inputs:
+      test_level:
+        description: 'Test level'
+        required: true
+        default: 'basic'
+        type: choice
+        options:
+        - basic
+        - full
+
+env:
+  DOCKER_BUILDKIT: 1
+
+jobs:
+  validate-config:
+    name: Validate DevContainer Configuration
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Dev Container CLI
+        run: |
+          npm install -g @devcontainers/cli@latest
+
+      - name: Validate devcontainer.json
+        run: |
+          echo "Validating devcontainer.json syntax and configuration..."
+          devcontainer read-configuration --workspace-folder .
+          
+      - name: Validate docker-compose configuration
+        run: |
+          echo "Validating docker-compose.devcontainer.yml..."
+          docker-compose -f .devcontainer/docker-compose.devcontainer.yml config
+
+      - name: Check required files exist
+        run: |
+          echo "Checking required devcontainer files..."
+          test -f .devcontainer/devcontainer.json
+          test -f .devcontainer/Dockerfile
+          test -f .devcontainer/docker-compose.devcontainer.yml
+          test -f .devcontainer/post-create.sh
+          test -f .devcontainer/post-start.sh
+          test -x .devcontainer/post-create.sh
+          test -x .devcontainer/post-start.sh
+          echo "All required files present and executable"
+
+  test-dockerfile:
+    name: Test DevContainer Dockerfile
+    runs-on: ubuntu-latest
+    needs: validate-config
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Development Container Dockerfile
+        run: |
+          echo "Building devcontainer Dockerfile..."
+          cd .devcontainer
+          docker build \
+            --file Dockerfile \
+            --tag yutodo-devcontainer:test \
+            --build-arg USERNAME=vscode \
+            --build-arg USER_UID=1000 \
+            --build-arg USER_GID=1000 \
+            ..
+
+      - name: Test base tools in container
+        run: |
+          echo "Testing base tools installation..."
+          docker run --rm yutodo-devcontainer:test bash -c "
+            echo 'System information:' &&
+            uname -a &&
+            echo 'Available tools:' &&
+            which git curl wget tree htop vim nano jq &&
+            echo 'Development utilities:' &&
+            which python3 sqlite3 &&
+            echo 'WebKit dependencies check:' &&
+            dpkg -l | grep -E 'webkit2gtk|appindicator|librsvg' | head -5 &&
+            echo 'Base container test completed successfully!'
+          "
+
+  test-devcontainer-features:
+    name: Test DevContainer with Features
+    runs-on: ubuntu-latest
+    needs: validate-config
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.test_level == 'full' || github.event_name == 'push'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Install Dev Container CLI
+        run: |
+          npm install -g @devcontainers/cli@latest
+
+      - name: Build DevContainer with Features
+        run: |
+          echo "Building devcontainer with all features..."
+          devcontainer build --workspace-folder . --log-level info
+
+      - name: Start DevContainer
+        run: |
+          echo "Starting devcontainer..."
+          devcontainer up --workspace-folder . --log-level info
+
+      - name: Test Development Tools
+        run: |
+          echo "Testing development tools..."
+          devcontainer exec --workspace-folder . bash -c "
+            set -e
+            echo '=== Development Environment Test ===' &&
+            echo 'Node.js:' \$(node --version) &&
+            echo 'npm:' \$(npm --version) &&
+            echo 'Rust:' \$(rustc --version) &&
+            echo 'Cargo:' \$(cargo --version) &&
+            echo 'Git:' \$(git --version) &&
+            echo 'TypeScript:' \$(tsc --version) &&
+            echo 'Environment test completed!'
+          "
+
+      - name: Test Post-Create Script Effects
+        run: |
+          echo "Testing post-create script effects..."
+          devcontainer exec --workspace-folder . bash -c "
+            set -e
+            echo '=== Post-Create Script Test ===' &&
+            echo 'Checking development aliases...' &&
+            type yt-dev yt-server yt-test &&
+            echo 'Checking Rust tools...' &&
+            which cargo-edit cargo-audit ||
+              echo 'Rust tools not found - may be installing in background' &&
+            echo 'Checking Tauri CLI...' &&
+            which cargo-tauri ||
+              echo 'Tauri CLI not found - may be installing in background' &&
+            echo 'Post-create test completed!'
+          "
+
+      - name: Test Development Workflow (Quick)
+        run: |
+          echo "Testing basic development workflow..."
+          devcontainer exec --workspace-folder . bash -c "
+            set -e
+            echo '=== Development Workflow Test ===' &&
+            echo 'Testing package.json exists...' &&
+            test -f package.json &&
+            echo 'Testing server/package.json exists...' &&
+            test -f server/package.json &&
+            echo 'Testing VS Code settings...' &&
+            test -f .vscode/settings.json &&
+            test -f .vscode/extensions.json &&
+            echo 'Development workflow test completed!'
+          "
+
+      - name: Cleanup DevContainer
+        if: always()
+        run: |
+          echo "Cleaning up devcontainer..."
+          devcontainer down --workspace-folder . || true
+
+  test-devcontainer-full:
+    name: Full DevContainer Integration Test
+    runs-on: ubuntu-latest
+    needs: [validate-config, test-dockerfile]
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.test_level == 'full'
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Install Dev Container CLI
+        run: |
+          npm install -g @devcontainers/cli@latest
+
+      - name: Build and Start DevContainer
+        run: |
+          echo "Building and starting devcontainer for full test..."
+          devcontainer up --workspace-folder . --log-level info
+
+      - name: Run Full Development Workflow
+        run: |
+          echo "Running full development workflow..."
+          devcontainer exec --workspace-folder . bash -c "
+            set -e
+            echo '=== Full Development Workflow Test ===' &&
+            
+            echo 'Step 1: Installing frontend dependencies...' &&
+            timeout 300 npm ci &&
+            
+            echo 'Step 2: Installing backend dependencies...' &&
+            cd server && timeout 300 npm ci && cd .. &&
+            
+            echo 'Step 3: Building frontend...' &&
+            timeout 600 npm run build &&
+            
+            echo 'Step 4: Building backend...' &&
+            cd server && timeout 300 npm run build && cd .. &&
+            
+            echo 'Step 5: Running frontend tests...' &&
+            timeout 300 npm test -- --run --coverage=false &&
+            
+            echo 'Step 6: Running backend tests...' &&
+            cd server && timeout 300 npm test && cd .. &&
+            
+            echo 'Full development workflow completed successfully!'
+          "
+
+      - name: Test Tauri Development Environment
+        run: |
+          echo "Testing Tauri development environment..."
+          devcontainer exec --workspace-folder . bash -c "
+            set -e
+            echo '=== Tauri Environment Test ===' &&
+            
+            echo 'Checking Tauri CLI...' &&
+            cargo tauri --version &&
+            
+            echo 'Checking Tauri dependencies...' &&
+            pkg-config --exists webkit2gtk-4.1 &&
+            pkg-config --exists gtk+-3.0 &&
+            
+            echo 'Testing Tauri info command...' &&
+            timeout 60 cargo tauri info &&
+            
+            echo 'Tauri environment test completed!'
+          "
+
+      - name: Test VS Code Integration
+        run: |
+          echo "Testing VS Code integration..."
+          devcontainer exec --workspace-folder . bash -c "
+            set -e
+            echo '=== VS Code Integration Test ===' &&
+            
+            echo 'Checking workspace settings...' &&
+            test -f .vscode/settings.json &&
+            jq empty .vscode/settings.json &&
+            
+            echo 'Checking extensions configuration...' &&
+            test -f .vscode/extensions.json &&
+            jq empty .vscode/extensions.json &&
+            
+            echo 'VS Code integration test completed!'
+          "
+
+      - name: Cleanup Full Test
+        if: always()
+        run: |
+          echo "Cleaning up full test environment..."
+          devcontainer down --workspace-folder . || true
+          docker system prune -f || true

@@ -1,0 +1,169 @@
+{
+  "name": "YuToDo Development Environment",
+  "dockerComposeFile": [
+    "../docker-compose.yml",
+    "docker-compose.devcontainer.yml"
+  ],
+  "service": "yutodo-dev",
+  "workspaceFolder": "/workspace",
+  "shutdownAction": "stopCompose",
+
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "20",
+      "nodeGypDependencies": true,
+      "installYarnUsingApt": true
+    },
+    "ghcr.io/devcontainers/features/rust:1": {
+      "version": "latest",
+      "profile": "default"
+    },
+    "ghcr.io/devcontainers/features/git:1": {
+      "version": "latest"
+    },
+    "ghcr.io/devcontainers/features/github-cli:1": {
+      "version": "latest"
+    },
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "version": "latest",
+      "enableNonRootDocker": true
+    }
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        // Rust Development
+        "rust-lang.rust-analyzer",
+        "vadimcn.vscode-lldb",
+        "serayuzgur.crates",
+        
+        // TypeScript & JavaScript
+        "ms-vscode.vscode-typescript-next",
+        "bradlc.vscode-tailwindcss",
+        "esbenp.prettier-vscode",
+        "dbaeumer.vscode-eslint",
+        
+        // React & Frontend
+        "ms-vscode.vscode-react-javascript",
+        "formulahendry.auto-rename-tag",
+        "christian-kohler.path-intellisense",
+        
+        // Tauri Development
+        "tauri-apps.tauri-vscode",
+        
+        // Docker & Containers
+        "ms-azuretools.vscode-docker",
+        "ms-vscode-remote.remote-containers",
+        
+        // Git & GitHub
+        "github.vscode-pull-request-github",
+        "github.copilot",
+        "github.copilot-chat",
+        
+        // Utilities
+        "ms-vscode.vscode-json",
+        "redhat.vscode-yaml",
+        "tamasfe.even-better-toml",
+        "ms-vscode.test-adapter-converter",
+        "hbenl.vscode-test-explorer",
+        
+        // Testing
+        "ms-vscode.vscode-jest",
+        "vitest.explorer",
+        
+        // Markdown & Documentation
+        "yzhang.markdown-all-in-one",
+        "davidanson.vscode-markdownlint"
+      ],
+      
+      "settings": {
+        // Rust Settings
+        "rust-analyzer.check.command": "cargo check",
+        "rust-analyzer.cargo.buildScripts.enable": true,
+        "rust-analyzer.procMacro.enable": true,
+        
+        // TypeScript Settings
+        "typescript.preferences.importModuleSpecifier": "relative",
+        "typescript.format.enable": true,
+        
+        // Prettier Settings
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+          "source.fixAll.eslint": "explicit"
+        },
+        
+        // Tailwind CSS
+        "tailwindCSS.includeLanguages": {
+          "typescript": "javascript",
+          "typescriptreact": "javascript"
+        },
+        
+        // File Associations
+        "files.associations": {
+          "*.toml": "toml",
+          "Dockerfile*": "dockerfile"
+        },
+        
+        // Terminal Settings
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "terminal.integrated.profiles.linux": {
+          "bash": {
+            "path": "bash"
+          }
+        },
+        
+        // Workspace Settings
+        "files.exclude": {
+          "**/node_modules": true,
+          "**/target": true,
+          "**/.git": true,
+          "**/.DS_Store": true,
+          "**/coverage": true,
+          "**/dist": true
+        },
+        
+        // Auto-save
+        "files.autoSave": "afterDelay",
+        "files.autoSaveDelay": 1000,
+        
+        // Testing
+        "jest.jestCommandLine": "npm test --",
+        "vitest.enable": true
+      }
+    }
+  },
+
+  "forwardPorts": [
+    1420,
+    3001,
+    5173
+  ],
+  
+  "portsAttributes": {
+    "1420": {
+      "label": "Tauri Dev Server",
+      "onAutoForward": "notify"
+    },
+    "3001": {
+      "label": "YuToDo Server",
+      "onAutoForward": "notify"
+    },
+    "5173": {
+      "label": "Vite Dev Server",
+      "onAutoForward": "silent"
+    }
+  },
+
+  "postCreateCommand": ".devcontainer/post-create.sh",
+  "postStartCommand": ".devcontainer/post-start.sh",
+
+  "remoteUser": "vscode",
+  "containerUser": "vscode",
+
+  "mounts": [
+    "source=yutodo-cargo-cache,target=/usr/local/cargo/registry,type=volume",
+    "source=yutodo-target-cache,target=/workspace/src-tauri/target,type=volume"
+  ]
+}
