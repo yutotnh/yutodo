@@ -7,6 +7,7 @@
     "core:default",
     "opener:default",
     "opener:allow-open-url",
+    "opener:allow-open-path",
     "clipboard-manager:allow-read-text",
     "clipboard-manager:allow-write-text",
     "dialog:allow-save",
@@ -38,6 +39,12 @@
         },
         {
           "path": "$CONFIG/YuToDo/**"
+        },
+        {
+          "path": "$CONFIG/yutodo/settings.toml"
+        },
+        {
+          "path": "$CONFIG/yutodo/keybindings.toml"
         }
       ]
     },
