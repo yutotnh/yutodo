@@ -145,3 +145,86 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           args: --debug
+
+  test-docker:
+    name: Docker Build Test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        platform: ['linux/amd64', 'linux/arm64']
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: ${{ matrix.platform }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          platforms: ${{ matrix.platform }}
+
+      - name: Test multi-platform Docker build
+        uses: docker/build-push-action@v5
+        with:
+          context: ./server
+          file: ./server/Dockerfile
+          platforms: ${{ matrix.platform }}
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+            VCS_REF=${{ github.sha }}
+            VERSION=ci-test
+            GITHUB_REPOSITORY=${{ github.repository }}
+
+      - name: Test Docker Compose (Development)
+        if: matrix.platform == 'linux/amd64'
+        run: |
+          docker-compose config
+          docker-compose build
+
+      - name: Test Docker Compose (Production)
+        if: matrix.platform == 'linux/amd64'
+        run: |
+          docker-compose -f docker-compose.prod.yml config
+          docker-compose -f docker-compose.prod.yml build
+
+      - name: Test container startup (amd64 only)
+        if: matrix.platform == 'linux/amd64'
+        run: |
+          # Start development container
+          docker-compose up -d
+          
+          # Wait for container to be ready
+          timeout 30 bash -c 'until docker-compose exec -T yutodo-server node -e "const http = require(\"http\"); const options = { host: \"0.0.0.0\", port: 3001, timeout: 2000 }; const request = http.request(options, (res) => { process.exit(res.statusCode === 200 ? 0 : 1); }); request.on(\"error\", () => process.exit(1)); request.end();" 2>/dev/null; do sleep 1; done'
+          
+          # Check logs for errors
+          docker-compose logs yutodo-server
+          
+          # Clean up
+          docker-compose down
+
+  test-devcontainer:
+    name: DevContainer Quick Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Dev Container CLI
+        run: |
+          npm install -g @devcontainers/cli
+
+      - name: Validate DevContainer configuration
+        run: |
+          # Quick validation of devcontainer.json syntax
+          devcontainer read-configuration --workspace-folder .
+          
+          # Validate docker-compose configuration
+          docker-compose -f .devcontainer/docker-compose.devcontainer.yml config > /dev/null
+          
+          echo "DevContainer configuration is valid"

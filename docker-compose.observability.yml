@@ -1,0 +1,269 @@
+# =====================================
+# Docker Compose - Observability Stack
+# =====================================
+
+version: '3.8'
+
+services:
+  # YuToDo Server (extends main docker-compose.yml)
+  yutodo-server:
+    extends:
+      file: docker-compose.yml
+      service: yutodo-server
+    environment:
+      # Enhanced observability configuration
+      - YUTODO_LOG_LEVEL=debug
+      - YUTODO_ENABLE_DEBUG=true
+      
+      # Metrics configuration
+      - YUTODO_METRICS_ENABLED=true
+      - YUTODO_METRICS_PORT=9090
+      
+      # Tracing configuration
+      - YUTODO_TRACING_ENABLED=true
+      - YUTODO_TRACING_EXPORTER=jaeger
+      - YUTODO_TRACING_ENDPOINT=http://jaeger:14268/api/traces
+      - YUTODO_TRACING_SAMPLE_RATE=1.0
+      
+      # Health check configuration
+      - YUTODO_HEALTH_ENABLED=true
+      - YUTODO_HEALTH_PORT=8080
+    
+    ports:
+      - "3001:3001"   # Main application
+      - "9090:9090"   # Prometheus metrics
+      - "8080:8080"   # Health checks
+    
+    depends_on:
+      - prometheus
+      - jaeger
+    
+    networks:
+      - yutodo-observability
+
+  # Prometheus - Metrics Collection
+  prometheus:
+    image: prom/prometheus:v2.47.0
+    container_name: yutodo-prometheus
+    
+    ports:
+      - "9091:9090"   # Prometheus UI (avoid conflict with app metrics port)
+    
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/prometheus/rules:/etc/prometheus/rules:ro
+      - prometheus-data:/prometheus
+    
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+      - '--web.enable-admin-api'
+    
+    networks:
+      - yutodo-observability
+    
+    labels:
+      - "com.yutodo.service=prometheus"
+      - "com.yutodo.description=Metrics collection and monitoring"
+
+  # Grafana - Metrics Visualization
+  grafana:
+    image: grafana/grafana:10.1.0
+    container_name: yutodo-grafana
+    
+    ports:
+      - "3000:3000"   # Grafana UI
+    
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_INSTALL_PLUGINS=grafana-piechart-panel
+    
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    
+    depends_on:
+      - prometheus
+    
+    networks:
+      - yutodo-observability
+    
+    labels:
+      - "com.yutodo.service=grafana"
+      - "com.yutodo.description=Metrics visualization and dashboards"
+
+  # Jaeger - Distributed Tracing
+  jaeger:
+    image: jaegertracing/all-in-one:1.49
+    container_name: yutodo-jaeger
+    
+    ports:
+      - "16686:16686"  # Jaeger UI
+      - "14250:14250"  # gRPC
+      - "14268:14268"  # HTTP
+    
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+      - COLLECTOR_ZIPKIN_HOST_PORT=:9411
+    
+    networks:
+      - yutodo-observability
+    
+    labels:
+      - "com.yutodo.service=jaeger"
+      - "com.yutodo.description=Distributed tracing and performance monitoring"
+
+  # Loki - Log Aggregation
+  loki:
+    image: grafana/loki:2.9.0
+    container_name: yutodo-loki
+    
+    ports:
+      - "3100:3100"
+    
+    volumes:
+      - ./monitoring/loki/loki-config.yml:/etc/loki/local-config.yaml:ro
+      - loki-data:/loki
+    
+    command: -config.file=/etc/loki/local-config.yaml
+    
+    networks:
+      - yutodo-observability
+    
+    labels:
+      - "com.yutodo.service=loki"
+      - "com.yutodo.description=Log aggregation and storage"
+
+  # Promtail - Log Collection Agent
+  promtail:
+    image: grafana/promtail:2.9.0
+    container_name: yutodo-promtail
+    
+    volumes:
+      - ./monitoring/promtail/promtail-config.yml:/etc/promtail/config.yml:ro
+      - /var/log:/var/log:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+    
+    command: -config.file=/etc/promtail/config.yml
+    
+    depends_on:
+      - loki
+    
+    networks:
+      - yutodo-observability
+    
+    labels:
+      - "com.yutodo.service=promtail"
+      - "com.yutodo.description=Log collection and forwarding agent"
+
+  # AlertManager - Alert Management
+  alertmanager:
+    image: prom/alertmanager:v0.26.0
+    container_name: yutodo-alertmanager
+    
+    ports:
+      - "9093:9093"
+    
+    volumes:
+      - ./monitoring/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager-data:/alertmanager
+    
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+      - '--web.external-url=http://localhost:9093'
+      - '--web.route-prefix=/'
+    
+    networks:
+      - yutodo-observability
+    
+    labels:
+      - "com.yutodo.service=alertmanager"
+      - "com.yutodo.description=Alert management and notification routing"
+
+  # Node Exporter - System Metrics
+  node-exporter:
+    image: prom/node-exporter:v1.6.0
+    container_name: yutodo-node-exporter
+    
+    ports:
+      - "9100:9100"
+    
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    
+    networks:
+      - yutodo-observability
+    
+    labels:
+      - "com.yutodo.service=node-exporter"
+      - "com.yutodo.description=System and hardware metrics collection"
+
+  # cAdvisor - Container Metrics
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.47.0
+    container_name: yutodo-cadvisor
+    
+    ports:
+      - "8081:8080"
+    
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    
+    privileged: true
+    devices:
+      - /dev/kmsg
+    
+    networks:
+      - yutodo-observability
+    
+    labels:
+      - "com.yutodo.service=cadvisor"
+      - "com.yutodo.description=Container resource usage and performance metrics"
+
+# Volumes for persistent data
+volumes:
+  prometheus-data:
+    driver: local
+    labels:
+      - "com.yutodo.description=Prometheus metrics data storage"
+  
+  grafana-data:
+    driver: local
+    labels:
+      - "com.yutodo.description=Grafana dashboards and configuration storage"
+  
+  loki-data:
+    driver: local
+    labels:
+      - "com.yutodo.description=Loki log data storage"
+  
+  alertmanager-data:
+    driver: local
+    labels:
+      - "com.yutodo.description=AlertManager configuration and data storage"
+
+# Dedicated observability network
+networks:
+  yutodo-observability:
+    driver: bridge
+    labels:
+      - "com.yutodo.description=Observability stack network isolation"

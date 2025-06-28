@@ -1,0 +1,176 @@
+# Docker Image Build and Publish to GitHub Container Registry
+name: Docker Publish
+
+on:
+  # Trigger on release creation
+  release:
+    types: [published]
+  
+  # Manual trigger for testing
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Docker image tag'
+        required: true
+        default: 'latest'
+      
+  # Trigger on main branch push (for latest tag)
+  push:
+    branches:
+      - main
+    paths:
+      - 'server/**'
+      - 'docker-compose*.yml'
+      - 'Dockerfile'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}/server
+
+jobs:
+  build-and-push:
+    name: Build and Push Docker Image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            # Tag as latest on main branch
+            type=raw,value=latest,enable={{is_default_branch}}
+            # Tag with version on release
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            # Tag with manual input
+            type=raw,value=${{ github.event.inputs.tag }},enable=${{ github.event_name == 'workflow_dispatch' }}
+            # Tag with commit SHA for main branch
+            type=sha,prefix={{branch}}-,enable={{is_default_branch}}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./server
+          file: ./server/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            BUILD_DATE=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.created'] }}
+            VCS_REF=${{ github.sha }}
+            VERSION=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.version'] }}
+            GITHUB_REPOSITORY=${{ github.repository }}
+
+  test-published-image:
+    name: Test Published Image
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    if: success()
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Test published image
+        run: |
+          # Use the built image directly from the registry
+          IMAGE_NAME="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
+          
+          # Login to GHCR to pull the image
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          
+          # Create test docker-compose with published image
+          cat > docker-compose.test.yml << EOF
+          version: '3.8'
+          services:
+            yutodo-server:
+              image: ${IMAGE_NAME}
+              container_name: yutodo-server-test
+              environment:
+                - NODE_ENV=production
+                - YUTODO_SERVER_HOST=0.0.0.0
+                - YUTODO_SERVER_PORT=3001
+                - YUTODO_DB_PATH=/data/todos.db
+                - YUTODO_LOG_LEVEL=info
+                - YUTODO_CORS_ORIGINS=*
+              volumes:
+                - test-data:/data
+              ports:
+                - "3001:3001"
+              
+          volumes:
+            test-data:
+          EOF
+          
+          # Start container and test
+          docker-compose -f docker-compose.test.yml up -d
+          
+          # Wait for startup
+          sleep 10
+          
+          # Test health endpoint
+          timeout 30 bash -c 'until curl -f http://localhost:3001 2>/dev/null; do sleep 1; done'
+          
+          # Check logs
+          docker-compose -f docker-compose.test.yml logs yutodo-server
+          
+          # Cleanup
+          docker-compose -f docker-compose.test.yml down -v
+
+  update-docker-compose:
+    name: Update Docker Compose Files
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release'
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update production Docker Compose
+        run: |
+          # Extract version from release tag
+          VERSION=${GITHUB_REF#refs/tags/}
+          IMAGE_TAG="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${VERSION}"
+          
+          # Update docker-compose.prod.yml to use specific version from GHCR
+          sed -i "s|build:|# build:|g" docker-compose.prod.yml
+          sed -i "s|context: ./server|# context: ./server|g" docker-compose.prod.yml
+          sed -i "s|dockerfile: Dockerfile|# dockerfile: Dockerfile|g" docker-compose.prod.yml
+          sed -i "s|target: production|# target: production|g" docker-compose.prod.yml
+          sed -i "/container_name: yutodo-server-prod/i\\    image: ${IMAGE_TAG}" docker-compose.prod.yml
+          
+          # Commit changes if there are any
+          if git diff --quiet; then
+            echo "No changes to commit"
+          else
+            git config --local user.email "action@github.com"
+            git config --local user.name "GitHub Action"
+            git add docker-compose.prod.yml
+            git commit -m "feat: update production Docker Compose to use GHCR image ${VERSION}"
+            git push
+          fi

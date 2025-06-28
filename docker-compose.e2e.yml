@@ -1,0 +1,153 @@
+# ======================================
+# Docker Compose - E2E Testing Environment
+# ======================================
+
+version: '3.8'
+
+services:
+  # YuToDo Server for E2E testing
+  yutodo-server-e2e:
+    extends:
+      file: docker-compose.yml
+      service: yutodo-server
+    container_name: yutodo-server-e2e
+    
+    environment:
+      - NODE_ENV=test
+      - YUTODO_SERVER_HOST=0.0.0.0
+      - YUTODO_SERVER_PORT=3001
+      - YUTODO_DB_PATH=/data/test-todos.db
+      - YUTODO_LOG_LEVEL=info
+      - YUTODO_ENABLE_DEBUG=false
+      - YUTODO_CORS_ORIGINS=*
+      - YUTODO_SCHEDULE_INTERVAL=120
+    
+    volumes:
+      - yutodo-e2e-data:/data
+      - yutodo-e2e-logs:/logs
+    
+    networks:
+      - yutodo-e2e-network
+    
+    healthcheck:
+      test: ["CMD", "node", "-e", "const http = require('http'); const options = { host: '0.0.0.0', port: 3001, timeout: 2000 }; const request = http.request(options, (res) => { process.exit(res.statusCode === 200 ? 0 : 1); }); request.on('error', () => process.exit(1)); request.end();"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    
+    labels:
+      - "com.yutodo.environment=e2e"
+      - "com.yutodo.service=server"
+
+  # E2E Test Runner
+  yutodo-e2e:
+    build:
+      context: ./e2e
+      dockerfile: Dockerfile
+    container_name: yutodo-e2e-runner
+    
+    depends_on:
+      yutodo-server-e2e:
+        condition: service_healthy
+    
+    environment:
+      - NODE_ENV=test
+      - DISPLAY=:99
+      - RUST_LOG=info
+      - YUTODO_SERVER_URL=http://yutodo-server-e2e:3001
+      - E2E_PARALLEL=${E2E_PARALLEL:-false}
+      - E2E_MAX_INSTANCES=${E2E_MAX_INSTANCES:-1}
+      - HEADED=${HEADED:-false}
+    
+    volumes:
+      # Mount source code for testing
+      - ./:/workspace/source:ro
+      - ./e2e:/workspace:rw
+      
+      # Test artifacts
+      - yutodo-e2e-reports:/workspace/test-output
+      - yutodo-e2e-screenshots:/workspace/screenshots
+      - yutodo-e2e-logs-test:/workspace/logs
+      
+      # Build artifacts (Tauri binary)
+      - ./src-tauri/target:/workspace/source/src-tauri/target:ro
+    
+    working_dir: /workspace
+    
+    networks:
+      - yutodo-e2e-network
+    
+    # Run tests and keep container alive for debugging
+    command: >
+      bash -c "
+        echo 'Waiting for server to be ready...' &&
+        timeout 60 bash -c 'until curl -f http://yutodo-server-e2e:3001; do sleep 2; done' &&
+        echo 'Server is ready, starting E2E tests...' &&
+        /usr/local/bin/docker-e2e-run.sh
+      "
+    
+    labels:
+      - "com.yutodo.environment=e2e"
+      - "com.yutodo.service=e2e-runner"
+
+  # Optional: E2E Test Development Environment
+  yutodo-e2e-dev:
+    extends:
+      service: yutodo-e2e
+    container_name: yutodo-e2e-dev
+    
+    # Override command for development/debugging
+    command: >
+      bash -c "
+        echo 'E2E Development Environment Ready' &&
+        echo 'Run: docker exec -it yutodo-e2e-dev /usr/local/bin/docker-e2e-run.sh' &&
+        tail -f /dev/null
+      "
+    
+    # Additional development volumes
+    volumes:
+      - ./:/workspace/source:rw
+      - ./e2e:/workspace:rw
+      - yutodo-e2e-reports:/workspace/test-output
+      - yutodo-e2e-screenshots:/workspace/screenshots
+      - yutodo-e2e-logs-test:/workspace/logs
+      - ./src-tauri/target:/workspace/source/src-tauri/target:rw
+    
+    labels:
+      - "com.yutodo.environment=e2e-dev"
+      - "com.yutodo.service=e2e-dev"
+
+# E2E-specific volumes
+volumes:
+  yutodo-e2e-data:
+    driver: local
+    labels:
+      - "com.yutodo.description=E2E test database storage"
+  
+  yutodo-e2e-logs:
+    driver: local
+    labels:
+      - "com.yutodo.description=E2E server logs"
+  
+  yutodo-e2e-reports:
+    driver: local
+    labels:
+      - "com.yutodo.description=E2E test reports and artifacts"
+  
+  yutodo-e2e-screenshots:
+    driver: local
+    labels:
+      - "com.yutodo.description=E2E test screenshots"
+  
+  yutodo-e2e-logs-test:
+    driver: local
+    labels:
+      - "com.yutodo.description=E2E test execution logs"
+
+# E2E testing network
+networks:
+  yutodo-e2e-network:
+    driver: bridge
+    labels:
+      - "com.yutodo.description=E2E testing network"

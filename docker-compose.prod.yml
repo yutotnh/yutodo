@@ -1,0 +1,126 @@
+# ======================================
+# Docker Compose - Production Environment
+# YuToDo Server Containerization
+# ======================================
+
+version: '3.8'
+
+services:
+  # YuToDo Server
+  yutodo-server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+      target: production
+    container_name: yutodo-server-prod
+    restart: always  # Always restart in production
+    
+    # Port mapping (可以根据需要更改主机端口)
+    ports:
+      - "${YUTODO_HOST_PORT:-3001}:3001"
+    
+    # Production environment variables
+    environment:
+      - NODE_ENV=production
+      - YUTODO_SERVER_HOST=0.0.0.0
+      - YUTODO_SERVER_PORT=3001
+      - YUTODO_DB_PATH=/data/todos.db
+      - YUTODO_CONFIG_DIR=/config
+      - YUTODO_LOG_LEVEL=${YUTODO_LOG_LEVEL:-info}
+      - YUTODO_ENABLE_DEBUG=false
+      # Production CORS settings - specify allowed origins
+      - YUTODO_CORS_ORIGINS=${YUTODO_CORS_ORIGINS:-http://localhost:1420}
+      # Performance optimization
+      - YUTODO_DB_CACHE_SIZE=${YUTODO_DB_CACHE_SIZE:-5000}
+      - YUTODO_SCHEDULE_INTERVAL=${YUTODO_SCHEDULE_INTERVAL:-30}
+    
+    # Volume mounts for production
+    volumes:
+      # Persistent data storage
+      - yutodo-prod-data:/data
+      # Configuration file (read-only)
+      - ${YUTODO_CONFIG_PATH:-./server/config/production.toml}:/config/server-config.toml:ro
+      # Log output for monitoring
+      - yutodo-prod-logs:/logs
+    
+    # Resource limits for production
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+        reservations:
+          memory: 256M
+          cpus: '0.5'
+    
+    # Enhanced health check for production
+    healthcheck:
+      test: ["CMD", "node", "-e", "const http = require('http'); const options = { host: '0.0.0.0', port: 3001, timeout: 3000 }; const request = http.request(options, (res) => { process.exit(res.statusCode === 200 ? 0 : 1); }); request.on('error', () => process.exit(1)); request.end();"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    
+    # Security settings
+    security_opt:
+      - no-new-privileges:true
+    read_only: false  # SQLite needs write access to database files
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
+    
+    # Networking
+    networks:
+      - yutodo-prod-network
+    
+    # Production labels
+    labels:
+      - "com.yutodo.environment=production"
+      - "com.yutodo.service=server"
+      - "com.yutodo.version=1.0.0"
+      - "traefik.enable=true"  # For reverse proxy if using Traefik
+      - "traefik.http.routers.yutodo.rule=Host(\`yutodo.example.com\`)"
+      - "traefik.http.services.yutodo.loadbalancer.server.port=3001"
+    
+    # Logging configuration for production
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+# Production volumes with backup-friendly settings
+volumes:
+  yutodo-prod-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${YUTODO_DATA_DIR:-./data}
+    labels:
+      - "com.yutodo.description=YuToDo production database storage"
+      - "com.yutodo.backup=daily"
+  
+  yutodo-prod-logs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${YUTODO_LOGS_DIR:-./logs}
+    labels:
+      - "com.yutodo.description=YuToDo production server logs"
+
+# Production network with custom settings
+networks:
+  yutodo-prod-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+    labels:
+      - "com.yutodo.description=YuToDo production network"
