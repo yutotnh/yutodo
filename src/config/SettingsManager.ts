@@ -56,6 +56,17 @@ export class SettingsManager {
   }
   
   /**
+   * Reset singleton instance for testing
+   * @internal Only for testing purposes
+   */
+  static resetInstance(): void {
+    if (SettingsManager.instance) {
+      SettingsManager.instance.dispose();
+      SettingsManager.instance = null as any;
+    }
+  }
+  
+  /**
    * Wait for Tauri APIs to be ready
    */
   private async waitForTauriAPIs(): Promise<void> {
