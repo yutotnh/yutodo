@@ -196,6 +196,13 @@ export const useKeyboardShortcuts = (
       return;
     }
     
+    // Pre-check and prevent default for known problematic browser shortcuts
+    if (event.ctrlKey && event.key === ',') {
+      // Ctrl+, is browser settings - always prevent default
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    
     // Process keybindings
     for (const keybinding of effectiveKeybindings) {
       const parts = keybinding.key.split(' ').filter(p => p.trim());
@@ -207,7 +214,10 @@ export const useKeyboardShortcuts = (
         
         // Check if this is the first key of a sequence
         if (!isWaitingForSecondKey && matchesKeybinding(event, firstParsed)) {
-          event.preventDefault();
+          // Only prevent default if not already prevented
+          if (!event.defaultPrevented) {
+            event.preventDefault();
+          }
           setIsWaitingForSecondKey(true);
           setFirstKeyBinding(firstParsed);
           
@@ -222,7 +232,10 @@ export const useKeyboardShortcuts = (
         if (isWaitingForSecondKey && firstKeyBinding && 
             keybinding.key.startsWith(parts[0]) && 
             matchesKeybinding(event, secondParsed)) {
-          event.preventDefault();
+          // Only prevent default if not already prevented
+          if (!event.defaultPrevented) {
+            event.preventDefault();
+          }
           resetKeySequence();
           
           // Evaluate when clause and execute command
@@ -238,8 +251,11 @@ export const useKeyboardShortcuts = (
         if (matchesKeybinding(event, parsed)) {
           // Evaluate when clause
           if (evaluateWhenClause(keybinding.when, context)) {
-            event.preventDefault();
-            event.stopPropagation();
+            // Only prevent default if not already prevented
+            if (!event.defaultPrevented) {
+              event.preventDefault();
+              event.stopPropagation();
+            }
             executeCommand(keybinding.command, handlers);
             return;
           }
@@ -254,9 +270,10 @@ export const useKeyboardShortcuts = (
   }, [effectiveKeybindings, isWaitingForSecondKey, firstKeyBinding, resetKeySequence, context, handlers, options.isModalOpen]);
 
   useEffect(() => {
-    document.addEventListener('keydown', handleKeyDown);
+    // Use capture phase to ensure we get the event before browser default actions
+    document.addEventListener('keydown', handleKeyDown, true);
     return () => {
-      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('keydown', handleKeyDown, true);
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }

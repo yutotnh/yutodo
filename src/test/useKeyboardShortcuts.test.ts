@@ -79,7 +79,7 @@ describe('useKeyboardShortcuts', () => {
       
       renderHook(() => useKeyboardShortcuts(mockHandlers));
       
-      expect(addEventListenerSpy).toHaveBeenCalledWith('keydown', expect.any(Function));
+      expect(addEventListenerSpy).toHaveBeenCalledWith('keydown', expect.any(Function), true);
     });
 
     it('should remove event listener on unmount', () => {
@@ -89,7 +89,7 @@ describe('useKeyboardShortcuts', () => {
       
       unmount();
       
-      expect(removeEventListenerSpy).toHaveBeenCalledWith('keydown', expect.any(Function));
+      expect(removeEventListenerSpy).toHaveBeenCalledWith('keydown', expect.any(Function), true);
     });
 
     it('should return shortcuts list', () => {
