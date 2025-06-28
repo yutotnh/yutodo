@@ -38,3 +38,26 @@ coverage/
 # E2E test artifacts
 test-results/
 e2e/screenshots/*.png
+
+# Kubernetes and Helm
+k8s/helm/yutodo/charts/
+k8s/helm/yutodo/Chart.lock
+k8s/helm/yutodo/values-*-custom.yaml
+k8s/secrets/
+k8s/manifests/generated/
+
+# Temporary Kubernetes files
+*.kubeconfig
+kubeconfig
+.kube/
+kubectl-debug.log
+
+# Environment-specific configuration
+k8s/helm/yutodo/values-local.yaml
+k8s/helm/yutodo/values-*.local.yaml
+
+# Backup files
+backups/
+*.backup
+*.dump
+*.sql.gz

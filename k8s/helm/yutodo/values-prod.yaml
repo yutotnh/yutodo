@@ -1,0 +1,392 @@
+# Production Environment Configuration
+# Enterprise-grade configuration with high availability and security
+
+app:
+  environment: production
+
+# Production Image Configuration
+image:
+  repository: your-org/yutodo-server
+  tag: ""  # Use Chart.yaml appVersion for production
+  pullPolicy: IfNotPresent
+
+# Production Server Configuration
+config:
+  server:
+    nodeEnv: "production"
+    maxConnections: 1000
+    requestTimeout: 30000
+  
+  database:
+    type: "postgresql"
+    postgresql:
+      maxConnections: 50
+      connectionTimeout: 30000
+  
+  security:
+    corsOrigins: ["https://yutodo.example.com"]
+    enableRateLimit: true
+    rateLimitMax: 100
+    rateLimitWindow: 900000
+    enableSecurityHeaders: true
+    enableCsrf: true
+    
+  logging:
+    level: "warn"  # Production logging
+    enableConsole: false  # Only structured logging
+    enableFile: true
+    enableAudit: true
+
+# High availability deployment
+deployment:
+  replicas: 5  # High availability
+  
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0  # Zero downtime
+  
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 200m
+      memory: 256Mi
+  
+  # Production-grade probes
+  livenessProbe:
+    initialDelaySeconds: 60
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+    successThreshold: 1
+  
+  readinessProbe:
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3
+    successThreshold: 1
+  
+  startupProbe:
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 30
+    successThreshold: 1
+  
+  # Production affinity rules
+  affinity:
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:  # Hard requirement
+        - labelSelector:
+            matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values:
+                  - yutodo
+          topologyKey: kubernetes.io/hostname
+    nodeAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          preference:
+            matchExpressions:
+              - key: node-type
+                operator: In
+                values:
+                  - application
+
+# Production service
+service:
+  type: ClusterIP
+  port: 3001
+
+# Production ingress with full TLS
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+    nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    external-dns.alpha.kubernetes.io/hostname: "yutodo.example.com"
+  hosts:
+    - host: yutodo.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: yutodo-prod-tls
+      hosts:
+        - yutodo.example.com
+
+# Production persistence with backup
+persistence:
+  enabled: true
+  storageClass: "fast-ssd"  # High-performance storage
+  size: 50Gi
+  backup:
+    enabled: true
+    schedule: "0 1 * * *"  # Daily at 1 AM
+    retention: "30d"
+
+# Aggressive autoscaling for production
+autoscaling:
+  enabled: true
+  minReplicas: 5
+  maxReplicas: 20
+  targetCPUUtilizationPercentage: 60  # Conservative threshold
+  targetMemoryUtilizationPercentage: 70
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+        - type: Percent
+          value: 50  # Scale up by 50% maximum
+          periodSeconds: 15
+        - type: Pods
+          value: 2   # Or add 2 pods maximum
+          periodSeconds: 15
+    scaleDown:
+      stabilizationWindowSeconds: 300  # 5 minutes stabilization
+      policies:
+        - type: Percent
+          value: 10  # Scale down by 10% maximum
+          periodSeconds: 60
+
+# Strict PDB for production
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 3  # Always keep 3 pods available
+
+# Strict network policy
+networkPolicy:
+  enabled: true
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: ingress-nginx
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: prometheus
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: grafana
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: postgresql
+      ports:
+        - protocol: TCP
+          port: 5432
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: redis
+      ports:
+        - protocol: TCP
+          port: 6379
+    - to: []  # Allow DNS
+      ports:
+        - protocol: TCP
+          port: 53
+        - protocol: UDP
+          port: 53
+    - to: []  # Allow HTTPS for external APIs
+      ports:
+        - protocol: TCP
+          port: 443
+
+# Production monitoring with alerting
+monitoring:
+  enabled: true
+  
+  serviceMonitor:
+    enabled: true
+    interval: 15s  # Frequent monitoring
+    scrapeTimeout: 10s
+  
+  prometheusRule:
+    enabled: true
+    rules:
+      - alert: YuToDoHighMemoryUsage
+        expr: (container_memory_working_set_bytes{pod=~"yutodo-.*"} / container_spec_memory_limit_bytes) * 100 > 80
+        for: 2m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "YuToDo high memory usage"
+          description: "YuToDo pod {{ $labels.pod }} memory usage is above 80%"
+          runbook_url: "https://runbooks.example.com/yutodo/high-memory"
+      
+      - alert: YuToDoHighCPUUsage
+        expr: (rate(container_cpu_usage_seconds_total{pod=~"yutodo-.*"}[5m]) * 100) > 70
+        for: 2m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "YuToDo high CPU usage"
+          description: "YuToDo pod {{ $labels.pod }} CPU usage is above 70%"
+          runbook_url: "https://runbooks.example.com/yutodo/high-cpu"
+      
+      - alert: YuToDoDown
+        expr: up{job="yutodo"} == 0
+        for: 30s
+        labels:
+          severity: critical
+          team: platform
+          oncall: "true"
+        annotations:
+          summary: "YuToDo is down"
+          description: "YuToDo service is not responding"
+          runbook_url: "https://runbooks.example.com/yutodo/service-down"
+      
+      - alert: YuToDoHighErrorRate
+        expr: (rate(yutodo_http_requests_total{status=~"5.."}[5m]) / rate(yutodo_http_requests_total[5m])) * 100 > 5
+        for: 1m
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: "YuToDo high error rate"
+          description: "YuToDo error rate is above 5%"
+          runbook_url: "https://runbooks.example.com/yutodo/high-error-rate"
+      
+      - alert: YuToDoSlowResponseTime
+        expr: histogram_quantile(0.95, rate(yutodo_http_request_duration_seconds_bucket[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "YuToDo slow response time"
+          description: "YuToDo 95th percentile response time is above 1 second"
+          runbook_url: "https://runbooks.example.com/yutodo/slow-response"
+  
+  grafanaDashboard:
+    enabled: true
+
+# Production-grade PostgreSQL
+postgresql:
+  enabled: true
+  auth:
+    database: "yutodo_prod"
+  primary:
+    persistence:
+      enabled: true
+      size: 100Gi
+      storageClass: "fast-ssd"
+    resources:
+      limits:
+        cpu: 2000m
+        memory: 2Gi
+      requests:
+        cpu: 500m
+        memory: 512Mi
+    postgresql:
+      maxConnections: 200
+      sharedPreloadLibraries: "pg_stat_statements,pg_repack"
+    # PostgreSQL high availability
+    replication:
+      enabled: true
+      numSynchronousReplicas: 1
+      synchronousCommit: "on"
+
+# Production Redis with persistence
+redis:
+  enabled: true
+  auth:
+    enabled: true
+  master:
+    persistence:
+      enabled: true
+      size: 20Gi
+      storageClass: "fast-ssd"
+    resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+  replica:
+    replicaCount: 2  # Redis replicas for HA
+    persistence:
+      enabled: true
+      size: 20Gi
+    resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+
+# Disable development features
+development:
+  enabled: false
+
+# Full backup strategy
+backup:
+  enabled: true
+  schedule: "0 2 * * *"  # Daily at 2 AM
+  retention: "90d"  # 3 months retention
+  storage:
+    type: "s3"
+    s3:
+      bucket: "yutodo-prod-backups"
+      region: "us-west-2"
+      storageClass: "STANDARD_IA"
+  notifications:
+    slack:
+      enabled: true
+      webhook: "https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK"
+    email:
+      enabled: true
+      smtp:
+        host: "smtp.example.com"
+        port: 587
+        from: "noreply@example.com"
+        to: ["ops@example.com", "platform@example.com"]
+
+# Maximum security for production
+security:
+  podSecurityStandards:
+    enforce: "restricted"
+    audit: "restricted"
+    warn: "restricted"
+  
+  falco:
+    enabled: true
+    
+  gatekeeper:
+    enabled: true
+
+# Full cost optimization
+costOptimization:
+  vpa:
+    enabled: true
+    updateMode: "Auto"
+  
+  clusterAutoscaler:
+    enabled: true
+    
+  priorityClass:
+    enabled: true
+    value: 1000  # High priority
+    description: "High priority for YuToDo production workload"

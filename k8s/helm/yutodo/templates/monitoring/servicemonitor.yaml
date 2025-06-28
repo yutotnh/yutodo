@@ -1,0 +1,76 @@
+{{- if and .Values.monitoring.enabled .Values.monitoring.serviceMonitor.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "yutodo.serviceMonitorName" . }}
+  namespace: {{ .Values.monitoring.serviceMonitor.namespace | default (include "yutodo.namespace" .) }}
+  labels:
+    {{- include "yutodo.monitoringLabels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "yutodo.selectorLabels" . | nindent 6 }}
+  endpoints:
+    - port: metrics
+      path: {{ .Values.monitoring.serviceMonitor.path | default "/metrics" }}
+      interval: {{ .Values.monitoring.serviceMonitor.interval | default "30s" }}
+      scrapeTimeout: {{ .Values.monitoring.serviceMonitor.scrapeTimeout | default "10s" }}
+      {{- if .Values.monitoring.serviceMonitor.basicAuth }}
+      basicAuth:
+        username:
+          name: {{ .Values.monitoring.serviceMonitor.basicAuth.username.secret }}
+          key: {{ .Values.monitoring.serviceMonitor.basicAuth.username.key }}
+        password:
+          name: {{ .Values.monitoring.serviceMonitor.basicAuth.password.secret }}
+          key: {{ .Values.monitoring.serviceMonitor.basicAuth.password.key }}
+      {{- end }}
+      {{- if .Values.monitoring.serviceMonitor.bearerToken }}
+      bearerTokenSecret:
+        name: {{ .Values.monitoring.serviceMonitor.bearerToken.secret }}
+        key: {{ .Values.monitoring.serviceMonitor.bearerToken.key }}
+      {{- end }}
+      metricRelabelings:
+        # Add instance label with pod name
+        - sourceLabels: [__meta_kubernetes_pod_name]
+          targetLabel: instance
+        # Add environment label
+        - targetLabel: environment
+          replacement: {{ .Values.app.environment }}
+        # Add version label
+        - targetLabel: version
+          replacement: {{ .Chart.AppVersion }}
+      relabelings:
+        # Add service label
+        - sourceLabels: [__meta_kubernetes_service_name]
+          targetLabel: service
+        # Add namespace label
+        - sourceLabels: [__meta_kubernetes_namespace]
+          targetLabel: namespace
+        # Add pod label
+        - sourceLabels: [__meta_kubernetes_pod_name]
+          targetLabel: pod
+        # Add node label
+        - sourceLabels: [__meta_kubernetes_pod_node_name]
+          targetLabel: node
+    # Node exporter metrics
+    {{- if .Values.monitoring.nodeExporter.enabled }}
+    - port: node-metrics
+      path: /metrics
+      interval: {{ .Values.monitoring.serviceMonitor.interval | default "30s" }}
+      scrapeTimeout: {{ .Values.monitoring.serviceMonitor.scrapeTimeout | default "10s" }}
+      metricRelabelings:
+        - sourceLabels: [__meta_kubernetes_pod_name]
+          targetLabel: instance
+        - targetLabel: job
+          replacement: yutodo-node-exporter
+    {{- end }}
+  namespaceSelector:
+    matchNames:
+      - {{ include "yutodo.namespace" . }}
+  {{- if .Values.monitoring.serviceMonitor.honorLabels }}
+  honorLabels: {{ .Values.monitoring.serviceMonitor.honorLabels }}
+  {{- end }}
+  {{- if .Values.monitoring.serviceMonitor.honorTimestamps }}
+  honorTimestamps: {{ .Values.monitoring.serviceMonitor.honorTimestamps }}
+  {{- end }}
+{{- end }}

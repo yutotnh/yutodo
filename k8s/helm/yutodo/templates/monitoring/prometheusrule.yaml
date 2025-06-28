@@ -1,0 +1,239 @@
+{{- if and .Values.monitoring.enabled .Values.monitoring.prometheusRule.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ include "yutodo.prometheusRuleName" . }}
+  namespace: {{ .Values.monitoring.prometheusRule.namespace | default (include "yutodo.namespace" .) }}
+  labels:
+    {{- include "yutodo.monitoringLabels" . | nindent 4 }}
+spec:
+  groups:
+    - name: yutodo.availability
+      interval: 30s
+      rules:
+        - alert: YuToDoDown
+          expr: up{job="yutodo"} == 0
+          for: 1m
+          labels:
+            severity: critical
+            service: yutodo
+            team: platform
+          annotations:
+            summary: "YuToDo service is down"
+            description: "YuToDo service has been down for more than 1 minute. Pod: {{ $labels.pod }}"
+            runbook_url: "https://runbooks.example.com/yutodo/service-down"
+        
+        - alert: YuToDoHighErrorRate
+          expr: |
+            (
+              rate(yutodo_http_requests_total{status=~"5.."}[5m]) / 
+              rate(yutodo_http_requests_total[5m])
+            ) * 100 > 5
+          for: 5m
+          labels:
+            severity: warning
+            service: yutodo
+            team: platform
+          annotations:
+            summary: "YuToDo high error rate"
+            description: "YuToDo error rate is {{ $value }}% for pod {{ $labels.pod }}"
+            runbook_url: "https://runbooks.example.com/yutodo/high-error-rate"
+        
+        - alert: YuToDoSlowResponseTime
+          expr: |
+            histogram_quantile(0.95, 
+              rate(yutodo_http_request_duration_seconds_bucket[5m])
+            ) > 1
+          for: 5m
+          labels:
+            severity: warning
+            service: yutodo
+            team: platform
+          annotations:
+            summary: "YuToDo slow response time"
+            description: "YuToDo 95th percentile response time is {{ $value }}s for pod {{ $labels.pod }}"
+            runbook_url: "https://runbooks.example.com/yutodo/slow-response"
+
+    - name: yutodo.resources
+      interval: 30s
+      rules:
+        - alert: YuToDoHighMemoryUsage
+          expr: |
+            (
+              container_memory_working_set_bytes{pod=~"{{ include "yutodo.fullname" . }}-.*"} / 
+              container_spec_memory_limit_bytes
+            ) * 100 > 80
+          for: 5m
+          labels:
+            severity: warning
+            service: yutodo
+            team: platform
+          annotations:
+            summary: "YuToDo high memory usage"
+            description: "YuToDo memory usage is {{ $value }}% for pod {{ $labels.pod }}"
+            runbook_url: "https://runbooks.example.com/yutodo/high-memory"
+        
+        - alert: YuToDoHighCPUUsage
+          expr: |
+            (
+              rate(container_cpu_usage_seconds_total{pod=~"{{ include "yutodo.fullname" . }}-.*"}[5m]) * 100
+            ) > 70
+          for: 5m
+          labels:
+            severity: warning
+            service: yutodo
+            team: platform
+          annotations:
+            summary: "YuToDo high CPU usage"
+            description: "YuToDo CPU usage is {{ $value }}% for pod {{ $labels.pod }}"
+            runbook_url: "https://runbooks.example.com/yutodo/high-cpu"
+        
+        - alert: YuToDoOutOfMemory
+          expr: |
+            (
+              container_memory_working_set_bytes{pod=~"{{ include "yutodo.fullname" . }}-.*"} / 
+              container_spec_memory_limit_bytes
+            ) * 100 > 95
+          for: 1m
+          labels:
+            severity: critical
+            service: yutodo
+            team: platform
+          annotations:
+            summary: "YuToDo out of memory"
+            description: "YuToDo memory usage is {{ $value }}% for pod {{ $labels.pod }}"
+            runbook_url: "https://runbooks.example.com/yutodo/out-of-memory"
+
+    - name: yutodo.database
+      interval: 30s
+      rules:
+        {{- if .Values.postgresql.enabled }}
+        - alert: YuToDoPostgreSQLDown
+          expr: up{job="postgresql"} == 0
+          for: 1m
+          labels:
+            severity: critical
+            service: yutodo
+            component: database
+            team: platform
+          annotations:
+            summary: "YuToDo PostgreSQL is down"
+            description: "PostgreSQL database for YuToDo has been down for more than 1 minute"
+            runbook_url: "https://runbooks.example.com/yutodo/postgresql-down"
+        
+        - alert: YuToDoPostgreSQLHighConnections
+          expr: |
+            (
+              pg_stat_database_numbackends{datname="{{ .Values.config.database.postgresql.database }}"} / 
+              pg_settings_max_connections
+            ) * 100 > 80
+          for: 5m
+          labels:
+            severity: warning
+            service: yutodo
+            component: database
+            team: platform
+          annotations:
+            summary: "YuToDo PostgreSQL high connections"
+            description: "PostgreSQL connection usage is {{ $value }}%"
+            runbook_url: "https://runbooks.example.com/yutodo/postgresql-high-connections"
+        {{- end }}
+        
+        - alert: YuToDoSlowDatabaseQueries
+          expr: |
+            rate(yutodo_database_query_duration_seconds_sum[5m]) / 
+            rate(yutodo_database_query_duration_seconds_count[5m]) > 0.5
+          for: 5m
+          labels:
+            severity: warning
+            service: yutodo
+            component: database
+            team: platform
+          annotations:
+            summary: "YuToDo slow database queries"
+            description: "Average database query time is {{ $value }}s"
+            runbook_url: "https://runbooks.example.com/yutodo/slow-database"
+
+    - name: yutodo.websockets
+      interval: 30s
+      rules:
+        - alert: YuToDoHighWebSocketDisconnections
+          expr: |
+            rate(yutodo_websocket_disconnections_total[5m]) > 10
+          for: 5m
+          labels:
+            severity: warning
+            service: yutodo
+            component: websocket
+            team: platform
+          annotations:
+            summary: "YuToDo high WebSocket disconnections"
+            description: "WebSocket disconnection rate is {{ $value }}/s"
+            runbook_url: "https://runbooks.example.com/yutodo/websocket-disconnections"
+        
+        - alert: YuToDoWebSocketConnectionsLimitReached
+          expr: |
+            yutodo_websocket_connections_active > 1000
+          for: 1m
+          labels:
+            severity: warning
+            service: yutodo
+            component: websocket
+            team: platform
+          annotations:
+            summary: "YuToDo WebSocket connection limit approached"
+            description: "Active WebSocket connections: {{ $value }}"
+            runbook_url: "https://runbooks.example.com/yutodo/websocket-limit"
+
+    - name: yutodo.business
+      interval: 60s
+      rules:
+        - alert: YuToDoLowUserActivity
+          expr: |
+            rate(yutodo_todos_created_total[1h]) < 0.1
+          for: 30m
+          labels:
+            severity: info
+            service: yutodo
+            team: product
+          annotations:
+            summary: "YuToDo low user activity"
+            description: "Todo creation rate is {{ $value }}/hour"
+            runbook_url: "https://runbooks.example.com/yutodo/low-activity"
+        
+        - alert: YuToDoScheduleExecutionFailures
+          expr: |
+            (
+              rate(yutodo_schedule_executions_total{status="failure"}[1h]) / 
+              rate(yutodo_schedule_executions_total[1h])
+            ) * 100 > 10
+          for: 10m
+          labels:
+            severity: warning
+            service: yutodo
+            component: scheduler
+            team: platform
+          annotations:
+            summary: "YuToDo schedule execution failures"
+            description: "Schedule execution failure rate is {{ $value }}%"
+            runbook_url: "https://runbooks.example.com/yutodo/schedule-failures"
+
+    - name: yutodo.custom
+      interval: 30s
+      rules:
+        {{- range .Values.monitoring.prometheusRule.rules }}
+        - alert: {{ .alert }}
+          expr: {{ .expr }}
+          {{- if .for }}
+          for: {{ .for }}
+          {{- end }}
+          labels:
+            {{- toYaml .labels | nindent 12 }}
+          annotations:
+            {{- toYaml .annotations | nindent 12 }}
+        {{- end }}
+
+  {{- with .Values.monitoring.prometheusRule.additionalGroups }}
+  {{- toYaml . | nindent 4 }}
+  {{- end }}
+{{- end }}

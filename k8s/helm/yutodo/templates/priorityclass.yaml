@@ -1,0 +1,11 @@
+{{- if .Values.costOptimization.priorityClass.enabled }}
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: {{ include "yutodo.priorityClassName" . }}
+  labels:
+    {{- include "yutodo.labels" . | nindent 4 }}
+value: {{ .Values.costOptimization.priorityClass.value }}
+globalDefault: {{ .Values.costOptimization.priorityClass.globalDefault }}
+description: {{ .Values.costOptimization.priorityClass.description | quote }}
+{{- end }}

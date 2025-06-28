@@ -1,0 +1,142 @@
+# Development Environment Configuration
+# Optimized for local development and testing
+
+# Override global settings for development
+global:
+  imageRegistry: ""
+
+app:
+  environment: development
+
+# Development Image Configuration
+image:
+  repository: your-org/yutodo-server
+  tag: "dev"
+  pullPolicy: Always
+
+# Development Server Configuration
+config:
+  server:
+    nodeEnv: "development"
+    maxConnections: 50
+  
+  database:
+    type: "sqlite"  # Use SQLite for development simplicity
+    sqlite:
+      path: "/data/todos-dev.db"
+      cacheSize: 1000
+  
+  security:
+    corsOrigins: ["http://localhost:1420", "http://localhost:3000", "*"]
+    enableCsrf: false
+    
+  logging:
+    level: "debug"
+    enableConsole: true
+    enableFile: true
+
+# Single replica for development
+deployment:
+  replicas: 1
+  strategy:
+    type: Recreate  # Faster deployment for development
+  
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
+  
+  # More relaxed probes for development
+  livenessProbe:
+    initialDelaySeconds: 10
+    periodSeconds: 30
+    failureThreshold: 5
+  
+  readinessProbe:
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    failureThreshold: 5
+  
+  startupProbe:
+    initialDelaySeconds: 5
+    periodSeconds: 5
+    failureThreshold: 60
+
+# Development Service
+service:
+  type: NodePort
+  port: 3001
+  nodePort: 30001
+
+# Simple ingress for development
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "false"
+  hosts:
+    - host: yutodo-dev.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+# Smaller persistence for development
+persistence:
+  enabled: true
+  size: 5Gi
+
+# Disable autoscaling in development
+autoscaling:
+  enabled: false
+
+# Disable PDB for development
+podDisruptionBudget:
+  enabled: false
+
+# Relaxed network policy for development
+networkPolicy:
+  enabled: false
+
+# Development monitoring
+monitoring:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+    interval: 60s
+  
+  prometheusRule:
+    enabled: false  # Reduce noise in development
+
+# Disable external dependencies for simplicity
+postgresql:
+  enabled: false
+
+redis:
+  enabled: false
+
+# Development-specific settings
+development:
+  enabled: true
+
+# Disable backup in development
+backup:
+  enabled: false
+
+# Relaxed security for development
+security:
+  podSecurityStandards:
+    enforce: "baseline"
+    audit: "baseline"
+    warn: "baseline"
+
+# Disable cost optimization features
+costOptimization:
+  vpa:
+    enabled: false
+  priorityClass:
+    enabled: false

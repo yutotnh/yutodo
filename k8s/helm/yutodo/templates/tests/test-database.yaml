@@ -1,0 +1,87 @@
+{{- if eq .Values.config.database.type "postgresql" }}
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ include "yutodo.fullname" . }}-test-database"
+  namespace: {{ include "yutodo.namespace" . }}
+  labels:
+    {{- include "yutodo.labels" . | nindent 4 }}
+    test-type: database
+  annotations:
+    "helm.sh/hook": test
+    "helm.sh/hook-weight": "3"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  restartPolicy: Never
+  containers:
+    - name: postgres-test
+      image: postgres:15-alpine
+      command:
+        - /bin/sh
+        - -c
+        - |
+          echo "Testing PostgreSQL connection..."
+          
+          # Test connection
+          pg_isready -h ${POSTGRES_HOST} -p ${POSTGRES_PORT} -U ${POSTGRES_USERNAME} || exit 1
+          echo "✅ PostgreSQL connection OK"
+          
+          # Test database existence
+          psql "postgresql://${POSTGRES_USERNAME}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DATABASE}?sslmode=require" \
+            -c "SELECT 1;" || exit 1
+          echo "✅ Database access OK"
+          
+          # Test basic table operations
+          psql "postgresql://${POSTGRES_USERNAME}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DATABASE}?sslmode=require" \
+            -c "SELECT COUNT(*) FROM todos;" || exit 1
+          echo "✅ Todos table accessible"
+          
+          {{- if .Values.config.schedules.enabled }}
+          psql "postgresql://${POSTGRES_USERNAME}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DATABASE}?sslmode=require" \
+            -c "SELECT COUNT(*) FROM schedules;" || exit 1
+          echo "✅ Schedules table accessible"
+          {{- end }}
+          
+          echo "🎉 All database tests passed!"
+      env:
+        - name: POSTGRES_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: {{ include "yutodo.configmapName" . }}
+              key: POSTGRES_HOST
+        - name: POSTGRES_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: {{ include "yutodo.configmapName" . }}
+              key: POSTGRES_PORT
+        - name: POSTGRES_USERNAME
+          valueFrom:
+            configMapKeyRef:
+              name: {{ include "yutodo.configmapName" . }}
+              key: POSTGRES_USERNAME
+        - name: POSTGRES_DATABASE
+          valueFrom:
+            configMapKeyRef:
+              name: {{ include "yutodo.configmapName" . }}
+              key: POSTGRES_DATABASE
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "yutodo.secretName" . }}
+              key: POSTGRES_PASSWORD
+      resources:
+        limits:
+          cpu: 100m
+          memory: 128Mi
+        requests:
+          cpu: 50m
+          memory: 64Mi
+      securityContext:
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        runAsNonRoot: true
+        runAsUser: 999
+        capabilities:
+          drop:
+            - ALL
+{{- end }}

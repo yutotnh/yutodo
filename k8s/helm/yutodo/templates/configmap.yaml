@@ -1,0 +1,99 @@
+{{- include "yutodo.validateConfig" . -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "yutodo.configmapName" . }}
+  namespace: {{ include "yutodo.namespace" . }}
+  labels:
+    {{- include "yutodo.labels" . | nindent 4 }}
+data:
+  # Server Configuration
+  NODE_ENV: {{ .Values.config.server.nodeEnv | quote }}
+  SERVER_PORT: {{ .Values.config.server.port | quote }}
+  SERVER_HOST: {{ .Values.config.server.host | quote }}
+  MAX_CONNECTIONS: {{ .Values.config.server.maxConnections | quote }}
+  REQUEST_TIMEOUT: {{ .Values.config.server.requestTimeout | quote }}
+  KEEP_ALIVE_TIMEOUT: {{ .Values.config.server.keepAliveTimeout | quote }}
+  HEADERS_TIMEOUT: {{ .Values.config.server.headersTimeout | quote }}
+  
+  # Database Configuration
+  DATABASE_TYPE: {{ .Values.config.database.type | quote }}
+  {{- if eq .Values.config.database.type "sqlite" }}
+  SQLITE_PATH: {{ .Values.config.database.sqlite.path | quote }}
+  SQLITE_CACHE_SIZE: {{ .Values.config.database.sqlite.cacheSize | quote }}
+  SQLITE_JOURNAL_MODE: {{ .Values.config.database.sqlite.journalMode | quote }}
+  SQLITE_SYNCHRONOUS: {{ .Values.config.database.sqlite.synchronous | quote }}
+  {{- else if eq .Values.config.database.type "postgresql" }}
+  POSTGRES_HOST: {{ include "yutodo.postgresql.host" . | quote }}
+  POSTGRES_PORT: {{ .Values.config.database.postgresql.port | quote }}
+  POSTGRES_DATABASE: {{ .Values.config.database.postgresql.database | quote }}
+  POSTGRES_USERNAME: {{ .Values.config.database.postgresql.username | quote }}
+  POSTGRES_SSL_MODE: {{ .Values.config.database.postgresql.sslMode | quote }}
+  POSTGRES_MAX_CONNECTIONS: {{ .Values.config.database.postgresql.maxConnections | quote }}
+  POSTGRES_CONNECTION_TIMEOUT: {{ .Values.config.database.postgresql.connectionTimeout | quote }}
+  {{- end }}
+  
+  # Redis Configuration
+  {{- if .Values.config.redis.enabled }}
+  REDIS_ENABLED: "true"
+  REDIS_HOST: {{ include "yutodo.redis.host" . | quote }}
+  REDIS_PORT: {{ .Values.config.redis.port | quote }}
+  REDIS_DATABASE: {{ .Values.config.redis.database | quote }}
+  {{- else }}
+  REDIS_ENABLED: "false"
+  {{- end }}
+  
+  # Security Configuration
+  ENABLE_RATE_LIMIT: {{ .Values.config.security.enableRateLimit | quote }}
+  RATE_LIMIT_MAX: {{ .Values.config.security.rateLimitMax | quote }}
+  RATE_LIMIT_WINDOW: {{ .Values.config.security.rateLimitWindow | quote }}
+  CORS_ORIGINS: {{ join "," .Values.config.security.corsOrigins | quote }}
+  ENABLE_SECURITY_HEADERS: {{ .Values.config.security.enableSecurityHeaders | quote }}
+  ENABLE_CSRF: {{ .Values.config.security.enableCsrf | quote }}
+  
+  # Schedule Configuration
+  SCHEDULE_CHECK_INTERVAL: {{ .Values.config.schedules.checkInterval | quote }}
+  SCHEDULE_TIMEZONE: {{ .Values.config.schedules.timezone | quote }}
+  SCHEDULE_MAX_CONCURRENT: {{ .Values.config.schedules.maxConcurrentExecutions | quote }}
+  
+  # Logging Configuration
+  LOG_LEVEL: {{ .Values.config.logging.level | quote }}
+  LOG_FORMAT: {{ .Values.config.logging.format | quote }}
+  LOG_ENABLE_CONSOLE: {{ .Values.config.logging.enableConsole | quote }}
+  LOG_ENABLE_FILE: {{ .Values.config.logging.enableFile | quote }}
+  LOG_ENABLE_AUDIT: {{ .Values.config.logging.enableAudit | quote }}
+  
+  # Application Configuration
+  APP_NAME: {{ .Values.app.name | quote }}
+  APP_VERSION: {{ .Values.app.version | quote }}
+  APP_ENVIRONMENT: {{ .Values.app.environment | quote }}
+  
+  # Kubernetes-specific Configuration
+  KUBERNETES_NAMESPACE: {{ include "yutodo.namespace" . | quote }}
+  KUBERNETES_POD_NAME: "{{ "{{" }} .metadata.name {{ "}}" }}"
+  KUBERNETES_SERVICE_NAME: {{ include "yutodo.fullname" . | quote }}
+  
+  # Monitoring Configuration
+  ENABLE_METRICS: {{ .Values.monitoring.enabled | quote }}
+  METRICS_PATH: "/metrics"
+  HEALTH_CHECK_PATH: "/health"
+  READINESS_CHECK_PATH: "/ready"
+  
+  # Feature Flags
+  FEATURE_WEBSOCKETS: "true"
+  FEATURE_SCHEDULES: "true"
+  FEATURE_EXPORT_IMPORT: "true"
+  FEATURE_MULTI_USER: "false"
+  
+  # Performance Configuration
+  {{- if .Values.deployment.resources.limits.memory }}
+  MEMORY_LIMIT: {{ .Values.deployment.resources.limits.memory | quote }}
+  {{- end }}
+  {{- if .Values.deployment.resources.limits.cpu }}
+  CPU_LIMIT: {{ .Values.deployment.resources.limits.cpu | quote }}
+  {{- end }}
+  
+  # Observability Configuration
+  TRACING_ENABLED: "true"
+  TRACING_SERVICE_NAME: "yutodo-server"
+  TRACING_ENVIRONMENT: {{ .Values.app.environment | quote }}

@@ -1,0 +1,96 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ include "yutodo.fullname" . }}-test-websocket"
+  namespace: {{ include "yutodo.namespace" . }}
+  labels:
+    {{- include "yutodo.labels" . | nindent 4 }}
+    test-type: websocket
+  annotations:
+    "helm.sh/hook": test
+    "helm.sh/hook-weight": "4"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  restartPolicy: Never
+  containers:
+    - name: websocket-test
+      image: node:20-alpine
+      command:
+        - /bin/sh
+        - -c
+        - |
+          echo "Testing WebSocket connection..."
+          
+          # Install dependencies
+          npm install -g ws
+          
+          # Create WebSocket test script
+          cat > /tmp/websocket-test.js << 'EOF'
+          const WebSocket = require('ws');
+          
+          const ws = new WebSocket('ws://{{ include "yutodo.fullname" . }}:{{ .Values.service.port }}/socket.io/?EIO=4&transport=websocket');
+          
+          let connected = false;
+          let testPassed = false;
+          
+          ws.on('open', function open() {
+            console.log('✅ WebSocket connection established');
+            connected = true;
+            
+            // Send ping message
+            ws.send('2probe');
+            
+            setTimeout(() => {
+              if (testPassed) {
+                console.log('🎉 WebSocket test passed!');
+                process.exit(0);
+              } else {
+                console.log('❌ WebSocket test failed - no pong received');
+                process.exit(1);
+              }
+            }, 5000);
+          });
+          
+          ws.on('message', function message(data) {
+            console.log('Received:', data.toString());
+            if (data.toString().includes('pong')) {
+              console.log('✅ WebSocket ping/pong OK');
+              testPassed = true;
+            }
+          });
+          
+          ws.on('error', function error(err) {
+            console.log('❌ WebSocket error:', err.message);
+            process.exit(1);
+          });
+          
+          ws.on('close', function close() {
+            if (!connected) {
+              console.log('❌ WebSocket connection failed');
+              process.exit(1);
+            }
+          });
+          
+          // Timeout after 10 seconds
+          setTimeout(() => {
+            console.log('❌ WebSocket test timeout');
+            process.exit(1);
+          }, 10000);
+          EOF
+          
+          # Run the test
+          node /tmp/websocket-test.js
+      resources:
+        limits:
+          cpu: 200m
+          memory: 256Mi
+        requests:
+          cpu: 100m
+          memory: 128Mi
+      securityContext:
+        allowPrivilegeEscalation: false
+        runAsNonRoot: true
+        runAsUser: 1000
+        capabilities:
+          drop:
+            - ALL

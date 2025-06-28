@@ -1,0 +1,453 @@
+# Default values for yutodo
+# This is a YAML-formatted file with comprehensive configuration for production deployments
+
+global:
+  imageRegistry: ""
+  imagePullSecrets: []
+  storageClass: ""
+
+# Application Configuration
+app:
+  name: yutodo
+  version: "1.0.0"
+  environment: production
+
+# Container Image Configuration
+image:
+  registry: ghcr.io
+  repository: your-org/yutodo-server
+  tag: ""  # If not set, appVersion from Chart.yaml is used
+  pullPolicy: IfNotPresent
+  pullSecrets: []
+
+# Application-specific Configuration
+config:
+  # Server Configuration
+  server:
+    port: 3001
+    host: "0.0.0.0"
+    nodeEnv: "production"
+    maxConnections: 1000
+    requestTimeout: 30000
+    keepAliveTimeout: 5000
+    headersTimeout: 60000
+    
+  # Database Configuration
+  database:
+    # Use external PostgreSQL instead of SQLite for production
+    type: "postgresql"  # sqlite | postgresql
+    sqlite:
+      path: "/data/todos.db"
+      cacheSize: 2000
+      journalMode: "WAL"
+      synchronous: "NORMAL"
+    postgresql:
+      host: "yutodo-postgresql"
+      port: 5432
+      database: "yutodo"
+      username: "yutodo"
+      # Password will be set via secret
+      sslMode: "require"
+      maxConnections: 20
+      connectionTimeout: 30000
+      
+  # Redis Configuration (for session management and caching)
+  redis:
+    enabled: true
+    host: "yutodo-redis-master"
+    port: 6379
+    database: 0
+    # Password will be set via secret
+    
+  # Security Configuration
+  security:
+    enableRateLimit: true
+    rateLimitMax: 100
+    rateLimitWindow: 900000  # 15 minutes
+    corsOrigins: ["*"]
+    enableSecurityHeaders: true
+    enableCsrf: true
+    sessionSecret: ""  # Will be generated if not provided
+    
+  # Schedule Configuration
+  schedules:
+    checkInterval: 30
+    timezone: "UTC"
+    maxConcurrentExecutions: 10
+    
+  # Logging Configuration
+  logging:
+    level: "info"
+    format: "json"
+    enableConsole: true
+    enableFile: false
+    enableAudit: true
+
+# Deployment Configuration
+deployment:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  
+  # Pod Configuration
+  podAnnotations: {}
+  podLabels: {}
+  podSecurityContext:
+    fsGroup: 1001
+    runAsNonRoot: true
+    runAsUser: 1001
+    runAsGroup: 1001
+    seccompProfile:
+      type: RuntimeDefault
+  
+  securityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    runAsNonRoot: true
+    runAsUser: 1001
+    runAsGroup: 1001
+    capabilities:
+      drop:
+        - ALL
+    seccompProfile:
+      type: RuntimeDefault
+  
+  # Container Resources
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+  
+  # Node Selection
+  nodeSelector: {}
+  tolerations: []
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+                - key: app.kubernetes.io/name
+                  operator: In
+                  values:
+                    - yutodo
+            topologyKey: kubernetes.io/hostname
+  
+  # Probes Configuration
+  livenessProbe:
+    httpGet:
+      path: /health
+      port: http
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+    successThreshold: 1
+  
+  readinessProbe:
+    httpGet:
+      path: /ready
+      port: http
+    initialDelaySeconds: 5
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3
+    successThreshold: 1
+  
+  startupProbe:
+    httpGet:
+      path: /health
+      port: http
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 30
+    successThreshold: 1
+
+# Service Configuration
+service:
+  type: ClusterIP
+  port: 3001
+  targetPort: http
+  annotations: {}
+
+# Ingress Configuration
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+  hosts:
+    - host: yutodo.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: yutodo-tls
+      hosts:
+        - yutodo.example.com
+
+# Persistence Configuration
+persistence:
+  enabled: true
+  storageClass: ""  # Use default storage class
+  accessMode: ReadWriteOnce
+  size: 10Gi
+  annotations: {}
+  # Mount paths
+  mountPath: /data
+  # Backup configuration
+  backup:
+    enabled: true
+    schedule: "0 2 * * *"  # Daily at 2 AM
+    retention: "30d"
+
+# Horizontal Pod Autoscaler
+autoscaling:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 15
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Percent
+          value: 10
+          periodSeconds: 60
+
+# Pod Disruption Budget
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 2
+  # Alternative: maxUnavailable: 1
+
+# Network Policy
+networkPolicy:
+  enabled: true
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: ingress-nginx
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: prometheus
+  egress:
+    - to: []
+      ports:
+        - protocol: TCP
+          port: 5432  # PostgreSQL
+        - protocol: TCP
+          port: 6379  # Redis
+        - protocol: TCP
+          port: 53    # DNS
+        - protocol: UDP
+          port: 53    # DNS
+        - protocol: TCP
+          port: 443   # HTTPS
+
+# Service Account and RBAC
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+  automountServiceAccountToken: false
+
+rbac:
+  create: true
+  rules:
+    - apiGroups: [""]
+      resources: ["configmaps", "secrets"]
+      verbs: ["get", "list", "watch"]
+
+# Monitoring Configuration
+monitoring:
+  enabled: true
+  
+  # Prometheus ServiceMonitor
+  serviceMonitor:
+    enabled: true
+    namespace: ""
+    labels: {}
+    interval: 30s
+    scrapeTimeout: 10s
+    path: /metrics
+    
+  # Prometheus Rules
+  prometheusRule:
+    enabled: true
+    namespace: ""
+    labels: {}
+    rules:
+      - alert: YuToDoHighMemoryUsage
+        expr: (container_memory_working_set_bytes{pod=~"yutodo-.*"} / container_spec_memory_limit_bytes) * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "YuToDo high memory usage"
+          description: "YuToDo pod {{ $labels.pod }} memory usage is above 85%"
+      
+      - alert: YuToDoHighCPUUsage
+        expr: (rate(container_cpu_usage_seconds_total{pod=~"yutodo-.*"}[5m]) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "YuToDo high CPU usage"
+          description: "YuToDo pod {{ $labels.pod }} CPU usage is above 80%"
+      
+      - alert: YuToDoDown
+        expr: up{job="yutodo"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "YuToDo is down"
+          description: "YuToDo service is not responding"
+          
+  # Grafana Dashboard
+  grafanaDashboard:
+    enabled: true
+    namespace: ""
+    labels: {}
+
+# External Dependencies
+
+# PostgreSQL Configuration
+postgresql:
+  enabled: true
+  auth:
+    postgresPassword: ""  # Will be generated
+    username: "yutodo"
+    password: ""  # Will be generated
+    database: "yutodo"
+  primary:
+    persistence:
+      enabled: true
+      size: 20Gi
+    resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+    postgresql:
+      maxConnections: 100
+      sharedPreloadLibraries: "pg_stat_statements"
+
+# Redis Configuration
+redis:
+  enabled: true
+  auth:
+    enabled: true
+    password: ""  # Will be generated
+  master:
+    persistence:
+      enabled: true
+      size: 5Gi
+    resources:
+      limits:
+        cpu: 250m
+        memory: 256Mi
+      requests:
+        cpu: 50m
+        memory: 64Mi
+
+# Development and Testing
+development:
+  enabled: false
+  # Development-specific overrides
+  replicas: 1
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
+  persistence:
+    size: 5Gi
+
+# Backup and Disaster Recovery
+backup:
+  enabled: true
+  schedule: "0 2 * * *"
+  retention: "30d"
+  storage:
+    type: "s3"  # s3 | gcs | azure
+    s3:
+      bucket: "yutodo-backups"
+      region: "us-west-2"
+      # Credentials will be set via secret
+  notifications:
+    slack:
+      enabled: false
+      webhook: ""
+    email:
+      enabled: false
+      smtp:
+        host: ""
+        port: 587
+        username: ""
+        password: ""
+        from: ""
+        to: []
+
+# Security Scanning
+security:
+  podSecurityStandards:
+    enforce: "restricted"
+    audit: "restricted"
+    warn: "restricted"
+  
+  # Falco Integration
+  falco:
+    enabled: false
+    
+  # OPA Gatekeeper
+  gatekeeper:
+    enabled: false
+
+# Cost Optimization
+costOptimization:
+  # Vertical Pod Autoscaler
+  vpa:
+    enabled: false
+    updateMode: "Auto"  # Off | Initial | Auto
+  
+  # Cluster Autoscaler
+  clusterAutoscaler:
+    enabled: true
+    
+  # Pod Priority
+  priorityClass:
+    enabled: true
+    value: 100
+    globalDefault: false
+    description: "Priority class for YuToDo application"

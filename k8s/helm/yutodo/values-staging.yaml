@@ -1,0 +1,165 @@
+# Staging Environment Configuration
+# Production-like environment for testing and validation
+
+app:
+  environment: staging
+
+# Staging Image Configuration
+image:
+  repository: your-org/yutodo-server
+  tag: "staging"
+  pullPolicy: Always
+
+# Staging Server Configuration
+config:
+  server:
+    nodeEnv: "staging"
+    maxConnections: 200
+  
+  database:
+    type: "postgresql"  # Use PostgreSQL like production
+  
+  security:
+    corsOrigins: ["https://yutodo-staging.example.com"]
+    enableCsrf: true
+    
+  logging:
+    level: "info"
+    enableConsole: true
+    enableFile: true
+    enableAudit: true
+
+# Reduced replicas for staging
+deployment:
+  replicas: 2
+  
+  resources:
+    limits:
+      cpu: 300m
+      memory: 384Mi
+    requests:
+      cpu: 75m
+      memory: 96Mi
+  
+  # Production-like probes
+  livenessProbe:
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    failureThreshold: 3
+  
+  readinessProbe:
+    initialDelaySeconds: 5
+    periodSeconds: 5
+    failureThreshold: 3
+
+# ClusterIP service for staging
+service:
+  type: ClusterIP
+  port: 3001
+
+# Staging ingress with TLS
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-staging"
+  hosts:
+    - host: yutodo-staging.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: yutodo-staging-tls
+      hosts:
+        - yutodo-staging.example.com
+
+# Moderate persistence for staging
+persistence:
+  enabled: true
+  size: 10Gi
+
+# Limited autoscaling for staging
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 75
+  targetMemoryUtilizationPercentage: 85
+
+# Enable PDB with single unavailable
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+# Enable network policy
+networkPolicy:
+  enabled: true
+
+# Staging monitoring
+monitoring:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+    interval: 30s
+  
+  prometheusRule:
+    enabled: true
+  
+  grafanaDashboard:
+    enabled: true
+
+# Enable PostgreSQL with moderate resources
+postgresql:
+  enabled: true
+  primary:
+    persistence:
+      size: 15Gi
+    resources:
+      limits:
+        cpu: 300m
+        memory: 384Mi
+      requests:
+        cpu: 75m
+        memory: 96Mi
+
+# Enable Redis with reduced resources
+redis:
+  enabled: true
+  master:
+    persistence:
+      size: 3Gi
+    resources:
+      limits:
+        cpu: 150m
+        memory: 192Mi
+      requests:
+        cpu: 25m
+        memory: 48Mi
+
+# Disable development features
+development:
+  enabled: false
+
+# Limited backup for staging
+backup:
+  enabled: true
+  schedule: "0 3 * * *"  # Daily at 3 AM
+  retention: "7d"  # Shorter retention
+
+# Standard security for staging
+security:
+  podSecurityStandards:
+    enforce: "restricted"
+    audit: "restricted"
+    warn: "restricted"
+
+# Basic cost optimization
+costOptimization:
+  vpa:
+    enabled: true
+    updateMode: "Initial"  # More conservative
+  priorityClass:
+    enabled: true
+    value: 75

@@ -1,0 +1,294 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "yutodo.fullname" . }}
+  namespace: {{ include "yutodo.namespace" . }}
+  labels:
+    {{- include "yutodo.labels" . | nindent 4 }}
+  {{- with .Values.deployment.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.deployment.replicas }}
+  {{- end }}
+  strategy:
+    {{- toYaml .Values.deployment.strategy | nindent 4 }}
+  selector:
+    matchLabels:
+      {{- include "yutodo.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "yutodo.selectorLabels" . | nindent 8 }}
+        {{- with .Values.deployment.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      annotations:
+        {{- include "yutodo.podAnnotations" . | nindent 8 }}
+    spec:
+      {{- include "yutodo.imagePullSecrets" . | nindent 6 }}
+      serviceAccountName: {{ include "yutodo.serviceAccountName" . }}
+      {{- if .Values.costOptimization.priorityClass.enabled }}
+      priorityClassName: {{ include "yutodo.priorityClassName" . }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.deployment.podSecurityContext | nindent 8 }}
+      {{- with .Values.deployment.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.deployment.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.deployment.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      initContainers:
+        # Database migration and health check init container
+        - name: db-migrate
+          image: {{ include "yutodo.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command:
+            - /bin/sh
+            - -c
+            - |
+              echo "Starting database migration..."
+              {{- if eq .Values.config.database.type "postgresql" }}
+              # Wait for PostgreSQL to be ready
+              until pg_isready -h ${POSTGRES_HOST} -p ${POSTGRES_PORT} -U ${POSTGRES_USERNAME}; do
+                echo "Waiting for PostgreSQL..."
+                sleep 2
+              done
+              echo "PostgreSQL is ready"
+              
+              # Run database migrations
+              npm run migrate
+              {{- else }}
+              # For SQLite, just ensure the directory exists
+              mkdir -p $(dirname ${SQLITE_PATH})
+              echo "SQLite directory prepared"
+              {{- end }}
+              echo "Database migration completed"
+          env:
+            {{- include "yutodo.containerEnv" . | nindent 12 }}
+          securityContext:
+            {{- toYaml .Values.deployment.securityContext | nindent 12 }}
+          {{- if .Values.persistence.enabled }}
+          volumeMounts:
+            - name: data
+              mountPath: {{ .Values.persistence.mountPath }}
+          {{- end }}
+        
+        {{- if .Values.config.redis.enabled }}
+        # Redis connectivity check
+        - name: redis-check
+          image: redis:7-alpine
+          command:
+            - /bin/sh
+            - -c
+            - |
+              echo "Checking Redis connectivity..."
+              {{- if .Values.redis.auth.enabled }}
+              until redis-cli -h ${REDIS_HOST} -p ${REDIS_PORT} -a ${REDIS_PASSWORD} ping; do
+              {{- else }}
+              until redis-cli -h ${REDIS_HOST} -p ${REDIS_PORT} ping; do
+              {{- end }}
+                echo "Waiting for Redis..."
+                sleep 2
+              done
+              echo "Redis is ready"
+          env:
+            - name: REDIS_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "yutodo.configmapName" . }}
+                  key: REDIS_HOST
+            - name: REDIS_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "yutodo.configmapName" . }}
+                  key: REDIS_PORT
+            {{- if .Values.redis.auth.enabled }}
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "yutodo.secretName" . }}
+                  key: REDIS_PASSWORD
+            {{- end }}
+        {{- end }}
+      
+      containers:
+        - name: yutodo
+          image: {{ include "yutodo.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.config.server.port }}
+              protocol: TCP
+            - name: metrics
+              containerPort: 9090
+              protocol: TCP
+          env:
+            {{- include "yutodo.containerEnv" . | nindent 12 }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "yutodo.configmapName" . }}
+            - secretRef:
+                name: {{ include "yutodo.secretName" . }}
+          {{- with .Values.deployment.livenessProbe }}
+          livenessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.deployment.readinessProbe }}
+          readinessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.deployment.startupProbe }}
+          startupProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.deployment.resources | nindent 12 }}
+          securityContext:
+            {{- toYaml .Values.deployment.securityContext | nindent 12 }}
+          volumeMounts:
+            {{- if .Values.persistence.enabled }}
+            - name: data
+              mountPath: {{ .Values.persistence.mountPath }}
+            {{- end }}
+            - name: tmp
+              mountPath: /tmp
+            - name: cache
+              mountPath: /app/.cache
+            - name: config-override
+              mountPath: /app/config
+              readOnly: true
+            {{- if .Values.config.tls.enabled }}
+            - name: tls-certs
+              mountPath: /app/certs
+              readOnly: true
+            {{- end }}
+        
+        {{- if .Values.monitoring.enabled }}
+        # Sidecar for additional monitoring and metrics
+        - name: metrics-exporter
+          image: prom/node-exporter:latest
+          args:
+            - --path.rootfs=/host
+            - --collector.filesystem.mount-points-exclude
+            - "^/(sys|proc|dev|host|etc|rootfs/var/lib/docker/containers|rootfs/var/lib/docker/overlay2|rootfs/run/docker/netns|rootfs/var/lib/docker/aufs)($$|/)"
+          ports:
+            - name: node-metrics
+              containerPort: 9100
+              protocol: TCP
+          resources:
+            limits:
+              cpu: 50m
+              memory: 64Mi
+            requests:
+              cpu: 10m
+              memory: 32Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 65534
+          volumeMounts:
+            - name: proc
+              mountPath: /host/proc
+              readOnly: true
+            - name: sys
+              mountPath: /host/sys
+              readOnly: true
+            - name: root
+              mountPath: /host
+              readOnly: true
+        {{- end }}
+      
+      volumes:
+        {{- if .Values.persistence.enabled }}
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ include "yutodo.pvcName" . }}
+        {{- end }}
+        - name: tmp
+          emptyDir:
+            sizeLimit: 1Gi
+        - name: cache
+          emptyDir:
+            sizeLimit: 2Gi
+        - name: config-override
+          configMap:
+            name: {{ include "yutodo.configmapName" . }}
+            defaultMode: 0644
+        {{- if .Values.config.tls.enabled }}
+        - name: tls-certs
+          secret:
+            secretName: {{ include "yutodo.secretName" . }}
+            defaultMode: 0600
+            items:
+              - key: TLS_CERT
+                path: tls.crt
+              - key: TLS_KEY
+                path: tls.key
+              {{- if .Values.config.tls.ca }}
+              - key: TLS_CA
+                path: ca.crt
+              {{- end }}
+        {{- end }}
+        {{- if .Values.monitoring.enabled }}
+        - name: proc
+          hostPath:
+            path: /proc
+            type: Directory
+        - name: sys
+          hostPath:
+            path: /sys
+            type: Directory
+        - name: root
+          hostPath:
+            path: /
+            type: Directory
+        {{- end }}
+      
+      {{- if .Values.development.enabled }}
+      # Development-specific configurations
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      {{- else }}
+      # Production-specific configurations
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      {{- end }}
+
+---
+{{/*
+Container environment variables helper template
+*/}}
+{{- define "yutodo.containerEnv" -}}
+- name: KUBERNETES_NODE_NAME
+  valueFrom:
+    fieldRef:
+      fieldPath: spec.nodeName
+- name: KUBERNETES_POD_NAME
+  valueFrom:
+    fieldRef:
+      fieldPath: metadata.name
+- name: KUBERNETES_POD_NAMESPACE
+  valueFrom:
+    fieldRef:
+      fieldPath: metadata.namespace
+- name: KUBERNETES_POD_IP
+  valueFrom:
+    fieldRef:
+      fieldPath: status.podIP
+- name: KUBERNETES_SERVICE_ACCOUNT
+  valueFrom:
+    fieldRef:
+      fieldPath: spec.serviceAccountName
+{{- end }}
