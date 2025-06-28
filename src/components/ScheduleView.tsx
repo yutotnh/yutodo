@@ -3,6 +3,7 @@ import { Plus, Calendar, Clock, Repeat, Edit, Trash2, Zap, RefreshCw, ChevronDow
 import { useTranslation } from 'react-i18next';
 import { Schedule } from '../types/todo';
 import { getPriorityText, getPriorityClassSuffix } from '../utils/priorityUtils';
+import { DeleteConfirmDialog } from './DeleteConfirmDialog';
 
 interface ScheduleViewProps {
   schedules: Schedule[];
@@ -56,7 +57,6 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
   const handleDeleteInactiveSchedules = () => {
     if (onDeleteInactiveSchedules) {
       onDeleteInactiveSchedules();
-      setShowDeleteConfirm(false);
     }
   };
 
@@ -349,33 +349,14 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
       </div>
 
       {/* 削除確認ダイアログ */}
-      {showDeleteConfirm && (
-        <div className="modal-overlay" onClick={() => setShowDeleteConfirm(false)}>
-          <div className="modal" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>{t('schedule.deleteInactiveSchedulesConfirm')}</h2>
-            </div>
-            <div className="modal-content">
-              <p>{t('schedule.deleteInactiveSchedulesDesc')}</p>
-              <p><strong>{inactiveSchedules.length}</strong> {t('schedule.inactiveSchedules').toLowerCase()}</p>
-            </div>
-            <div className="modal-actions">
-              <button 
-                className="btn btn--secondary" 
-                onClick={() => setShowDeleteConfirm(false)}
-              >
-                {t('buttons.cancel')}
-              </button>
-              <button 
-                className="btn btn--danger" 
-                onClick={handleDeleteInactiveSchedules}
-              >
-                {t('buttons.delete')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <DeleteConfirmDialog
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={handleDeleteInactiveSchedules}
+        title={t('schedule.deleteInactiveSchedulesConfirm')}
+        message={t('schedule.deleteInactiveSchedulesDesc')}
+        itemCount={inactiveSchedules.length}
+      />
     </div>
   );
 };
