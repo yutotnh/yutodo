@@ -47,8 +47,7 @@ export const Settings: React.FC<SettingsProps> = ({
     updateSettings: updateFileSettings,
     openSettingsFile,
     openKeybindingsFile,
-    clearError,
-    autoFixFile
+    clearError
   } = useFileSettings();
   
   // Window drag functionality
@@ -456,7 +455,6 @@ export const Settings: React.FC<SettingsProps> = ({
               await openSettingsFile();
             }
           }}
-          onAutoFix={autoFixFile}
         />
         
         <div className="settings-body">

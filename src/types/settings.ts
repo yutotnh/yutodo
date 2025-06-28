@@ -135,7 +135,6 @@ export interface SettingsFileError {
   userMessage: string;
   filePath: string;
   details?: ParseErrorDetails;
-  canAutoFix?: boolean;
   severity: 'error' | 'warning' | 'info';
 }
 

@@ -29,6 +29,7 @@ import { MenuBar } from './components/MenuBar';
 import { ScheduleView } from './components/ScheduleView';
 import { ScheduleModal } from './components/ScheduleModal';
 import { CommandPalette } from './components/CommandPalette';
+import { SettingsErrorBanner } from './components/SettingsErrorBanner';
 import { useSocket } from './hooks/useSocket';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useFileSettings } from './hooks/useFileSettings';
@@ -97,8 +98,13 @@ function App() {
     settings: fileSettings, 
     updateSettings: updateFileSettings, 
     isLoading: isLoadingSettings,
+    settingsErrors,
+    clearError: clearSettingsError,
+    openSettingsFile,
+    openKeybindingsFile,
     lastChangeSource 
   } = useFileSettings();
+  
   const [settings, setSettings] = useState<AppSettings>(getTauriDefaultSettings());
   const [isInitialized, setIsInitialized] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -150,7 +156,7 @@ function App() {
     deleteSchedule,
     toggleSchedule,
     retryConnection
-  } = useSocket(settings.serverUrl);
+  } = useSocket(!isLoadingSettings ? (fileSettings?.server.url || settings.serverUrl) : '');
 
   // ファイルベースの設定を適用
   useEffect(() => {
@@ -1440,6 +1446,19 @@ function App() {
           </button>
         </div>
       </header>
+
+      {/* Settings error banner - shown on main screen for immediate visibility */}
+      <SettingsErrorBanner
+        errors={settingsErrors}
+        onDismiss={clearSettingsError}
+        onOpenFile={async (filePath) => {
+          if (filePath.includes('keybindings')) {
+            await openKeybindingsFile();
+          } else {
+            await openSettingsFile();
+          }
+        }}
+      />
 
       <main className="app-main">
         {isTasksView() ? (

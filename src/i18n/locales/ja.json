@@ -460,18 +460,6 @@
     "line": "行",
     "problem": "問題",
     "suggestion": "修正案",
-    "openFile": "ファイルを開く",
-    "autoFix": "自動修正",
-    "autoFixing": "修正中..."
-  },
-  "autoFix": {
-    "confirmTitle": "自動修正の確認",
-    "description": "設定ファイルの一般的な構文エラーを自動的に修正します。",
-    "file": "ファイル",
-    "issue": "問題",
-    "fix": "修正",
-    "safetyNotice": "変更前にバックアップが作成されます。",
-    "cancel": "キャンセル",
-    "confirm": "今すぐ修正"
+    "openFile": "ファイルを開く"
   }
 }

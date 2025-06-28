@@ -17,17 +17,10 @@ vi.mock('../utils/logger', () => ({
   }
 }));
 
-// Mock TomlAutoFixer
-vi.mock('../utils/tomlAutoFixer', () => ({
-  TomlAutoFixer: {
-    canAutoFix: vi.fn(() => true)
-  }
-}));
 
 describe('SettingsErrorBanner', () => {
   const mockOnDismiss = vi.fn();
   const mockOnOpenFile = vi.fn();
-  const mockOnAutoFix = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -58,7 +51,6 @@ describe('SettingsErrorBanner', () => {
         problemText: 'unexpected character',
         suggestion: 'Remove backslash escape characters'
       },
-      canAutoFix: true,
       severity: 'error'
     };
 
@@ -67,7 +59,6 @@ describe('SettingsErrorBanner', () => {
         errors={[error]}
         onDismiss={mockOnDismiss}
         onOpenFile={mockOnOpenFile}
-        onAutoFix={mockOnAutoFix}
       />
     );
 
@@ -76,7 +67,6 @@ describe('SettingsErrorBanner', () => {
     expect(screen.getByText('Line 5:10')).toBeInTheDocument();
     expect(screen.getByText('Problem: unexpected character')).toBeInTheDocument();
     expect(screen.getByText('Open File')).toBeInTheDocument();
-    expect(screen.getByText('Auto Fix')).toBeInTheDocument();
   });
 
   it('should render keybindings file error', () => {

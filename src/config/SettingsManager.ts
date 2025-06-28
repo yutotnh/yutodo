@@ -10,6 +10,13 @@ import { checkTauriWatchAPI } from '../utils/checkTauriApis';
  * Handles separate settings.toml and keybindings.toml files
  * with hot reload and comment preservation
  */
+interface ParseError {
+  type: 'settings' | 'keybindings';
+  filePath: string;
+  error: any;
+  timestamp: number;
+}
+
 export class SettingsManager {
   private static instance: SettingsManager;
   
@@ -18,7 +25,7 @@ export class SettingsManager {
   private paths: SettingsPaths | null = null;
   private isInitialized: boolean = false;
   private initializationError: Error | null = null;
-  private parseErrors: any[] = [];
+  private parseErrors: ParseError[] = [];
   
   // Tauri v2 file watchers (UnwatchFn type)
   private settingsWatcher: (() => void) | null = null;
@@ -29,9 +36,8 @@ export class SettingsManager {
   private watcherInitializationInProgress: boolean = false;
   
   // Track watcher restart attempts to prevent runaway restarts
-  // Commented out as restart functionality is currently disabled
-  // private watcherRestartCount = new Map<string, number>();
-  // private readonly MAX_WATCHER_RESTARTS = 3;
+  private watcherRestartCount = new Map<string, number>();
+  private readonly MAX_WATCHER_RESTARTS = 3;
   
   private listeners = new Set<(event: SettingsChangeEvent) => void>();
   private debounceTimers = new Map<string, NodeJS.Timeout>();
@@ -312,6 +318,10 @@ export class SettingsManager {
         const parsed = parseToml(this.settingsFileContent, { 
           joiner: '\n'
         }) as any;
+        
+        // ✅ TOMLパース成功 → エラークリア
+        this.clearParseError('settings');
+        
         this.settings = this.mergeWithDefaults(parsed, DEFAULT_APP_SETTINGS);
         logger.info('Settings loaded from file');
       } else {
@@ -322,12 +332,8 @@ export class SettingsManager {
     } catch (error) {
       logger.error('Error loading settings:', error);
       
-      // Store parse error for UI display but continue with defaults
-      this.parseErrors.push({
-        type: 'settings',
-        filePath: this.paths.settingsFile,
-        error
-      });
+      // Store parse error for UI display
+      this.addParseError('settings', this.paths!.settingsFile, error);
       
       // Use default settings and continue initialization
       this.settings = { ...DEFAULT_APP_SETTINGS };
@@ -349,6 +355,10 @@ export class SettingsManager {
         const parsed = parseToml(this.keybindingsFileContent, { 
           joiner: '\n'
         }) as any;
+        
+        // ✅ TOMLパース成功 → エラークリア
+        this.clearParseError('keybindings');
+        
         this.keybindings = this.parseKeybindings(parsed);
         logger.info('Keybindings loaded from file');
       } else {
@@ -359,12 +369,8 @@ export class SettingsManager {
     } catch (error) {
       logger.error('Error loading keybindings:', error);
       
-      // Store parse error for UI display but continue with defaults
-      this.parseErrors.push({
-        type: 'keybindings',
-        filePath: this.paths.keybindingsFile,
-        error
-      });
+      // Store parse error for UI display
+      this.addParseError('keybindings', this.paths!.keybindingsFile, error);
       
       // Use default keybindings and continue initialization
       this.keybindings = [...DEFAULT_KEYBINDINGS];
@@ -747,9 +753,7 @@ command = "showHelp"
   /**
    * Restart a specific watcher to address one-shot behavior
    * 🔧 Re-enabled with proper event filtering to prevent infinite loop
-   * NOTE: Currently disabled to prevent restart loops
    */
-  /*
   private async restartWatcher(type: 'settings' | 'keybindings'): Promise<void> {
     if (!this.paths) {
       throw new Error('Cannot restart watcher: paths not initialized');
@@ -819,6 +823,9 @@ command = "showHelp"
           }
         );
         logger.debug('✅ Settings file watcher restarted successfully');
+        
+        // Reset restart count on successful restart
+        this.watcherRestartCount.set('settings_watcher', 0);
 
       } else if (type === 'keybindings') {
         // Stop existing watcher if running
@@ -858,6 +865,9 @@ command = "showHelp"
             }
           );
           logger.debug('✅ Keybindings file watcher restarted successfully');
+          
+          // Reset restart count on successful restart
+          this.watcherRestartCount.set('keybindings_watcher', 0);
         } else {
           logger.debug('📄 Keybindings file does not exist - skipping watcher restart');
         }
@@ -867,7 +877,6 @@ command = "showHelp"
       throw error;
     }
   }
-  */
   
   /**
    * Handle file change events
@@ -895,18 +904,18 @@ command = "showHelp"
           logger.info('✅ Keybindings reload completed');
         }
         
-        // Commenting out automatic restart to prevent restart loops
-        // The watcher should continue working after a file change
-        // await this.restartWatcher(type);
+        // Restart watcher to handle one-shot behavior
+        await this.restartWatcher(type);
       } catch (error) {
         logger.error(`❌ Error reloading ${type}:`, error);
         
-        // Commenting out restart on error to prevent restart loops
-        // try {
-        //   await this.restartWatcher(type);
-        // } catch (restartError) {
-        //   logger.error('❌ Failed to restart watcher after error:', restartError);
-        // }
+        // Try to restart watcher after error (limited to MAX_WATCHER_RESTARTS)
+        try {
+          logger.warn(`⚠️ Attempting to restart ${type} watcher after error`);
+          await this.restartWatcher(type);
+        } catch (restartError) {
+          logger.error('❌ Failed to restart watcher after error:', restartError);
+        }
       }
       
       this.debounceTimers.delete(type);
@@ -939,6 +948,9 @@ command = "showHelp"
       }) as any;
       logger.debug('✅ TOML parsing successful');
       
+      // ✅ TOMLパース成功 → エラークリア
+      this.clearParseError('settings');
+      
       logger.debug('🔄 Merging with defaults...');
       this.settings = this.mergeWithDefaults(parsed, DEFAULT_APP_SETTINGS);
       logger.debug('✅ Settings merged successfully');
@@ -962,6 +974,16 @@ command = "showHelp"
       });
     } catch (error) {
       logger.error('❌ Failed to reload settings:', error);
+      
+      // Store parse error for UI display
+      this.addParseError('settings', this.paths!.settingsFile, error);
+      // Still notify listeners so UI can update error state
+      this.notifyListeners({
+        type: 'settings',
+        previous,
+        current: this.settings, // Keep current settings
+        source: 'file'
+      });
     }
   }
   
@@ -981,6 +1003,10 @@ command = "showHelp"
       const parsed = parseToml(this.keybindingsFileContent, { 
         joiner: '\n'
       }) as any;
+      
+      // ✅ TOMLパース成功 → エラークリア
+      this.clearParseError('keybindings');
+      
       this.keybindings = this.parseKeybindings(parsed);
       
       // Notify listeners
@@ -994,6 +1020,17 @@ command = "showHelp"
       logger.info('Keybindings reloaded from file');
     } catch (error) {
       logger.error('Failed to reload keybindings:', error);
+      
+      // Store parse error for UI display
+      this.addParseError('keybindings', this.paths!.keybindingsFile, error);
+      
+      // Still notify listeners so UI can update error state
+      this.notifyListeners({
+        type: 'keybindings',
+        previous,
+        current: this.keybindings, // Keep current keybindings
+        source: 'file'
+      });
     }
   }
   
@@ -1049,14 +1086,45 @@ command = "showHelp"
   }
   
   /**
+   * Add parse error (removes duplicates for same type)
+   */
+  private addParseError(type: 'settings' | 'keybindings', filePath: string, error: any): void {
+    // Remove existing error of same type (keep only latest)
+    this.parseErrors = this.parseErrors.filter(e => e.type !== type);
+    
+    // Add new error
+    this.parseErrors.push({
+      type,
+      filePath,
+      error,
+      timestamp: Date.now()
+    });
+    
+    logger.debug(`Added ${type} parse error. Total errors: ${this.parseErrors.length}`);
+  }
+  
+  /**
+   * Clear parse error for specific type
+   */
+  private clearParseError(type: 'settings' | 'keybindings'): void {
+    const beforeCount = this.parseErrors.length;
+    this.parseErrors = this.parseErrors.filter(e => e.type !== type);
+    const afterCount = this.parseErrors.length;
+    
+    if (beforeCount !== afterCount) {
+      logger.debug(`Cleared ${type} parse error. Remaining errors: ${afterCount}`);
+    }
+  }
+  
+  /**
    * Get parse errors for UI display
    */
-  getParseErrors(): any[] {
+  getParseErrors(): ParseError[] {
     return [...this.parseErrors];
   }
   
   /**
-   * Clear parse errors
+   * Clear all parse errors
    */
   clearParseErrors(): void {
     this.parseErrors = [];
@@ -1507,109 +1575,6 @@ command = "showHelp"
     logger.debug('✅ Keybindings file watcher started successfully');
   }
   
-  /**
-   * Auto-fix TOML parsing errors in configuration files
-   */
-  async autoFixFile(filePath: string, error: any): Promise<boolean> {
-    try {
-      logger.info('Starting auto-fix for file:', filePath);
-      
-      // Read current file content
-      const originalContent = await readTextFile(filePath);
-      
-      // Import auto-fixer
-      const { TomlAutoFixer } = await import('../utils/tomlAutoFixer');
-      
-      // Create error object for auto-fixer
-      const errorDetails = {
-        type: filePath.includes('keybindings') ? 'keybindings' as const : 'settings' as const,
-        code: 'PARSE_ERROR' as const,
-        message: error.message || 'Failed to parse TOML',
-        userMessage: `Configuration file has syntax errors`,
-        filePath,
-        details: this.parseTomlError(error.message || ''),
-        canAutoFix: true,
-        severity: 'error' as const
-      };
-      
-      // Attempt auto-fix
-      const fixResult = await TomlAutoFixer.autoFix(originalContent, errorDetails, {
-        createBackup: true,
-        confirmBeforeFix: false // Already confirmed by user
-      });
-      
-      if (!fixResult.success || !fixResult.fixedContent) {
-        logger.warn('Auto-fix failed:', fixResult.errors);
-        return false;
-      }
-      
-      // Create backup
-      if (fixResult.backupContent) {
-        const backupPath = TomlAutoFixer.generateBackupFilename(filePath);
-        await writeTextFile(backupPath, fixResult.backupContent);
-        logger.info('Created backup at:', backupPath);
-      }
-      
-      // Write fixed content
-      await writeTextFile(filePath, fixResult.fixedContent);
-      logger.info('Auto-fix completed successfully. Fixes applied:', fixResult.fixesApplied);
-      
-      // Update our cached content
-      if (filePath.includes('keybindings')) {
-        this.keybindingsFileContent = fixResult.fixedContent;
-      } else {
-        this.settingsFileContent = fixResult.fixedContent;
-      }
-      
-      // Reload the fixed file
-      if (filePath.includes('keybindings')) {
-        await this.loadOrCreateKeybindings();
-      } else {
-        await this.loadOrCreateSettings();
-      }
-      
-      return true;
-      
-    } catch (error) {
-      logger.error('Auto-fix process failed:', error);
-      return false;
-    }
-  }
-  
-  /**
-   * Parse TOML error message to extract line/column information
-   */
-  private parseTomlError(errorMessage: string): any {
-    const details: any = {};
-    
-    // Extract line number
-    const lineMatch = errorMessage.match(/line (\d+)/i);
-    const atLineMatch = errorMessage.match(/at line (\d+)/i);
-    
-    if (lineMatch || atLineMatch) {
-      details.line = lineMatch ? parseInt(lineMatch[1]) : parseInt(atLineMatch![1]);
-    }
-    
-    // Extract column if available
-    const columnMatch = errorMessage.match(/column (\d+)/i);
-    if (columnMatch) {
-      details.column = parseInt(columnMatch[1]);
-    }
-    
-    // Extract problem text
-    if (errorMessage.includes('Bad basic string')) {
-      details.problemText = 'invalid escape sequence';
-      details.suggestion = 'Remove backslash escape characters (\\) in string values';
-      details.expectedFormat = 'Use plain string without escapes: when = "!inputFocus"';
-    } else if (errorMessage.includes('unexpected')) {
-      const unexpectedMatch = errorMessage.match(/unexpected (.+)/i);
-      if (unexpectedMatch) {
-        details.problemText = `unexpected ${unexpectedMatch[1]}`;
-      }
-    }
-    
-    return Object.keys(details).length > 0 ? details : undefined;
-  }
 
   /**
    * Cleanup resources
@@ -1647,7 +1612,7 @@ command = "showHelp"
     // Reset initialization states
     this.watchersInitialized = false;
     this.watcherInitializationInProgress = false;
-    // this.watcherRestartCount.clear();
+    this.watcherRestartCount.clear();
     
     logger.info('✅ SettingsManager disposed');
   }

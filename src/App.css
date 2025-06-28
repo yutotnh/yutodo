@@ -5231,7 +5231,9 @@ body {
 
 /* Settings Error Banner Styles */
 .settings-error-banner {
-  margin-bottom: 1rem;
+  background-color: #fef2f2;
+  border-bottom: 2px solid #ef4444;
+  padding: 10px;
 }
 
 .error-item {
@@ -5348,16 +5350,6 @@ body {
   background-color: rgba(0, 0, 0, 0.1);
 }
 
-.error-action-button.auto-fix {
-  background-color: #10b981;
-  color: white;
-  border-color: #10b981;
-}
-
-.error-action-button.auto-fix:hover {
-  background-color: #059669;
-  border-color: #059669;
-}
 
 /* Dark mode for error banner */
 .app--dark .error-item.error-error {
@@ -5392,188 +5384,4 @@ body {
   background-color: rgba(255, 255, 255, 0.1);
 }
 
-/* Auto Fix Confirmation Dialog */
-.auto-fix-confirm-dialog {
-  width: 90%;
-  max-width: 480px;
-  background: white;
-  border-radius: 0.75rem;
-  overflow: hidden;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-  margin: auto;
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 1002;
-}
-
-.auto-fix-header {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1.5rem;
-  border-bottom: 1px solid #e2e8f0;
-  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-  cursor: move;
-}
-
-.auto-fix-icon {
-  font-size: 1.5rem;
-}
-
-.auto-fix-header h3 {
-  margin: 0;
-  color: #0f172a;
-  font-weight: 600;
-}
-
-.auto-fix-content {
-  padding: 1.5rem;
-}
-
-.auto-fix-description {
-  margin: 0 0 1.5rem 0;
-  color: #475569;
-  line-height: 1.6;
-}
-
-.auto-fix-details {
-  margin-bottom: 1.5rem;
-  padding: 1rem;
-  background: #f8fafc;
-  border-radius: 0.5rem;
-  border-left: 4px solid #3b82f6;
-}
-
-.auto-fix-file,
-.auto-fix-error,
-.auto-fix-suggestion {
-  margin-bottom: 0.75rem;
-  font-size: 0.9rem;
-  line-height: 1.5;
-}
-
-.auto-fix-file:last-child,
-.auto-fix-error:last-child,
-.auto-fix-suggestion:last-child {
-  margin-bottom: 0;
-}
-
-.auto-fix-suggestion {
-  padding: 0.75rem;
-  background: #f0fdf4;
-  border-radius: 0.25rem;
-  border-left: 3px solid #10b981;
-  margin-top: 0.75rem;
-}
-
-.auto-fix-safety {
-  margin-bottom: 1.5rem;
-}
-
-.safety-notice {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem;
-  background: #fffbeb;
-  border: 1px solid #fbbf24;
-  border-radius: 0.5rem;
-  color: #92400e;
-  font-size: 0.9rem;
-}
-
-.safety-icon {
-  font-size: 1.1rem;
-}
-
-.auto-fix-actions {
-  display: flex;
-  gap: 1rem;
-  justify-content: flex-end;
-}
-
-.auto-fix-cancel,
-.auto-fix-confirm {
-  padding: 0.75rem 1.5rem;
-  border: none;
-  border-radius: 0.5rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.auto-fix-cancel {
-  background: #f1f5f9;
-  color: #475569;
-  border: 1px solid #cbd5e1;
-}
-
-.auto-fix-cancel:hover {
-  background: #e2e8f0;
-  border-color: #94a3b8;
-}
-
-.auto-fix-confirm {
-  background: #10b981;
-  color: white;
-}
-
-.auto-fix-confirm:hover {
-  background: #059669;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3);
-}
-
-.auto-fix-confirm:active {
-  transform: translateY(0);
-}
-
-/* Dark mode for auto-fix dialog */
-.app--dark .auto-fix-confirm-dialog {
-  background: #1e293b;
-  color: #f1f5f9;
-}
-
-.app--dark .auto-fix-header {
-  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-  border-bottom-color: #475569;
-}
-
-.app--dark .auto-fix-header h3 {
-  color: #f1f5f9;
-}
-
-.app--dark .auto-fix-description {
-  color: #cbd5e1;
-}
-
-.app--dark .auto-fix-details {
-  background: #334155;
-  border-left-color: #60a5fa;
-}
-
-.app--dark .auto-fix-suggestion {
-  background: #14532d;
-  border-left-color: #34d399;
-  color: #bbf7d0;
-}
-
-.app--dark .safety-notice {
-  background: #1f1611;
-  border-color: #fbbf24;
-  color: #fbbf24;
-}
-
-.app--dark .auto-fix-cancel {
-  background: #475569;
-  color: #e2e8f0;
-  border-color: #64748b;
-}
-
-.app--dark .auto-fix-cancel:hover {
-  background: #64748b;
-  border-color: #94a3b8;
-}
 

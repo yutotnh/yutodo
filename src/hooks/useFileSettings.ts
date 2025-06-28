@@ -9,10 +9,11 @@ function isTauriEnvironment(): boolean {
 }
 
 // Helper function to parse SettingsError into SettingsFileError
-function parseSettingsError(settingsError: any): SettingsFileError | null {
+function parseSettingsError(parseError: any): SettingsFileError | null {
   try {
-    // Extract error details from the SettingsError
-    const originalError = settingsError.details;
+    
+    // Extract the actual error object
+    const originalError = parseError.error;
     const errorDetails: any = {};
     
     // Parse TOML parsing error for line/column information
@@ -43,9 +44,9 @@ function parseSettingsError(settingsError: any): SettingsFileError | null {
       }
     }
     
-    // Determine file type from path
-    const filePath = settingsError.filePath || '';
-    const fileType = filePath.includes('keybindings') ? 'keybindings' : 'settings';
+    // Determine file type from parseError
+    const filePath = parseError.filePath || '';
+    const fileType = parseError.type || (filePath.includes('keybindings') ? 'keybindings' : 'settings');
     
     // Generate user-friendly error messages
     let userMessage = '';
@@ -63,16 +64,16 @@ function parseSettingsError(settingsError: any): SettingsFileError | null {
       userMessage += ` ${errorDetails.suggestion}`;
     }
     
-    return {
-      type: fileType,
-      code: settingsError.code || 'PARSE_ERROR',
-      message: settingsError.message || 'Failed to parse configuration file',
+    const result: SettingsFileError = {
+      type: fileType as 'settings' | 'keybindings',
+      code: 'PARSE_ERROR',
+      message: originalError?.message || 'Failed to parse configuration file',
       userMessage,
       filePath,
       details: Object.keys(errorDetails).length > 0 ? errorDetails : undefined,
-      canAutoFix: errorDetails.suggestion?.includes('escape') || false,
       severity: 'error'
     };
+    return result;
   } catch (parseError) {
     logger.error('Failed to parse settings error:', parseError);
     return null;
@@ -93,7 +94,6 @@ interface UseFileSettingsReturn {
   openSettingsFile: () => Promise<void>;
   openKeybindingsFile: () => Promise<void>;
   clearError: (type: 'settings' | 'keybindings') => void;
-  autoFixFile: (error: SettingsFileError) => Promise<boolean>;
 }
 
 /**
@@ -136,15 +136,16 @@ export function useFileSettings(): UseFileSettingsReturn {
         setKeybindings(initialKeybindings);
         
         // Convert parse errors to SettingsFileError format
+        logger.debug('Initial parse errors from SettingsManager:', initialParseErrors.length);
         if (initialParseErrors.length > 0) {
-          const convertedErrors = initialParseErrors.map(parseError => parseSettingsError({
-            code: 'PARSE_ERROR',
-            message: parseError.error.message || 'Failed to parse configuration file',
-            filePath: parseError.filePath,
-            details: parseError.error
-          })).filter(Boolean) as SettingsFileError[];
+          const convertedErrors = initialParseErrors
+            .map(parseError => parseSettingsError(parseError))
+            .filter(Boolean) as SettingsFileError[];
           
+          logger.debug('Setting initial settings errors:', convertedErrors.length);
           setSettingsErrors(convertedErrors);
+        } else {
+          logger.debug('No initial parse errors found');
         }
         
         // Subscribe to changes
@@ -153,6 +154,8 @@ export function useFileSettings(): UseFileSettingsReturn {
             return;
           }
           
+          logger.debug('Settings change event received:', event.type, 'source:', event.source);
+          
           if (event.type === 'settings') {
             setLastChangeSource(event.source);
             setSettings(event.current as AppSettingsFile);
@@ -160,6 +163,16 @@ export function useFileSettings(): UseFileSettingsReturn {
             setLastChangeSource(event.source);
             setKeybindings(event.current as Keybinding[]);
           }
+          
+          // Always sync parse errors after any change
+          const currentParseErrors = settingsManager.getParseErrors();
+          logger.debug('Syncing parse errors after change. Count:', currentParseErrors.length);
+          
+          const convertedErrors = currentParseErrors
+            .map(parseError => parseSettingsError(parseError))
+            .filter(Boolean) as SettingsFileError[];
+          
+          setSettingsErrors(convertedErrors);
         });
         
         setIsLoading(false);
@@ -169,7 +182,14 @@ export function useFileSettings(): UseFileSettingsReturn {
           // Handle SettingsError specifically for TOML parsing issues
           if (err instanceof Error && err.name === 'SettingsError') {
             const settingsError = err as any; // SettingsError type
-            const parsedError = parseSettingsError(settingsError);
+            // Create a parseError object compatible with our parser
+            const parseError = {
+              type: 'settings' as const,
+              filePath: settingsError.filePath || '',
+              error: settingsError,
+              timestamp: Date.now()
+            };
+            const parsedError = parseSettingsError(parseError);
             if (parsedError) {
               setSettingsErrors([parsedError]);
             }
@@ -265,33 +285,6 @@ export function useFileSettings(): UseFileSettingsReturn {
     setSettingsErrors(prev => prev.filter(error => error.type !== type));
   }, []);
 
-  // Auto-fix file errors
-  const autoFixFile = useCallback(async (error: SettingsFileError): Promise<boolean> => {
-    try {
-      logger.info('Starting auto-fix for error:', error.type, error.code);
-      
-      // Use SettingsManager's auto-fix functionality
-      const success = await settingsManager.autoFixFile(error.filePath, {
-        message: error.message
-      });
-      
-      if (success) {
-        // Clear the specific error from SettingsManager
-        settingsManager.clearParseErrors();
-        
-        // Clear the error from our state since it should be fixed
-        clearError(error.type);
-        logger.info('Auto-fix completed successfully');
-      } else {
-        logger.warn('Auto-fix failed to resolve the error');
-      }
-      
-      return success;
-    } catch (error) {
-      logger.error('Auto-fix process failed:', error);
-      return false;
-    }
-  }, [clearError]);
   
   return {
     settings,
@@ -306,8 +299,7 @@ export function useFileSettings(): UseFileSettingsReturn {
     resetToDefaults,
     openSettingsFile,
     openKeybindingsFile,
-    clearError,
-    autoFixFile
+    clearError
   };
 }
 
