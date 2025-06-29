@@ -224,7 +224,7 @@ jobs:
           # Quick validation of devcontainer.json syntax
           devcontainer read-configuration --workspace-folder .
           
-          # Validate docker-compose configuration
-          docker compose -f .devcontainer/docker-compose.devcontainer.yml config > /dev/null
+          # Validate docker-compose configuration (devcontainer uses both files)
+          docker compose -f docker-compose.yml -f .devcontainer/docker-compose.devcontainer.yml config > /dev/null
           
           echo "DevContainer configuration is valid"

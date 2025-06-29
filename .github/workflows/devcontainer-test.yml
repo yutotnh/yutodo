@@ -49,8 +49,8 @@ jobs:
           
       - name: Validate docker-compose configuration
         run: |
-          echo "Validating docker-compose.devcontainer.yml..."
-          docker compose -f .devcontainer/docker-compose.devcontainer.yml config
+          echo "Validating docker-compose.devcontainer.yml with base configuration..."
+          docker compose -f docker-compose.yml -f .devcontainer/docker-compose.devcontainer.yml config > /dev/null
 
       - name: Check required files exist
         run: |
