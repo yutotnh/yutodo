@@ -48,6 +48,10 @@ export class ServerConfigManager {
       console.error('❌ Failed to initialize server configuration:', error);
       console.log('🔄 Using default configuration');
       this.config = DEFAULT_SERVER_CONFIG;
+      
+      // Apply environment overrides even when config file can't be loaded
+      this.applyEnvironmentOverrides();
+      
       this.isInitialized = true;
     }
   }
@@ -148,8 +152,15 @@ export class ServerConfigManager {
       console.log('✅ Configuration loaded successfully');
     } catch (error: any) {
       if (error.code === 'ENOENT') {
-        console.log('ℹ️ Config file not found, creating default config...');
-        await this.createDefaultConfigFile();
+        console.log('ℹ️ Config file not found');
+        // Try to create default config file, but don't fail if we can't
+        try {
+          await this.createDefaultConfigFile();
+          console.log('✅ Created default config file');
+        } catch (createError: any) {
+          // Ignore errors when creating config file (e.g., read-only filesystem)
+          console.log('⚠️ Could not create config file (read-only filesystem?):', createError.message);
+        }
         this.config = DEFAULT_SERVER_CONFIG;
       } else {
         console.error('❌ Error loading config file:', error);
