@@ -84,7 +84,7 @@ services:
       - "com.yutodo.service=server"
       - "com.yutodo.version=1.0.0"
       - "traefik.enable=true"  # For reverse proxy if using Traefik
-      - "traefik.http.routers.yutodo.rule=Host(\`yutodo.example.com\`)"
+      - "traefik.http.routers.yutodo.rule=Host(`yutodo.example.com`)"
       - "traefik.http.services.yutodo.loadbalancer.server.port=3001"
     
     # Logging configuration for production
