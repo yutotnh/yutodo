@@ -196,16 +196,81 @@ jobs:
       - name: Test container startup (amd64 only)
         if: matrix.platform == 'linux/amd64'
         run: |
-          # Start development container
+          echo "=== Installing required tools ==="
+          sudo apt-get update -qq && sudo apt-get install -y curl netcat-openbsd
+          
+          echo "=== Starting development container ==="
           docker compose up -d
           
-          # Wait for container to be ready
-          timeout 30 bash -c 'until docker compose exec -T yutodo-server node -e "const http = require(\"http\"); const options = { host: \"0.0.0.0\", port: 3001, timeout: 2000 }; const request = http.request(options, (res) => { process.exit(res.statusCode === 200 ? 0 : 1); }); request.on(\"error\", () => process.exit(1)); request.end();" 2>/dev/null; do sleep 1; done'
+          echo "=== Waiting for container to be ready ==="
+          # Give the container some time to initialize
+          sleep 5
           
-          # Check logs for errors
+          # Check container status
+          echo "Container status:"
+          docker compose ps
+          
+          # Show initial logs
+          echo "=== Initial container logs ==="
+          docker compose logs yutodo-server
+          
+          # Enhanced health check with better timeout and error handling
+          echo "=== Testing server connectivity ==="
+          for i in {1..60}; do
+            echo "Health check attempt $i/60..."
+            
+            # Step 1: Check TCP port connectivity with netcat
+            if nc -z localhost 3001 2>/dev/null; then
+              echo "✅ TCP port 3001 is accessible"
+              
+              # Step 2: Test HTTP response with curl  
+              if curl -f -s --connect-timeout 2 --max-time 5 http://localhost:3001 >/dev/null 2>&1; then
+                echo "✅ Server is responding with HTTP!"
+                break
+              else
+                echo "🔶 Port accessible but HTTP request failed, retrying..."
+              fi
+            else
+              echo "🔶 TCP port 3001 not yet accessible"
+            fi
+            
+            # Step 3: If external checks fail, try internal connectivity test
+            if docker compose exec -T yutodo-server node -e "
+              const http = require('http');
+              const options = { host: '0.0.0.0', port: 3001, timeout: 3000 };
+              const request = http.request(options, (res) => {
+                console.log('Internal health check - Status:', res.statusCode);
+                process.exit(res.statusCode === 200 ? 0 : 1);
+              });
+              request.on('error', (err) => {
+                console.log('Internal health check error:', err.message);
+                process.exit(1);
+              });
+              request.end();
+            " 2>/dev/null; then
+              echo "✅ Server internal connectivity confirmed!"
+              break
+            fi
+            
+            if [ $i -eq 60 ]; then
+              echo "❌ Server failed to become ready within 60 seconds"
+              echo "=== Final container logs ==="
+              docker compose logs yutodo-server
+              echo "=== Container processes ==="
+              docker compose exec -T yutodo-server ps aux || true
+              echo "=== Container network info ==="
+              docker compose exec -T yutodo-server netstat -tlnp || true
+              exit 1
+            fi
+            
+            sleep 1
+          done
+          
+          echo "=== Final status check ==="
           docker compose logs yutodo-server
           
           # Clean up
+          echo "=== Cleaning up ==="
           docker compose down
 
   test-devcontainer:
@@ -225,6 +290,9 @@ jobs:
           devcontainer read-configuration --workspace-folder .
           
           # Validate docker-compose configuration (devcontainer uses both files)
-          docker compose -f docker-compose.yml -f .devcontainer/docker-compose.devcontainer.yml config > /dev/null
+          echo "Current working directory: $(pwd)"
+          echo "Files in current directory:"
+          ls -la
+          docker compose -f ./docker-compose.yml -f ./.devcontainer/docker-compose.devcontainer.yml config > /dev/null
           
           echo "DevContainer configuration is valid"

@@ -50,7 +50,10 @@ jobs:
       - name: Validate docker-compose configuration
         run: |
           echo "Validating docker-compose.devcontainer.yml with base configuration..."
-          docker compose -f docker-compose.yml -f .devcontainer/docker-compose.devcontainer.yml config > /dev/null
+          echo "Current working directory: $(pwd)"
+          echo "Files in current directory:"
+          ls -la
+          docker compose -f ./docker-compose.yml -f ./.devcontainer/docker-compose.devcontainer.yml config > /dev/null
 
       - name: Check required files exist
         run: |
