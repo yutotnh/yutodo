@@ -90,7 +90,7 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Install cargo-audit
+      - name: Install cargo-audit for Rust vulnerability scanning
         run: cargo install cargo-audit --locked
 
       # Frontend dependency scan
