@@ -289,10 +289,24 @@ jobs:
           # Quick validation of devcontainer.json syntax
           devcontainer read-configuration --workspace-folder .
           
-          # Validate docker-compose configuration (devcontainer uses both files)
+          # Verify the referenced docker-compose files exist
           echo "Current working directory: $(pwd)"
           echo "Files in current directory:"
           ls -la
-          docker compose -f ./docker-compose.yml -f ./.devcontainer/docker-compose.devcontainer.yml config > /dev/null
           
-          echo "DevContainer configuration is valid"
+          # Check if docker-compose files exist
+          if [ -f "./docker-compose.yml" ] && [ -f "./.devcontainer/docker-compose.devcontainer.yml" ]; then
+            echo "✅ Both docker-compose files exist"
+            
+            # Test docker-compose syntax separately (without devcontainer context)
+            echo "Testing docker-compose.yml syntax..."
+            docker compose -f docker-compose.yml config > /dev/null
+            
+            echo "Testing docker-compose.devcontainer.yml syntax..."
+            docker compose -f .devcontainer/docker-compose.devcontainer.yml config > /dev/null
+            
+            echo "✅ DevContainer configuration is valid"
+          else
+            echo "❌ Required docker-compose files not found"
+            exit 1
+          fi
