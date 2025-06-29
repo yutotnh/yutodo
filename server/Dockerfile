@@ -30,15 +30,15 @@ RUN npm ci --prefer-offline --no-audit
 # Copy source code
 COPY . .
 
-# Debug TypeScript environment
+# Debug and build TypeScript
 RUN echo "=== TypeScript Debug Info ===" && \
     pwd && \
     ls -la && \
     which tsc && \
-    tsc --version && \
+    ./node_modules/.bin/tsc --version && \
     cat tsconfig.json && \
     echo "=== Building TypeScript ===" && \
-    npm run build
+    ./node_modules/.bin/tsc
 
 # Verify build output exists
 RUN echo "=== Build Output ===" && \
