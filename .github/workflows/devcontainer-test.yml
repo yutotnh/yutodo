@@ -53,7 +53,17 @@ jobs:
           echo "Current working directory: $(pwd)"
           echo "Files in current directory:"
           ls -la
-          docker compose -f ./docker-compose.yml -f ./.devcontainer/docker-compose.devcontainer.yml config > /dev/null
+          
+          # Test each file individually first
+          echo "Testing docker-compose.yml syntax..."
+          docker compose -f docker-compose.yml config > /dev/null
+          
+          echo "Testing docker-compose.devcontainer.yml syntax..."
+          cd .devcontainer
+          docker compose -f docker-compose.devcontainer.yml config > /dev/null
+          cd ..
+          
+          echo "✅ Docker compose files are valid"
 
       - name: Check required files exist
         run: |
