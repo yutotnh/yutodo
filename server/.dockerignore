@@ -82,5 +82,5 @@ temp/
 # Lock files (package-lock.json is copied explicitly in Dockerfile)
 yarn.lock
 
-# TypeScript config (copied separately if needed)
-tsconfig.json
+# TypeScript config (needed for Docker build)
+# tsconfig.json

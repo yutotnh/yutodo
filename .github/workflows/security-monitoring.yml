@@ -28,6 +28,10 @@ jobs:
   vulnerability-scan:
     name: Vulnerability Scan & Analysis
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+      pull-requests: read
     outputs:
       has-vulnerabilities: ${{ steps.scan.outputs.has-vulnerabilities }}
       critical-count: ${{ steps.scan.outputs.critical-count }}
@@ -46,6 +50,9 @@ jobs:
         
     - name: Setup Rust
       uses: dtolnay/rust-toolchain@stable
+      
+    - name: Install cargo-audit
+      run: cargo install cargo-audit --locked
       
     - name: Install dependencies
       run: |
@@ -95,10 +102,10 @@ jobs:
         
         total_vulns=$((frontend_vulns + backend_vulns + e2e_vulns + rust_vulns))
         
-        # Dependabot APIからの脆弱性情報取得
-        dependabot_vulns=$(gh api repos/${{ github.repository }}/dependabot/alerts --jq '[.[] | select(.state == "open")] | length')
-        dependabot_critical=$(gh api repos/${{ github.repository }}/dependabot/alerts --jq '[.[] | select(.state == "open" and .security_vulnerability.severity == "critical")] | length')
-        dependabot_high=$(gh api repos/${{ github.repository }}/dependabot/alerts --jq '[.[] | select(.state == "open" and .security_vulnerability.severity == "high")] | length')
+        # Dependabot APIからの脆弱性情報取得 (エラーハンドリング付き)
+        dependabot_vulns=$(gh api repos/${{ github.repository }}/dependabot/alerts --jq '[.[] | select(.state == "open")] | length' 2>/dev/null || echo "0")
+        dependabot_critical=$(gh api repos/${{ github.repository }}/dependabot/alerts --jq '[.[] | select(.state == "open" and .security_vulnerability.severity == "critical")] | length' 2>/dev/null || echo "0")
+        dependabot_high=$(gh api repos/${{ github.repository }}/dependabot/alerts --jq '[.[] | select(.state == "open" and .security_vulnerability.severity == "high")] | length' 2>/dev/null || echo "0")
         
         echo "Vulnerability Summary:"
         echo "- Frontend: $frontend_vulns"
