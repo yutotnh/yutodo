@@ -34,7 +34,6 @@ COPY . .
 RUN echo "=== TypeScript Debug Info ===" && \
     pwd && \
     ls -la && \
-    which tsc && \
     ./node_modules/.bin/tsc --version && \
     cat tsconfig.json && \
     echo "=== Building TypeScript ===" && \
