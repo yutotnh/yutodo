@@ -238,7 +238,7 @@ export const ServerConfigSchema = z.object({
 export const DEFAULT_SERVER_CONFIG: ServerConfig = {
   server: {
     port: 3001,
-    host: 'localhost',
+    host: '0.0.0.0', // Docker環境対応：全インターフェースでリッスン
     auto_start: true,
     max_connections: 100,
     request_timeout: 30000, // 30秒

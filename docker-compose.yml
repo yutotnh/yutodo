@@ -3,8 +3,6 @@
 # YuToDo Server Containerization
 # ======================================
 
-version: '3.8'
-
 services:
   # YuToDo Server
   yutodo-server:
@@ -25,7 +23,8 @@ services:
       - YUTODO_SERVER_HOST=0.0.0.0
       - YUTODO_SERVER_PORT=3001
       - YUTODO_DB_PATH=/data/todos.db
-      - YUTODO_CONFIG_DIR=/config
+      # CONFIG_DIRを削除してデフォルト設定を使用
+      # - YUTODO_CONFIG_DIR=/config
       - YUTODO_LOG_LEVEL=debug
       - YUTODO_ENABLE_DEBUG=true
       # CORS設定：開発時はワイルドカード許可
@@ -37,18 +36,18 @@ services:
     volumes:
       # データベース永続化
       - yutodo-data:/data
-      # 設定ファイル（オプション）
-      - ./server/config:/config:ro
+      # 設定ファイル（オプション） - 削除してデフォルト設定を使用
+      # - ./server/config:/config:ro
       # ログ出力（開発時のデバッグ用）
       - yutodo-logs:/logs
     
-    # Health check
+    # Health check - 改善されたヘルスチェック設定
     healthcheck:
-      test: ["CMD", "node", "-e", "const http = require('http'); const options = { host: '0.0.0.0', port: 3001, timeout: 2000 }; const request = http.request(options, (res) => { process.exit(res.statusCode === 200 ? 0 : 1); }); request.on('error', () => process.exit(1)); request.end();"]
-      interval: 30s
+      test: ["CMD", "node", "-e", "const http = require('http'); const options = { host: 'localhost', port: 3001, timeout: 5000 }; const request = http.request(options, (res) => { console.log('Health check status:', res.statusCode); process.exit(res.statusCode === 200 ? 0 : 1); }); request.on('error', (err) => { console.log('Health check error:', err.message); process.exit(1); }); request.end();"]
+      interval: 15s
       timeout: 10s
-      retries: 3
-      start_period: 10s
+      retries: 5
+      start_period: 30s
     
     # Networking
     networks:

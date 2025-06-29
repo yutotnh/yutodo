@@ -3,8 +3,6 @@
 # YuToDo Server Containerization
 # ======================================
 
-version: '3.8'
-
 services:
   # YuToDo Server
   yutodo-server:
@@ -53,11 +51,11 @@ services:
           memory: 256M
           cpus: '0.5'
     
-    # Enhanced health check for production
+    # Enhanced health check for production  
     healthcheck:
-      test: ["CMD", "node", "-e", "const http = require('http'); const options = { host: '0.0.0.0', port: 3001, timeout: 3000 }; const request = http.request(options, (res) => { process.exit(res.statusCode === 200 ? 0 : 1); }); request.on('error', () => process.exit(1)); request.end();"]
+      test: ["CMD", "node", "-e", "const http = require('http'); const options = { host: 'localhost', port: 3001, timeout: 5000 }; const request = http.request(options, (res) => { console.log('Health check status:', res.statusCode); process.exit(res.statusCode === 200 ? 0 : 1); }); request.on('error', (err) => { console.log('Health check error:', err.message); process.exit(1); }); request.end();"]
       interval: 15s
-      timeout: 5s
+      timeout: 10s
       retries: 5
       start_period: 30s
     
