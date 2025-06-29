@@ -30,11 +30,23 @@ RUN npm ci --prefer-offline --no-audit
 # Copy source code
 COPY . .
 
-# Build TypeScript
-RUN npm run build
+# Debug TypeScript environment
+RUN echo "=== TypeScript Debug Info ===" && \
+    pwd && \
+    ls -la && \
+    which tsc && \
+    tsc --version && \
+    cat tsconfig.json && \
+    echo "=== Building TypeScript ===" && \
+    npm run build
 
-# Clean up unnecessary files for smaller image
-RUN rm -rf src/ node_modules/
+# Verify build output exists
+RUN echo "=== Build Output ===" && \
+    ls -la dist/ && \
+    echo "Build completed successfully"
+
+# Clean up unnecessary files for smaller image (keep src for runtime)
+RUN rm -rf node_modules/
 
 # =====================================
 # Production Stage  
@@ -98,7 +110,6 @@ RUN npm ci --only=production && npm cache clean --force
 
 # Copy built application from builder stage
 COPY --from=builder --chown=yutodo:yutodo /app/dist ./dist
-COPY --from=builder --chown=yutodo:yutodo /app/src ./src
 
 # Switch to non-root user
 USER yutodo
