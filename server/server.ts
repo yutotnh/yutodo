@@ -1419,6 +1419,16 @@ async function startServer() {
     // ミドルウェアを設定
     app.use(express.json({ limit: config.security.max_request_size }));
     
+    // Basic root health check endpoint
+    app.get('/', (req, res) => {
+      res.json({
+        status: 'ok',
+        service: 'yutodo-server',
+        version: process.env.npm_package_version || '1.0.0',
+        timestamp: new Date().toISOString()
+      });
+    });
+    
     // 既存のAPIエンドポイントを設定（ここに既存のio.onハンドラーを移動）
     setupSocketHandlers();
     
