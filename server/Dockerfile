@@ -34,10 +34,13 @@ COPY . .
 RUN echo "=== TypeScript Debug Info ===" && \
     pwd && \
     ls -la && \
-    ./node_modules/.bin/tsc --version && \
+    npm list typescript || true && \
+    npx tsc --version && \
     cat tsconfig.json && \
-    echo "=== Building TypeScript ===" && \
-    ./node_modules/.bin/tsc
+    echo "=== TypeScript source files ===" && \
+    find . -name "*.ts" -not -path "./node_modules/*" | head -10 && \
+    echo "=== Building TypeScript with npm ===" && \
+    npm run build
 
 # Verify build output exists
 RUN echo "=== Build Output ===" && \
