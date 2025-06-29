@@ -85,7 +85,7 @@ services:
       - yutodo-dev-data:/data
       - yutodo-dev-logs:/logs
     
-    # Network configuration for devcontainer
+    # Network configuration for devcontainer (override inherited network)
     networks:
       - yutodo-dev-network
     
@@ -136,3 +136,9 @@ networks:
     driver: bridge
     labels:
       - "com.yutodo.description=Development container network"
+  
+  # Network definition for inherited service compatibility
+  yutodo-network:
+    driver: bridge
+    labels:
+      - "com.yutodo.description=Compatibility network for inherited services"
