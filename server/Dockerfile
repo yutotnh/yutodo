@@ -6,7 +6,7 @@
 # =====================================
 # Build Stage
 # =====================================
-FROM node:20-alpine AS builder
+FROM node:20-alpine3.20 AS builder
 
 # Build arguments for multi-platform support
 ARG TARGETPLATFORM
@@ -53,7 +53,7 @@ RUN rm -rf node_modules/
 # =====================================
 # Production Stage  
 # =====================================
-FROM node:20-alpine AS production
+FROM node:20-alpine3.20 AS production
 
 # Build arguments for CI/CD integration and multi-platform support
 ARG BUILD_DATE
@@ -88,8 +88,13 @@ LABEL yutodo.build.platform=${BUILDPLATFORM}
 LABEL yutodo.target.arch=${TARGETARCH}
 LABEL yutodo.target.variant=${TARGETVARIANT}
 
-# Install dumb-init for proper signal handling and platform-specific optimizations
-RUN apk add --no-cache dumb-init && \
+# Update packages and install dumb-init for proper signal handling
+# Apply security patches for known vulnerabilities
+RUN apk update && \
+    apk upgrade --no-cache && \
+    apk add --no-cache dumb-init && \
+    # Fix busybox vulnerabilities if present
+    apk add --no-cache busybox=1.36.1-r29 || true && \
     echo "Target platform: ${TARGETPLATFORM:-unknown}" && \
     echo "Target architecture: ${TARGETARCH:-unknown}"
 
