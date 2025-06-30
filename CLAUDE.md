@@ -227,7 +227,7 @@ src/test/
 ├── configManager.test.ts       # Configuration management tests
 ├── utils.test.ts               # Utility function tests
 ├── AddTodoForm.test.tsx        # Form component tests
-├── ConnectionStatus.test.tsx   # Connection status tests
+├── ConnectionErrorOverlay.test.tsx # Connection error overlay tests
 ├── DarkMode.test.tsx           # Dark mode functionality tests
 ├── DeleteConfirmDialog.test.tsx # Delete confirmation tests
 ├── MenuBar.test.tsx            # Menu bar functionality tests
@@ -584,10 +584,11 @@ The app detects WSLg environment and provides appropriate fallbacks:
 - **Outside click**: Closes modal when clicking outside dialog content area
 - **Conflict resolution**: Main keyboard shortcuts disabled when modals are open
 
-### Connection Status Indicators
-- **Detailed mode**: Full connection status display in header center
-- **Slim mode**: Small colored dot indicator in bottom-right corner with tooltip
-- **Color coding**: Green (connected), Blue (connecting), Gray (disconnected), Red (error)
+### Connection Status Display
+- **Primary**: Full-screen ConnectionErrorOverlay when connection issues occur
+- **Settings Panel**: Small status indicator in Server settings tab
+- **Window Title**: Reconnection attempts shown in window title during reconnection
+- **Status Types**: connecting (blue spinner), error (red warning), disconnected (gray WiFi-off), connected (overlay hidden)
 
 ### Keyboard Shortcut System
 - **OS Detection**: Dynamically shows Ctrl (Windows/Linux) vs Cmd (macOS) in help text
