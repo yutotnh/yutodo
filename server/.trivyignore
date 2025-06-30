@@ -4,8 +4,11 @@
 # 2. Not applicable to our use case
 # 3. Already mitigated through other means
 
-# Busybox vulnerabilities that are fixed in our Dockerfile but may still be reported
-# CVE-2023-42364
-# CVE-2023-42365
+# Alpine Linux vulnerabilities that are mitigated through regular updates
+# These are often false positives due to version detection issues
+
+# Node.js vulnerabilities that don't affect our usage pattern
+# (uncomment specific CVEs after careful review)
 
 # Note: Only add CVEs here after careful review and confirmation that they don't pose a risk
+# Always prefer fixing vulnerabilities over ignoring them

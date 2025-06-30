@@ -6,7 +6,7 @@
 # =====================================
 # Build Stage
 # =====================================
-FROM node:20-alpine3.20 AS builder
+FROM node:20.18.2-alpine3.19 AS builder
 
 # Build arguments for multi-platform support
 ARG TARGETPLATFORM
@@ -27,8 +27,9 @@ COPY package.json package-lock.json ./
 # Use npm ci for faster, reliable, reproducible builds
 RUN npm ci --prefer-offline --no-audit
 
-# Copy source code
-COPY . .
+# Copy only necessary source files (exclude test files and other non-essential items)
+COPY --chown=builder:builder tsconfig.json ./
+COPY --chown=builder:builder src ./src
 
 # Debug and build TypeScript
 RUN echo "=== TypeScript Debug Info ===" && \
@@ -53,7 +54,7 @@ RUN rm -rf node_modules/
 # =====================================
 # Production Stage  
 # =====================================
-FROM node:20-alpine3.20 AS production
+FROM node:20.18.2-alpine3.19 AS production
 
 # Build arguments for CI/CD integration and multi-platform support
 ARG BUILD_DATE
@@ -93,14 +94,22 @@ LABEL yutodo.target.variant=${TARGETVARIANT}
 RUN apk update && \
     apk upgrade --no-cache && \
     apk add --no-cache dumb-init && \
-    # Fix busybox vulnerabilities if present
-    apk add --no-cache busybox=1.36.1-r29 || true && \
+    # Add gcompat for better compatibility with Alpine 3.19
+    apk add --no-cache gcompat && \
+    # Clean APK cache to reduce image size
+    rm -rf /var/cache/apk/* && \
     echo "Target platform: ${TARGETPLATFORM:-unknown}" && \
     echo "Target architecture: ${TARGETARCH:-unknown}"
 
 # Create non-root user for security
 RUN addgroup -g 1001 -S yutodo && \
-    adduser -S yutodo -u 1001 -G yutodo
+    adduser -S yutodo -u 1001 -G yutodo && \
+    # Remove unnecessary user accounts
+    deluser --remove-home node 2>/dev/null || true && \
+    # Set secure permissions on system directories
+    chmod 700 /root && \
+    # Remove setuid/setgid bits from binaries that don't need them
+    find / -perm /6000 -type f -exec chmod a-s {} \; 2>/dev/null || true
 
 # Set working directory
 WORKDIR /app
@@ -112,8 +121,15 @@ RUN mkdir -p /data /config /logs && \
 # Copy package files
 COPY --from=builder --chown=yutodo:yutodo /app/package.json /app/package-lock.json ./
 
-# Install only production dependencies
-RUN npm ci --only=production && npm cache clean --force
+# Install only production dependencies and remove npm after installation
+RUN npm ci --only=production && \
+    npm cache clean --force && \
+    # Remove npm and other build tools not needed at runtime
+    npm uninstall -g npm && \
+    rm -rf /usr/local/lib/node_modules/npm && \
+    rm -rf /tmp/* /var/tmp/* && \
+    # Remove any remaining package manager files
+    rm -rf /home/yutodo/.npm /home/yutodo/.node-gyp
 
 # Copy built application from builder stage
 COPY --from=builder --chown=yutodo:yutodo /app/dist ./dist
