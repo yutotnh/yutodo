@@ -40,7 +40,7 @@ jobs:
         id: version
         if: ${{ github.event.inputs.release_type != 'auto' }}
         run: |
-          CURRENT_VERSION=$(jq -r '.[".]' .release-please-manifest.json)
+          CURRENT_VERSION=$(jq -r '.["."]' .release-please-manifest.json)
           RELEASE_TYPE="${{ github.event.inputs.release_type }}"
           
           # Parse current version
