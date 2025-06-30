@@ -34,6 +34,7 @@ A modern, feature-rich todo list application built with Tauri, React, and TypeSc
 - [Kubernetes Deployment](#kubernetes-deployment)
 - [E2E Testing](#e2e-testing)
 - [WSLg Environment Support](#wslg-environment-support)
+- [Release Process](#release-process)
 - [Contributing](#contributing)
 - [Known Issues](#known-issues)
 - [Troubleshooting](#troubleshooting)
@@ -87,8 +88,12 @@ npm run tauri dev
 ```
 
 ### 📦 Download Release
-<!-- Download pre-built binaries from [Releases](https://github.com/your-username/yutodo/releases) -->
-*Pre-built releases coming soon*
+Download pre-built binaries from [Releases](https://github.com/yutotnh/yutodo/releases)
+
+Available formats:
+- **Windows**: `.msi` installer, `.exe` portable
+- **macOS**: `.dmg` disk image, `.app.tar.gz` archive  
+- **Linux**: `.deb` package, `.AppImage` portable
 
 ### ✨ First Steps
 1. **Create your first task** - Click the input at the bottom or press `Ctrl+N`
@@ -675,6 +680,99 @@ MESA: error: ZINK: failed to choose pdev
 ```
 
 Suppress with: `export LIBGL_ALWAYS_SOFTWARE=1`
+
+## Release Process
+
+YuToDo uses automated Release Please for creating releases with cross-platform binaries. 
+
+### Manual Release Creation
+
+To create a new release manually:
+
+1. **Navigate to Actions**
+   - Go to the [GitHub Actions page](https://github.com/yutotnh/yutodo/actions)
+   - Select "Release Please" workflow
+
+2. **Trigger Release**
+   - Click "Run workflow"
+   - Select branch: `main` (recommended)
+   - Choose release type:
+     - **auto**: Automatically determined from commit history (default)
+     - **patch**: Bug fixes (0.1.0 → 0.1.1)
+     - **minor**: New features (0.1.0 → 0.2.0)
+     - **major**: Breaking changes (0.1.0 → 1.0.0)
+     - **prerelease**: Pre-release version (0.1.0 → 0.1.1-alpha.0)
+
+3. **Review Release PR**
+   - Release Please creates a PR with:
+     - Updated CHANGELOG.md
+     - Version bumps in all package files
+     - Release notes based on commit history
+   - Review and merge the PR when ready
+
+4. **Automatic Build & Publish**
+   - When PR is merged, automation builds:
+     - **Desktop Apps**: Windows (.msi, .exe), macOS (.dmg), Linux (.deb, .AppImage)
+     - **Docker Images**: Multi-platform containers (AMD64, ARM64)
+   - Binaries are automatically attached to the GitHub release
+   - Docker images are published to GitHub Container Registry
+
+### Release Types Behavior
+
+| Type | Version Change | Use Case |
+|------|---------------|----------|
+| `auto` | Based on commits | Let conventional commits decide |
+| `patch` | 0.1.0 → 0.1.1 | Bug fixes only |
+| `minor` | 0.1.0 → 0.2.0 | New features |
+| `major` | 0.1.0 → 1.0.0 | Breaking changes |
+| `prerelease` | 0.1.0 → 0.1.1-alpha.0 | Testing/preview |
+
+### Conventional Commits
+
+For automatic release detection, use conventional commit format:
+
+```bash
+# Features (minor bump)
+git commit -m "feat: add keyboard shortcuts system"
+git commit -m "feat(ui): implement dark mode toggle"
+
+# Bug fixes (patch bump)
+git commit -m "fix: resolve connection timeout issues"
+git commit -m "fix(server): handle database migration errors"
+
+# Breaking changes (major bump)
+git commit -m "feat!: redesign task API interface"
+
+# Other types (no version bump)
+git commit -m "docs: update installation guide"
+git commit -m "test: add coverage for schedule execution"
+git commit -m "refactor: simplify component structure"
+```
+
+### Pre-release Testing
+
+For testing before stable release:
+
+1. **Create prerelease**: Select `prerelease` in workflow
+2. **Test binaries**: Download and test from draft release
+3. **Promote to stable**: Run workflow with appropriate type if testing passes
+
+### Troubleshooting Releases
+
+**Release PR not created:**
+- Check commit messages follow conventional format
+- Ensure commits exist since last release
+- Verify Release Please configuration
+
+**Build failures:**
+- Check GitHub Actions logs
+- Ensure all tests pass locally first
+- Verify Rust/Node.js versions match CI
+
+**Missing binaries:**
+- Check Tauri build logs in Actions
+- Verify platform-specific dependencies
+- Ensure proper permissions in repository settings
 
 ## Contributing
 
