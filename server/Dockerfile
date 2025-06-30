@@ -6,7 +6,7 @@
 # =====================================
 # Build Stage
 # =====================================
-FROM node:20.18.2-alpine3.19 AS builder
+FROM node:20-alpine AS builder
 
 # Build arguments for multi-platform support
 ARG TARGETPLATFORM
@@ -54,7 +54,7 @@ RUN rm -rf node_modules/
 # =====================================
 # Production Stage  
 # =====================================
-FROM node:20.18.2-alpine3.19 AS production
+FROM node:20-alpine AS production
 
 # Build arguments for CI/CD integration and multi-platform support
 ARG BUILD_DATE
