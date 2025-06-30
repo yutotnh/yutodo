@@ -28,12 +28,16 @@ jobs:
     outputs:
       release_created: ${{ steps.release.outputs.release_created }}
       tag_name: ${{ steps.release.outputs.tag_name }}
+      prerelease: ${{ steps.release.outputs.prerelease }}
+      body: ${{ steps.release.outputs.body }}
     steps:
       - name: Release Please
         id: release
         uses: googleapis/release-please-action@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          release-as: ${{ github.event.inputs.release_type != 'auto' && github.event.inputs.release_type != 'prerelease' && github.event.inputs.release_type || '' }}
+          prerelease: ${{ github.event.inputs.release_type == 'prerelease' }}
 
   build-and-release:
     if: ${{ needs.release-please.outputs.release_created }}
@@ -89,9 +93,9 @@ jobs:
         with:
           tagName: ${{ needs.release-please.outputs.tag_name }}
           releaseName: 'YuToDo ${{ needs.release-please.outputs.tag_name }}'
-          releaseBody: 'See CHANGELOG.md for details.'
+          releaseBody: ${{ needs.release-please.outputs.body }}
           releaseDraft: false
-          prerelease: false
+          prerelease: ${{ needs.release-please.outputs.prerelease == 'true' }}
 
   publish-docker:
     name: Publish Docker Image
