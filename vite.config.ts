@@ -36,12 +36,6 @@ export default defineConfig(async () => ({
     // Increase chunk size warning limit for Tauri apps
     chunkSizeWarningLimit: 1000,
     rollupOptions: {
-      external: [
-        '@tauri-apps/plugin-dialog',
-        '@tauri-apps/plugin-fs',
-        '@tauri-apps/plugin-opener',
-        '@tauri-apps/plugin-clipboard-manager'
-      ],
       output: {
         manualChunks: {
           // Separate vendor chunks for better caching
@@ -54,7 +48,5 @@ export default defineConfig(async () => ({
       }
     }
   },
-  optimizeDeps: {
-    exclude: ['@tauri-apps/api', '@tauri-apps/plugin-dialog', '@tauri-apps/plugin-fs', '@tauri-apps/plugin-opener', '@tauri-apps/plugin-clipboard-manager']
-  }
+  // Remove optimizeDeps exclusions for Tauri plugins to ensure they're bundled properly
 }));
