@@ -41,7 +41,7 @@ jobs:
           
       - name: Calculate next version
         id: version
-        if: ${{ github.event.inputs.release_type != 'auto' }}
+        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_type != 'auto' }}
         run: |
           CURRENT_VERSION=$(jq -r '.["."]' .release-please-manifest.json)
           RELEASE_TYPE="${{ github.event.inputs.release_type }}"
@@ -81,7 +81,7 @@ jobs:
           echo "next_version=$NEXT_VERSION" >> $GITHUB_OUTPUT
           
       - name: Update manifest for manual release
-        if: ${{ github.event.inputs.release_type != 'auto' }}
+        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_type != 'auto' }}
         run: |
           # Update manifest with calculated version
           jq --arg version "${{ steps.version.outputs.next_version }}" \
