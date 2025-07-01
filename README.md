@@ -1,6 +1,6 @@
 # YuToDo - Tauri Desktop Application
 
-A modern, feature-rich todo list application built with Tauri, React, and TypeScript. This desktop app provides real-time synchronization, native file operations, Markdown support, comprehensive scheduling system, and extensive customization options for enhanced productivity.
+A modern, feature-rich todo list application built with Tauri, React, and TypeScript. This desktop app provides real-time synchronization, native file operations, Markdown support, comprehensive scheduling system, and extensive customization options for enhanced productivity and workflow optimization.
 
 [![Tauri](https://img.shields.io/badge/Tauri-v2-blue?logo=tauri)](https://tauri.app/)
 [![React](https://img.shields.io/badge/React-18-blue?logo=react)](https://reactjs.org/)
