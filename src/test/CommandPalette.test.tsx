@@ -56,6 +56,7 @@ describe('CommandPalette - Basic Tests', () => {
     
     mockContext = {
       startupView: 'tasks-detailed',
+      currentView: 'tasks-detailed',
       selectedTasks: new Set<string>(),
       searchQuery: '',
       settings: {
