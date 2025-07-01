@@ -6,6 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [0.2.3](https://github.com/yutotnh/yutodo/compare/yutodo-v0.2.2...yutodo-v0.2.3) (2025-07-01)
+
+
+### Features
+
+* implement staged urgency display for overdue tasks ([481efc5](https://github.com/yutotnh/yutodo/commit/481efc5d967487e69d365ea8aad1f395c6a906fe))
+
+
+### Bug Fixes
+
+* align schedule badges consistently in slim mode ([9f2d542](https://github.com/yutotnh/yutodo/commit/9f2d54277b129f566f0a86be6612100cb5c31dcf))
+* update Release Please configuration to v4 format ([583c220](https://github.com/yutotnh/yutodo/commit/583c220de0d5279f61345bd734a3c732638574a7))
+
+
+### Documentation
+
+* trigger release please workflow ([ed3cbab](https://github.com/yutotnh/yutodo/commit/ed3cbab91811b80bf61770f664dab467e79d27fd))
+
 ## [0.2.2](https://github.com/yutotnh/yutodo/compare/v0.2.1...v0.2.2) (2025-07-01)
 
 
