@@ -113,7 +113,7 @@ provide_recommendations() {
     
     cat << EOF
 1. Use specific Alpine version tags (e.g., alpine3.19) instead of 'alpine:latest'
-2. Pin Node.js to specific versions (e.g., node:20.18.2-alpine3.19)
+2. Pin Node.js to specific versions (e.g., node:20-alpine or node:20.18-alpine)
 3. Run 'apk update && apk upgrade' to get latest security patches
 4. Remove package manager caches after installation
 5. Use multi-stage builds to minimize final image size

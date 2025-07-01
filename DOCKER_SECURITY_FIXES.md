@@ -6,9 +6,9 @@ This document outlines the security fixes applied to resolve HIGH/CRITICAL vulne
 
 ### 1. Base Image Updates
 
-- **Updated Node.js version**: From `node:20-alpine3.20` to `node:20.18.2-alpine3.19`
+- **Updated Node.js version**: From `node:20-alpine3.20` to `node:20-alpine`
   - Uses the latest Node.js 20 LTS with security patches
-  - Alpine 3.19 chosen for better compatibility (Alpine 3.21 has known issues with Node.js 20.18.2)
+  - Latest Alpine Linux version for compatibility and security updates
 
 ### 2. Security Hardening Measures
 
