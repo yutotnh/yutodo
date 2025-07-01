@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [0.2.1](https://github.com/yutotnh/yutodo/compare/v0.2.0...v0.2.1) (2025-07-01)
+
+
+### Bug Fixes
+
+* add contents write permission to Docker publish job ([e51ef7a](https://github.com/yutotnh/yutodo/commit/e51ef7afd1c69ba64e8a352f7d15e95dad186aec))
+* sync Tauri app version to 0.2.0 and improve Release Please configuration ([cf550eb](https://github.com/yutotnh/yutodo/commit/cf550eb3e1e2c7fe3400ccd04fe3740cb76aa4b4))
+
 ## [0.2.0](https://github.com/yutotnh/yutodo/compare/v0.1.1...v0.2.0) (2025-07-01)
 
 
