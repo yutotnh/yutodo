@@ -16,7 +16,8 @@
         { "type": "build", "section": "Build System" },
         { "type": "ci", "section": "CI/CD" }
       ],
-      "include-v-in-tag": true,
+      "include-v-in-tag": false,
+      "tag-separator": "-v",
       "extra-files": [
         "src-tauri/Cargo.toml",
         "src-tauri/tauri.conf.json",
