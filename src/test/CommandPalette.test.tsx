@@ -347,4 +347,166 @@ describe('CommandPalette - Basic Tests', () => {
       expect(dialog).toHaveAttribute('aria-label', 'Command Palette');
     });
   });
+
+  describe('Current View Context Integration', () => {
+    it('should pass currentView in context to command registry', () => {
+      const contextWithCurrentView = {
+        ...mockContext,
+        currentView: 'schedules' as const,
+        startupView: 'tasks-detailed' as const, // Different from currentView
+      };
+
+      render(
+        <CommandPalette
+          isOpen={true}
+          onClose={mockOnClose}
+          context={contextWithCurrentView}
+        />
+      );
+
+      expect(mockCommandRegistry.getFilteredCommands).toHaveBeenCalledWith('', contextWithCurrentView);
+    });
+
+    it('should handle different currentView values', () => {
+      const views = ['tasks-detailed', 'tasks-simple', 'schedules'] as const;
+      
+      views.forEach(currentView => {
+        vi.clearAllMocks();
+        
+        const contextWithView = {
+          ...mockContext,
+          currentView,
+        };
+
+        render(
+          <CommandPalette
+            isOpen={true}
+            onClose={mockOnClose}
+            context={contextWithView}
+          />
+        );
+
+        expect(mockCommandRegistry.getFilteredCommands).toHaveBeenCalledWith('', contextWithView);
+      });
+    });
+
+    it('should handle context updates without breaking', () => {
+      const { rerender } = render(
+        <CommandPalette
+          isOpen={true}
+          onClose={mockOnClose}
+          context={mockContext}
+        />
+      );
+
+      // Change currentView while keeping startupView the same
+      const updatedContext = {
+        ...mockContext,
+        currentView: 'schedules' as const,
+        startupView: 'tasks-detailed' as const, // Unchanged
+      };
+
+      // This should not throw an error
+      expect(() => {
+        rerender(
+          <CommandPalette
+            isOpen={true}
+            onClose={mockOnClose}
+            context={updatedContext}
+          />
+        );
+      }).not.toThrow();
+
+      // Component should continue to function with updated context
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+    });
+
+    it('should distinguish between currentView and startupView', () => {
+      const contextWithDifferentViews = {
+        ...mockContext,
+        currentView: 'tasks-simple' as const,
+        startupView: 'schedules' as const, // Different from currentView
+      };
+
+      render(
+        <CommandPalette
+          isOpen={true}
+          onClose={mockOnClose}
+          context={contextWithDifferentViews}
+        />
+      );
+
+      // Both currentView and startupView should be available in context
+      const passedContext = mockCommandRegistry.getFilteredCommands.mock.calls[0][1];
+      expect(passedContext.currentView).toBe('tasks-simple');
+      expect(passedContext.startupView).toBe('schedules');
+    });
+
+    it('should handle onViewChange callback from context', () => {
+      render(
+        <CommandPalette
+          isOpen={true}
+          onClose={mockOnClose}
+          context={mockContext}
+        />
+      );
+
+      // Verify that onViewChange callback is available in context
+      expect(mockContext.onViewChange).toBeDefined();
+      expect(mockContext.onViewChange).toBeInstanceOf(Function);
+    });
+
+    it('should preserve view context during command filtering', () => {
+      render(
+        <CommandPalette
+          isOpen={true}
+          onClose={mockOnClose}
+          context={mockContext}
+        />
+      );
+
+      const searchInput = screen.getByPlaceholderText('Search commands...');
+      
+      // Trigger search which should re-filter commands
+      fireEvent.change(searchInput, { target: { value: 'export' } });
+
+      // Should maintain the same context including currentView
+      expect(mockCommandRegistry.getFilteredCommands).toHaveBeenCalledWith('export', mockContext);
+    });
+
+    it('should handle view-specific command visibility', () => {
+      // Create view-specific commands
+      const viewSpecificCommands = [
+        {
+          id: 'view.tasks.detailed',
+          title: 'Detailed Tasks Command',
+          description: 'Only available in detailed view',
+          category: 'view',
+          keywords: ['detailed'],
+          execute: vi.fn(),
+        },
+        {
+          id: 'view.schedules',
+          title: 'Schedules Command',
+          description: 'Only available in schedules view',
+          category: 'view',
+          keywords: ['schedules'],
+          execute: vi.fn(),
+        },
+      ];
+
+      mockCommandRegistry.getFilteredCommands.mockReturnValue(viewSpecificCommands);
+
+      render(
+        <CommandPalette
+          isOpen={true}
+          onClose={mockOnClose}
+          context={mockContext}
+        />
+      );
+
+      // Commands should be filtered based on context including currentView
+      expect(mockCommandRegistry.getFilteredCommands).toHaveBeenCalledWith('', mockContext);
+    });
+  });
 });
