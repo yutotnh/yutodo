@@ -315,6 +315,7 @@ body {
   background: #f1f5f9;
   border-radius: 4px;
   flex-shrink: 0;
+  margin-left: auto; /* 日時バッジを常に右端に固定 */
 }
 
 /* Legacy schedule overdue styling */
