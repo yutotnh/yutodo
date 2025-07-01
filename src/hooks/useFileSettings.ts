@@ -258,25 +258,45 @@ export function useFileSettings(): UseFileSettingsReturn {
   
   // Open settings file in editor
   const openSettingsFile = useCallback(async () => {
+    const path = settingsManager.getSettingsPath();
     try {
       const { openPath } = await import('@tauri-apps/plugin-opener');
-      const path = settingsManager.getSettingsPath();
       await openPath(path);
     } catch (err) {
       logger.error('Failed to open settings file:', err);
-      throw err;
+      
+      // Fallback: Copy path to clipboard
+      try {
+        const { writeText } = await import('@tauri-apps/plugin-clipboard-manager');
+        await writeText(path);
+        logger.info('Settings file path copied to clipboard:', path);
+        // You can show a toast notification here if needed
+      } catch (clipboardErr) {
+        logger.error('Failed to copy path to clipboard:', clipboardErr);
+        throw err; // Throw original error
+      }
     }
   }, []);
   
   // Open keybindings file in editor
   const openKeybindingsFile = useCallback(async () => {
+    const path = settingsManager.getKeybindingsPath();
     try {
       const { openPath } = await import('@tauri-apps/plugin-opener');
-      const path = settingsManager.getKeybindingsPath();
       await openPath(path);
     } catch (err) {
       logger.error('Failed to open keybindings file:', err);
-      throw err;
+      
+      // Fallback: Copy path to clipboard
+      try {
+        const { writeText } = await import('@tauri-apps/plugin-clipboard-manager');
+        await writeText(path);
+        logger.info('Keybindings file path copied to clipboard:', path);
+        // You can show a toast notification here if needed
+      } catch (clipboardErr) {
+        logger.error('Failed to copy path to clipboard:', clipboardErr);
+        throw err; // Throw original error
+      }
     }
   }, []);
   
