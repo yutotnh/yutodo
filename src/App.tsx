@@ -37,6 +37,7 @@ import { AppSettings, Todo, Schedule, SearchSettings } from './types/todo';
 import { CommandContext } from './types/commands';
 import { formatTomlKeyValue } from './utils/tomlUtils';
 import { registerDefaultCommands } from './commands/defaultCommands';
+import { isOverdue } from './utils/dateUtils';
 import logger from './utils/logger';
 import './App.css';
 import './components/CommandPalette.css';
@@ -1091,8 +1092,7 @@ function App() {
 
   // フィルタリングと検索ロジック
   const filteredTodos = todos.filter(todo => {
-    const now = new Date();
-    const isOverdue = todo.scheduledFor && new Date(todo.scheduledFor) < now && !todo.completed;
+    const isTaskOverdue = isOverdue(todo.scheduledFor, todo.completed);
 
     // 検索クエリでフィルタリング
     const matchesSearch = (() => {
@@ -1145,7 +1145,7 @@ function App() {
       case 'pending':
         return !todo.completed;
       case 'overdue':
-        return isOverdue;
+        return isTaskOverdue;
       case 'high':
         return todo.priority === 'high';
       case 'medium':
@@ -1162,10 +1162,7 @@ function App() {
     all: todos.length,
     completed: todos.filter(todo => todo.completed).length,
     pending: todos.filter(todo => !todo.completed).length,
-    overdue: todos.filter(todo => {
-      const now = new Date();
-      return todo.scheduledFor && new Date(todo.scheduledFor) < now && !todo.completed;
-    }).length,
+    overdue: todos.filter(todo => isOverdue(todo.scheduledFor, todo.completed)).length,
     high: todos.filter(todo => todo.priority === 'high').length,
     medium: todos.filter(todo => todo.priority === 'medium').length,
     low: todos.filter(todo => todo.priority === 'low').length

@@ -9,6 +9,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { useTranslation } from 'react-i18next';
 import { Todo, Priority } from '../types/todo';
 import { getPriorityText, getPriorityClassSuffix } from '../utils/priorityUtils';
+import { calculateUrgencyLevel, getUrgencyClassSuffix, isOverdue as isTaskOverdue } from '../utils/dateUtils';
 import logger from '../utils/logger';
 
 interface TodoItemProps {
@@ -249,7 +250,10 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onUpdate, on
     return `schedule-priority-inline schedule-priority--${getPriorityClassSuffix(priority)}`;
   };
 
-  const isOverdue = todo.scheduledFor && new Date(todo.scheduledFor) < new Date() && !todo.completed;
+  // Calculate urgency level for staged visual indicators
+  const urgencyLevel = calculateUrgencyLevel(todo.scheduledFor, todo.completed);
+  const urgencyClassSuffix = getUrgencyClassSuffix(urgencyLevel);
+  const isOverdue = isTaskOverdue(todo.scheduledFor, todo.completed);
 
 
   // スリムモード編集時のキー処理
@@ -388,7 +392,7 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onUpdate, on
       data-todo-id={todo.id}
       ref={setNodeRef}
       style={style}
-      className={`todo-item ${todo.completed ? 'todo-item--completed' : ''} ${isOverdue ? 'todo-item--overdue' : ''} ${isSelected ? 'todo-item--selected' : ''}`}
+      className={`todo-item ${todo.completed ? 'todo-item--completed' : ''} ${urgencyClassSuffix ? `todo-item${urgencyClassSuffix}` : ''} ${isSelected ? 'todo-item--selected' : ''}`}
       data-dragging={isDragging}
       onClick={handleClick}
       {...attributes}
@@ -501,7 +505,7 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onUpdate, on
             
             {/* 日時表示 */}
             {todo.scheduledFor && (
-              <div className={`schedule-compact ${isOverdue ? 'schedule-compact--overdue' : ''}`}>
+              <div className={`schedule-compact ${urgencyClassSuffix ? `schedule-compact${urgencyClassSuffix}` : ''}`}>
                 <Clock size={8} />
                 <span>
                   {new Date(todo.scheduledFor).toLocaleString(undefined, { 
@@ -575,7 +579,7 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onUpdate, on
               </span>
               
               {todo.scheduledFor && (
-                <span className={`schedule-badge ${isOverdue ? 'schedule-badge--overdue' : ''}`}>
+                <span className={`schedule-badge ${urgencyClassSuffix ? `schedule-badge${urgencyClassSuffix}` : ''}`}>
                   <Clock size={12} />
                   {new Date(todo.scheduledFor).toLocaleString(undefined, { 
                     year: 'numeric',
