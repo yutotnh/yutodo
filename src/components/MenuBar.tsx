@@ -1,12 +1,11 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Menu } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { AppSettings } from '../types/todo';
 import { useFileSettings } from '../hooks/useFileSettings';
 import { detectOS } from '../utils/osDetection';
 
 interface MenuBarProps {
-  settings: AppSettings;
+  currentView: 'tasks-detailed' | 'tasks-simple' | 'schedules';
   sessionAlwaysOnTop: boolean;
   onNewTask: () => void;
   onSelectAll: () => void;
@@ -32,7 +31,7 @@ interface MenuItemData {
 }
 
 export const MenuBar: React.FC<MenuBarProps> = ({
-  settings,
+  currentView,
   sessionAlwaysOnTop,
   onNewTask,
   onSelectAll,
@@ -121,9 +120,9 @@ export const MenuBar: React.FC<MenuBarProps> = ({
       label: t('menu.view'),
       accessKey: 'V',
       items: [
-        { id: 'show-tasks-detailed', label: settings.startupView === 'tasks-detailed' ? t('menu.showingTasksDetailed') : t('menu.showTasksDetailed'), shortcut: getShortcutForCommand('showTasksDetailed'), action: () => onViewChange('tasks-detailed') },
-        { id: 'show-tasks-simple', label: settings.startupView === 'tasks-simple' ? t('menu.showingTasksSimple') : t('menu.showTasksSimple'), shortcut: getShortcutForCommand('showTasksSimple'), action: () => onViewChange('tasks-simple') },
-        { id: 'show-schedules', label: settings.startupView === 'schedules' ? t('menu.showingSchedules') : t('menu.showSchedules'), shortcut: getShortcutForCommand('showSchedules'), action: () => onViewChange('schedules') },
+        { id: 'show-tasks-detailed', label: currentView === 'tasks-detailed' ? t('menu.showingTasksDetailed') : t('menu.showTasksDetailed'), shortcut: getShortcutForCommand('showTasksDetailed'), action: () => onViewChange('tasks-detailed') },
+        { id: 'show-tasks-simple', label: currentView === 'tasks-simple' ? t('menu.showingTasksSimple') : t('menu.showTasksSimple'), shortcut: getShortcutForCommand('showTasksSimple'), action: () => onViewChange('tasks-simple') },
+        { id: 'show-schedules', label: currentView === 'schedules' ? t('menu.showingSchedules') : t('menu.showSchedules'), shortcut: getShortcutForCommand('showSchedules'), action: () => onViewChange('schedules') },
         { id: 'separator-1', separator: true },
         { id: 'always-on-top', prefix: sessionAlwaysOnTop ? '✓ ' : '  ', label: t('menu.alwaysOnTop'), action: onToggleAlwaysOnTop }
       ] as MenuItemData[]
@@ -137,7 +136,7 @@ export const MenuBar: React.FC<MenuBarProps> = ({
         { id: 'about', label: t('menu.about'), action: onShowAbout }
       ] as MenuItemData[]
     }
-  }), [t, getShortcutForCommand, onNewTask, onImportTasks, onExportTasks, onShowSettings, onQuit, onSelectAll, onDeleteSelected, onShowShortcuts, onShowAbout, onToggleAlwaysOnTop, onViewChange, sessionAlwaysOnTop, settings.startupView]);
+  }), [t, getShortcutForCommand, onNewTask, onImportTasks, onExportTasks, onShowSettings, onQuit, onSelectAll, onDeleteSelected, onShowShortcuts, onShowAbout, onToggleAlwaysOnTop, onViewChange, sessionAlwaysOnTop, currentView]);
 
 
   // 言語に応じてアクセスキーを括弧で表示する必要があるかチェック

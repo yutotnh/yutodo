@@ -31,6 +31,7 @@ export interface CommandPaletteState {
 export interface CommandContext {
   // App state context for command execution
   startupView: 'tasks-detailed' | 'tasks-simple' | 'schedules';
+  currentView: 'tasks-detailed' | 'tasks-simple' | 'schedules';
   selectedTasks: Set<string>;
   searchQuery: string;
   settings: any;

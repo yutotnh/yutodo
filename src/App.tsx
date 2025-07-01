@@ -137,6 +137,9 @@ function App() {
     useRegex: false,
     wholeWord: false
   });
+  
+  // 現在のビュー状態（一時的、設定ファイルには保存しない）
+  const [currentView, setCurrentView] = useState<'tasks-detailed' | 'tasks-simple' | 'schedules'>(settings.startupView);
   const addTodoFormRef = useRef<AddTodoFormRef>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -223,6 +226,14 @@ function App() {
       setIsInitialized(true);
     }
   }, [fileSettings, isLoadingSettings, lastChangeSource, i18n]);
+
+  // currentViewとsettings.startupViewの同期
+  // settings.startupViewが変更されたときにcurrentViewを更新
+  useEffect(() => {
+    if (isInitialized && settings.startupView) {
+      setCurrentView(settings.startupView);
+    }
+  }, [isInitialized, settings.startupView]);
 
   // 言語設定の変更を適用
   useEffect(() => {
@@ -957,14 +968,14 @@ function App() {
     setSelectionAnchorIndex(-1);
   };
 
-  // ビューヘルパー関数
-  const isTasksView = () => settings.startupView === 'tasks-detailed' || settings.startupView === 'tasks-simple';
-  const isDetailedTasksView = () => settings.startupView === 'tasks-detailed';
-  const isSimpleTasksView = () => settings.startupView === 'tasks-simple';
+  // ビューヘルパー関数（現在のビュー状態を使用）
+  const isTasksView = () => currentView === 'tasks-detailed' || currentView === 'tasks-simple';
+  const isDetailedTasksView = () => currentView === 'tasks-detailed';
+  const isSimpleTasksView = () => currentView === 'tasks-simple';
 
-  // ビュー切り替えハンドラー
+  // ビュー切り替えハンドラー（現在のセッションのみ変更）
   const handleViewChange = (view: 'tasks-detailed' | 'tasks-simple' | 'schedules') => {
-    setSettings(prev => ({ ...prev, startupView: view }));
+    setCurrentView(view);
   };
 
   // スケジュール関連ハンドラー
@@ -1267,28 +1278,28 @@ function App() {
     onOpenCommandPalette: () => {
       setShowCommandPalette(true);
     },
-    // View switching
+    // View switching（現在のビューのみ変更、設定ファイルには保存しない）
     onShowTasks: () => {
-      handleSettingsChange({ ...settings, startupView: 'tasks-detailed' });
+      setCurrentView('tasks-detailed');
     },
     onShowTasksDetailed: () => {
-      handleSettingsChange({ ...settings, startupView: 'tasks-detailed' });
+      setCurrentView('tasks-detailed');
     },
     onShowTasksSimple: () => {
-      handleSettingsChange({ ...settings, startupView: 'tasks-simple' });
+      setCurrentView('tasks-simple');
     },
     onShowSchedules: () => {
-      handleSettingsChange({ ...settings, startupView: 'schedules' });
+      setCurrentView('schedules');
     },
     // Legacy handlers for backward compatibility
     onViewTasksDetailed: () => {
-      handleSettingsChange({ ...settings, startupView: 'tasks-detailed' });
+      setCurrentView('tasks-detailed');
     },
     onViewTasksSimple: () => {
-      handleSettingsChange({ ...settings, startupView: 'tasks-simple' });
+      setCurrentView('tasks-simple');
     },
     onViewSchedules: () => {
-      handleSettingsChange({ ...settings, startupView: 'schedules' });
+      setCurrentView('schedules');
     },
     // Navigation (TODO: implement these)
     onNextTask: () => {
@@ -1372,6 +1383,7 @@ function App() {
   // CommandContext for command palette
   const commandContext: CommandContext = {
     startupView: settings.startupView,
+    currentView: currentView,
     selectedTasks: selectedTodos,
     searchQuery,
     settings,
@@ -1390,7 +1402,7 @@ function App() {
     onToggleSelectedCompletion: keyboardHandlers.onToggleSelectedCompletion,
     onExportTasks: handleExportTasksFromMenu,
     onImportTasks: handleImportTasksFromMenu,
-    onViewChange: (view: 'tasks-detailed' | 'tasks-simple' | 'schedules') => setSettings(prev => ({ ...prev, startupView: view })),
+    onViewChange: setCurrentView,
     onToggleDarkMode: () => {
       const newMode = settings.darkMode === 'dark' ? 'light' : settings.darkMode === 'light' ? 'auto' : 'dark';
       setSettings(prev => ({ ...prev, darkMode: newMode }));
@@ -1398,15 +1410,15 @@ function App() {
     onToggleSlimMode: () => {
       if (isTasksView()) {
         const newView = isDetailedTasksView() ? 'tasks-simple' : 'tasks-detailed';
-        setSettings(prev => ({ ...prev, startupView: newView }));
+        setCurrentView(newView);
       }
     },
     onToggleAlwaysOnTop: () => setSessionAlwaysOnTop(!sessionAlwaysOnTop),
     onShowHelp: () => setShowShortcutHelp(true),
-    // View handlers
-    onShowTasksDetailed: () => setSettings(prev => ({ ...prev, startupView: 'tasks-detailed' })),
-    onShowTasksSimple: () => setSettings(prev => ({ ...prev, startupView: 'tasks-simple' })),
-    onShowSchedules: () => setSettings(prev => ({ ...prev, startupView: 'schedules' })),
+    // View handlers（現在のビューのみ変更）
+    onShowTasksDetailed: () => setCurrentView('tasks-detailed'),
+    onShowTasksSimple: () => setCurrentView('tasks-simple'),
+    onShowSchedules: () => setCurrentView('schedules'),
     // Schedule handlers
     onDeleteInactiveSchedules: handleDeleteInactiveSchedules,
     onCreateSchedule: handleCreateSchedule
@@ -1417,7 +1429,7 @@ function App() {
       <header data-testid="app-header" className={`app-header ${(isDetailedTasksView() || showHeader) ? 'app-header--visible' : 'app-header--hidden'}`} onMouseDown={handleHeaderMouseDown}>
         <div className="header-left">
           <MenuBar
-            settings={settings}
+            currentView={currentView}
             sessionAlwaysOnTop={sessionAlwaysOnTop}
             onNewTask={keyboardHandlers.onNewTask}
             onSelectAll={keyboardHandlers.onSelectAll}

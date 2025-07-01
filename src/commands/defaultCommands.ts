@@ -43,7 +43,7 @@ const createViewCommands = (t: TFunction): CommandAction[] => [
       context.onViewChange('tasks-detailed');
     },
     isEnabled: () => true,
-    isVisible: (context?: CommandContext) => context?.startupView !== 'tasks-detailed'
+    isVisible: (context?: CommandContext) => context?.currentView !== 'tasks-detailed'
   },
   {
     id: 'view.tasks.simple',
@@ -56,7 +56,7 @@ const createViewCommands = (t: TFunction): CommandAction[] => [
       context.onViewChange('tasks-simple');
     },
     isEnabled: () => true,
-    isVisible: (context?: CommandContext) => context?.startupView !== 'tasks-simple'
+    isVisible: (context?: CommandContext) => context?.currentView !== 'tasks-simple'
   },
   {
     id: 'view.schedules',
@@ -69,7 +69,7 @@ const createViewCommands = (t: TFunction): CommandAction[] => [
       context.onViewChange('schedules');
     },
     isEnabled: () => true,
-    isVisible: (context?: CommandContext) => context?.startupView !== 'schedules'
+    isVisible: (context?: CommandContext) => context?.currentView !== 'schedules'
   },
   {
     id: 'view.toggle.dark',
