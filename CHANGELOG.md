@@ -6,6 +6,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [0.2.2](https://github.com/yutotnh/yutodo/compare/v0.2.1...v0.2.2) (2025-07-01)
+
+
+### Features
+
+* add clipboard copy notifications for keybindings and shortcuts ([b1fed0f](https://github.com/yutotnh/yutodo/commit/b1fed0f478918b7a5c14cc4294a7602ae6f8c769))
+* add workflow optimization emphasis to application description ([a99a094](https://github.com/yutotnh/yutodo/commit/a99a0942271b76fe422f4d93c19a74460db86020))
+* enhance productivity focus in application description ([eeb71d5](https://github.com/yutotnh/yutodo/commit/eeb71d54f4767a8392fc8627467b74ce99d3e61f))
+* implement staged urgency display for overdue tasks ([78e8951](https://github.com/yutotnh/yutodo/commit/78e8951a2d742f1c4772dacbffb291d5c80f030b))
+
+
+### Bug Fixes
+
+* add bootstrap-sha to resolve release-please initialization ([6a76549](https://github.com/yutotnh/yutodo/commit/6a765493e19b9b3e85e90a5314d6437b16c3299c))
+* add Cargo.lock to release-please extra-files ([9f9296c](https://github.com/yutotnh/yutodo/commit/9f9296c4418aaacfdaf1bd82c7309f9dda568a2c))
+* add include-component-in-tag config to resolve release-please tag detection ([ec9f2c8](https://github.com/yutotnh/yutodo/commit/ec9f2c8b5723499a98fec8a2b75ff1e1881f6602))
+* add JSONPath for Cargo.lock version update ([3e757b1](https://github.com/yutotnh/yutodo/commit/3e757b1a10c2951e8043de7d76cb0931c3619848))
+* add packages configuration for release-please v4 ([5c8589c](https://github.com/yutotnh/yutodo/commit/5c8589c0b641ab93b43f8f27f7e8116b06a5858c))
+* align schedule badges consistently in slim mode ([dc2e908](https://github.com/yutotnh/yutodo/commit/dc2e908c690660d2c07f4ee5b7c91219d104f6e7))
+* correct Docker image section formatting in GitHub release notes ([8b95e8d](https://github.com/yutotnh/yutodo/commit/8b95e8da5dc46885e39b0ca4865375d6a160bf7d))
+* correct Release Please configuration for automatic version synchronization ([8099a73](https://github.com/yutotnh/yutodo/commit/8099a73f9977c619af5c1c6f6c49783063764876))
+* remove duplicate release-please config files from .github directory ([890af3f](https://github.com/yutotnh/yutodo/commit/890af3f1701d61588ff5f5a8d5ed168f420f297e))
+* standardize all version numbers to 0.2.1 ([c6f364d](https://github.com/yutotnh/yutodo/commit/c6f364df857399be33d17fc6b39dd7650901dafa))
+* use generic updater for Cargo.lock ([ce93b1c](https://github.com/yutotnh/yutodo/commit/ce93b1c033211fff96eead8d1937682a3cbb44e6))
+
 ## [0.2.1](https://github.com/yutotnh/yutodo/compare/v0.2.0...v0.2.1) (2025-07-01)
 
 
