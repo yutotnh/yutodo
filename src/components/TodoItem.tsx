@@ -9,7 +9,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { useTranslation } from 'react-i18next';
 import { Todo, Priority } from '../types/todo';
 import { getPriorityText, getPriorityClassSuffix } from '../utils/priorityUtils';
-import { calculateUrgencyLevel, getUrgencyClassSuffix, isOverdue as isTaskOverdue } from '../utils/dateUtils';
+import { calculateUrgencyLevel, getUrgencyClassSuffix } from '../utils/dateUtils';
 import logger from '../utils/logger';
 
 interface TodoItemProps {
@@ -253,7 +253,6 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onUpdate, on
   // Calculate urgency level for staged visual indicators
   const urgencyLevel = calculateUrgencyLevel(todo.scheduledFor, todo.completed);
   const urgencyClassSuffix = getUrgencyClassSuffix(urgencyLevel);
-  const isOverdue = isTaskOverdue(todo.scheduledFor, todo.completed);
 
 
   // スリムモード編集時のキー処理

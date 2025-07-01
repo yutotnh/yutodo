@@ -1,8 +1,9 @@
-import React, { useEffect, useRef } from 'react';
-import { X, Keyboard } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { X, Keyboard, Copy } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { getAllShortcutsForDisplay, getModifierKey } from '../utils/keyboardShortcuts';
 import { useWindowDrag } from '../hooks/useWindowDrag';
+import logger from '../utils/logger';
 
 interface ShortcutHelpProps {
   onClose: () => void;
@@ -12,6 +13,7 @@ interface ShortcutHelpProps {
 export const ShortcutHelp: React.FC<ShortcutHelpProps> = ({ onClose, shortcuts: propShortcuts }) => {
   const { t } = useTranslation();
   const shortcutPanelRef = useRef<HTMLDivElement>(null);
+  const [showCopySuccess, setShowCopySuccess] = useState(false);
   
   // Window drag functionality
   const { handleMouseDown: handleHeaderDrag } = useWindowDrag();
@@ -79,6 +81,34 @@ export const ShortcutHelp: React.FC<ShortcutHelpProps> = ({ onClose, shortcuts: 
     // Don't show Enter or confirmEdit in the help
     return s.command !== 'confirmEdit' && s.key !== 'Enter';
   });
+  
+  // Copy shortcuts to clipboard
+  const copyToClipboard = async () => {
+    try {
+      const shortcutText = visibleShortcuts
+        .map(shortcut => `${shortcut.key}: ${shortcut.description}`)
+        .join('\n');
+      
+      // Try Tauri clipboard first, then fallback to navigator clipboard
+      if (typeof window !== 'undefined' && (window as any).__TAURI__) {
+        const { writeText } = await import('@tauri-apps/plugin-clipboard-manager');
+        await writeText(shortcutText);
+      } else if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(shortcutText);
+      } else {
+        throw new Error('Clipboard API not available');
+      }
+      
+      // Show success message
+      setShowCopySuccess(true);
+      setTimeout(() => setShowCopySuccess(false), 2000);
+      
+      logger.info('Shortcuts copied to clipboard');
+    } catch (error) {
+      logger.error('Failed to copy shortcuts to clipboard:', error);
+      // You could add error notification here if needed
+    }
+  };
   return (
     <div className="settings-overlay">
       <div className="settings-panel" ref={shortcutPanelRef} data-testid="shortcut-help">
@@ -87,12 +117,26 @@ export const ShortcutHelp: React.FC<ShortcutHelpProps> = ({ onClose, shortcuts: 
             <Keyboard size={20} />
             {t('shortcuts.title')}
           </h2>
-          <button onClick={onClose} className="settings-close">
-            <X size={20} />
-          </button>
+          <div className="header-actions">
+            <button 
+              onClick={copyToClipboard}
+              className="copy-button"
+              title={t('shortcuts.copyToClipboard')}
+            >
+              <Copy size={16} />
+            </button>
+            <button onClick={onClose} className="settings-close">
+              <X size={20} />
+            </button>
+          </div>
         </div>
 
         <div className="settings-content">
+          {showCopySuccess && (
+            <div className="copy-success-message">
+              {t('shortcuts.copiedToClipboard')}
+            </div>
+          )}
           <div className="shortcut-list">
             {visibleShortcuts.map((shortcut, index) => (
               <div key={index} className="shortcut-item">

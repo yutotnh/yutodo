@@ -44,6 +44,7 @@ export const Settings: React.FC<SettingsProps> = ({
     settings: fileSettings,
     keybindings,
     settingsErrors,
+    copiedToClipboard,
     updateSettings: updateFileSettings,
     openSettingsFile,
     openKeybindingsFile,
@@ -365,6 +366,11 @@ export const Settings: React.FC<SettingsProps> = ({
               
               {fileSettings ? (
                 <>
+                  {copiedToClipboard && (
+                    <div className="copy-success-message">
+                      {t('settings.keybindings.pathCopiedToClipboard')}
+                    </div>
+                  )}
                   <div className="file-settings-info">
                     <p>{t('settings.keybindings.fileBasedDescription')}</p>
                     <div className="file-actions">

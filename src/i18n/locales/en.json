@@ -72,7 +72,9 @@
     "edit-task-e": "Edit task",
     "edit-task-f2": "Edit task",
     "clear-selection": "Remove focus",
-    "show-help": "Show shortcut help"
+    "show-help": "Show shortcut help",
+    "copyToClipboard": "Copy to clipboard",
+    "copiedToClipboard": "Shortcuts copied to clipboard!"
   },
   "connection": {
     "connected": "Connected to server",
@@ -207,7 +209,8 @@
       "openFile": "Open Keybindings File",
       "legacyDescription": "Keyboard shortcuts are built into the application.",
       "pressForHelp": "Press {{key}} to view all shortcuts",
-      "when": "When"
+      "when": "When",
+      "pathCopiedToClipboard": "Keybindings file path copied to clipboard!"
     },
     "openSettingsFile": "Open Settings File"
   },

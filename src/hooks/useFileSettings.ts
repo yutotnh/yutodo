@@ -87,6 +87,7 @@ interface UseFileSettingsReturn {
   error: Error | null;
   settingsErrors: SettingsFileError[];
   lastChangeSource: 'app' | 'file' | null;
+  copiedToClipboard: string | null;
   updateSettings: (updates: Partial<AppSettingsFile>) => Promise<void>;
   addKeybinding: (keybinding: Keybinding) => Promise<void>;
   removeKeybinding: (key: string) => Promise<void>;
@@ -106,6 +107,7 @@ export function useFileSettings(): UseFileSettingsReturn {
   const [error, setError] = useState<Error | null>(null);
   const [settingsErrors, setSettingsErrors] = useState<SettingsFileError[]>([]);
   const [lastChangeSource, setLastChangeSource] = useState<'app' | 'file' | null>(null);
+  const [copiedToClipboard, setCopiedToClipboard] = useState<string | null>(null);
   
   // Initialize settings manager
   useEffect(() => {
@@ -292,7 +294,8 @@ export function useFileSettings(): UseFileSettingsReturn {
         const { writeText } = await import('@tauri-apps/plugin-clipboard-manager');
         await writeText(path);
         logger.info('Keybindings file path copied to clipboard:', path);
-        // You can show a toast notification here if needed
+        setCopiedToClipboard(path);
+        setTimeout(() => setCopiedToClipboard(null), 3000);
       } catch (clipboardErr) {
         logger.error('Failed to copy path to clipboard:', clipboardErr);
         throw err; // Throw original error
@@ -313,6 +316,7 @@ export function useFileSettings(): UseFileSettingsReturn {
     error,
     settingsErrors,
     lastChangeSource,
+    copiedToClipboard,
     updateSettings,
     addKeybinding,
     removeKeybinding,

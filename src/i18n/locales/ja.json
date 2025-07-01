@@ -72,7 +72,9 @@
     "edit-task-e": "タスクを編集",
     "edit-task-f2": "タスクを編集",
     "clear-selection": "フォーカスを外す",
-    "show-help": "ショートカットヘルプを表示"
+    "show-help": "ショートカットヘルプを表示",
+    "copyToClipboard": "クリップボードにコピー",
+    "copiedToClipboard": "ショートカットをクリップボードにコピーしました！"
   },
   "connection": {
     "connected": "サーバーに接続中",
@@ -207,7 +209,8 @@
       "openFile": "キーバインドファイルを開く",
       "legacyDescription": "キーボードショートカットはアプリケーションに組み込まれています。",
       "pressForHelp": "{{key}}を押してすべてのショートカットを表示",
-      "when": "条件"
+      "when": "条件",
+      "pathCopiedToClipboard": "キーバインドファイルのパスをクリップボードにコピーしました！"
     },
     "openSettingsFile": "設定ファイルを開く"
   },

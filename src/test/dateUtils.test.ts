@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { calculateUrgencyLevel, isOverdue, getUrgencyClassSuffix, getUrgencyDescription } from '../utils/dateUtils';
-import type { UrgencyLevel } from '../utils/dateUtils';
 
 describe('dateUtils', () => {
   let mockDate: Date;
