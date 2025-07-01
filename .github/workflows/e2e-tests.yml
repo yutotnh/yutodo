@@ -115,7 +115,7 @@ jobs:
         if: always()
         run: |
           cd e2e
-          npx wdio-html-nice-reporter
+          npm run report
         continue-on-error: true
 
       - name: Upload HTML report

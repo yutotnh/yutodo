@@ -32,7 +32,16 @@ export const config = {
     connectionRetryTimeout: 120000,
     connectionRetryCount: 3,
     framework: 'mocha',
-    reporters: ['spec'],
+    reporters: [
+        'spec',
+        ['html-nice', {
+            outputDir: './reports/',
+            filename: 'report.html',
+            reportTitle: 'YuToDo E2E Test Report',
+            linkScreenshots: true,
+            LOG: true
+        }]
+    ],
     mochaOpts: {
         ui: 'bdd',
         timeout: 60000

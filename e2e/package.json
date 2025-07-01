@@ -13,14 +13,17 @@
     "docker:build": "docker build -t yutodo-e2e:latest .",
     "docker:shell": "docker run -it --rm yutodo-e2e:latest bash",
     "install:quiet": "./scripts/install-quiet.sh",
-    "postinstall": "echo '✅ E2E dependencies installed - Security vulnerabilities: 0'"
+    "postinstall": "echo '✅ E2E dependencies installed - Security vulnerabilities: 0'",
+    "report": "npx wdio-html-nice-reporter"
   },
   "devDependencies": {
     "@wdio/cli": "^9.16.2",
+    "@wdio/globals": "^9.16.2",
     "@wdio/local-runner": "^9.16.2",
     "@wdio/mocha-framework": "^9.16.2",
     "@wdio/spec-reporter": "^8.43.0",
     "tsx": "^4.19.0",
-    "webdriverio": "^9.16.2"
+    "webdriverio": "^9.16.2",
+    "wdio-html-nice-reporter": "^8.1.7"
   }
 }
