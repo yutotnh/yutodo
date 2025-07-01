@@ -39,68 +39,12 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           
-      - name: Calculate next version
-        id: version
-        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_type != 'auto' }}
-        run: |
-          CURRENT_VERSION=$(jq -r '.["."]' .release-please-manifest.json)
-          RELEASE_TYPE="${{ github.event.inputs.release_type }}"
-          
-          # Parse current version
-          IFS='.' read -r MAJOR MINOR PATCH <<< "${CURRENT_VERSION}"
-          
-          # Calculate next version based on release type
-          case "$RELEASE_TYPE" in
-            "major")
-              NEXT_VERSION="$((MAJOR + 1)).0.0"
-              ;;
-            "minor")
-              NEXT_VERSION="${MAJOR}.$((MINOR + 1)).0"
-              ;;
-            "patch")
-              NEXT_VERSION="${MAJOR}.${MINOR}.$((PATCH + 1))"
-              ;;
-            "prerelease")
-              # Check if already a prerelease
-              if [[ "$CURRENT_VERSION" == *"-"* ]]; then
-                # Increment prerelease version
-                BASE_VERSION="${CURRENT_VERSION%%-*}"
-                PRERELEASE="${CURRENT_VERSION#*-}"
-                PRERELEASE_NUM="${PRERELEASE##*.}"
-                PRERELEASE_PREFIX="${PRERELEASE%.*}"
-                NEXT_VERSION="${BASE_VERSION}-${PRERELEASE_PREFIX}.$((PRERELEASE_NUM + 1))"
-              else
-                # First prerelease
-                NEXT_VERSION="${MAJOR}.${MINOR}.$((PATCH + 1))-alpha.0"
-              fi
-              ;;
-          esac
-          
-          echo "Current version: $CURRENT_VERSION"
-          echo "Next version: $NEXT_VERSION"
-          echo "next_version=$NEXT_VERSION" >> $GITHUB_OUTPUT
-          
-      - name: Update manifest for manual release
-        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_type != 'auto' }}
-        run: |
-          # Update manifest with calculated version
-          jq --arg version "${{ steps.version.outputs.next_version }}" \
-             '.["."] = $version' \
-             .release-please-manifest.json > manifest.tmp
-          mv manifest.tmp .release-please-manifest.json
-          
-          # Commit the change
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add .release-please-manifest.json
-          git commit -m "chore: update version to ${{ steps.version.outputs.next_version }} for ${{ github.event.inputs.release_type }} release"
-          git push
-          
       - name: Release Please
         id: release
         uses: googleapis/release-please-action@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          release-type: ${{ github.event.inputs.release_type != 'auto' && github.event.inputs.release_type || 'node' }}
 
   build-and-release:
     if: ${{ needs.release-please.outputs.release_created }}
