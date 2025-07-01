@@ -8,6 +8,9 @@ vi.mock('../config/SettingsManager');
 vi.mock('@tauri-apps/plugin-opener', () => ({
   openPath: vi.fn()
 }));
+vi.mock('@tauri-apps/plugin-clipboard-manager', () => ({
+  writeText: vi.fn()
+}));
 
 describe('useFileSettings', () => {
   const mockSettings = {
@@ -261,6 +264,96 @@ describe('useFileSettings', () => {
       });
       
       expect(openPath).toHaveBeenCalledWith('/path/to/keybindings.toml');
+    });
+
+    it('should fallback to clipboard when settings file opening fails', async () => {
+      const { openPath } = await import('@tauri-apps/plugin-opener');
+      const { writeText } = await import('@tauri-apps/plugin-clipboard-manager');
+      
+      // Mock openPath to fail
+      vi.mocked(openPath).mockRejectedValue(new Error('Not allowed to open path'));
+      vi.mocked(writeText).mockResolvedValue();
+      
+      const { result } = renderHook(() => useFileSettings());
+      
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+      
+      await act(async () => {
+        await result.current.openSettingsFile();
+      });
+      
+      expect(openPath).toHaveBeenCalledWith('/path/to/settings.toml');
+      expect(writeText).toHaveBeenCalledWith('/path/to/settings.toml');
+    });
+
+    it('should fallback to clipboard when keybindings file opening fails', async () => {
+      const { openPath } = await import('@tauri-apps/plugin-opener');
+      const { writeText } = await import('@tauri-apps/plugin-clipboard-manager');
+      
+      // Mock openPath to fail
+      vi.mocked(openPath).mockRejectedValue(new Error('Not allowed to open path'));
+      vi.mocked(writeText).mockResolvedValue();
+      
+      const { result } = renderHook(() => useFileSettings());
+      
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+      
+      await act(async () => {
+        await result.current.openKeybindingsFile();
+      });
+      
+      expect(openPath).toHaveBeenCalledWith('/path/to/keybindings.toml');
+      expect(writeText).toHaveBeenCalledWith('/path/to/keybindings.toml');
+    });
+
+    it('should throw original error when both file opening and clipboard fail', async () => {
+      const { openPath } = await import('@tauri-apps/plugin-opener');
+      const { writeText } = await import('@tauri-apps/plugin-clipboard-manager');
+      
+      const originalError = new Error('Not allowed to open path');
+      const clipboardError = new Error('Clipboard access denied');
+      
+      // Mock both operations to fail
+      vi.mocked(openPath).mockRejectedValue(originalError);
+      vi.mocked(writeText).mockRejectedValue(clipboardError);
+      
+      const { result } = renderHook(() => useFileSettings());
+      
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+      
+      await expect(result.current.openSettingsFile()).rejects.toThrow('Not allowed to open path');
+      
+      expect(openPath).toHaveBeenCalledWith('/path/to/settings.toml');
+      expect(writeText).toHaveBeenCalledWith('/path/to/settings.toml');
+    });
+
+    it('should throw original error when both keybindings file opening and clipboard fail', async () => {
+      const { openPath } = await import('@tauri-apps/plugin-opener');
+      const { writeText } = await import('@tauri-apps/plugin-clipboard-manager');
+      
+      const originalError = new Error('Not allowed to open path');
+      const clipboardError = new Error('Clipboard access denied');
+      
+      // Mock both operations to fail
+      vi.mocked(openPath).mockRejectedValue(originalError);
+      vi.mocked(writeText).mockRejectedValue(clipboardError);
+      
+      const { result } = renderHook(() => useFileSettings());
+      
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+      
+      await expect(result.current.openKeybindingsFile()).rejects.toThrow('Not allowed to open path');
+      
+      expect(openPath).toHaveBeenCalledWith('/path/to/keybindings.toml');
+      expect(writeText).toHaveBeenCalledWith('/path/to/keybindings.toml');
     });
   });
 
