@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [0.2.0](https://github.com/yutotnh/yutodo/compare/v0.1.1...v0.2.0) (2025-07-01)
+
+
+### Features
+
+* add GUI setting for startup view preference ([1febbef](https://github.com/yutotnh/yutodo/commit/1febbef7235e24f07a24d6ae5780ef5218560fe7))
+* implement ultra-compact 1-row view for slim mode ([3a78d9e](https://github.com/yutotnh/yutodo/commit/3a78d9ee3e0bc9cd83c85a1a61ad40669144f7d2))
+
+
+### Bug Fixes
+
+* add clipboard fallback for file opening when opener permissions fail ([c63d8be](https://github.com/yutotnh/yutodo/commit/c63d8be808183a6e9ed43b3695daacf29695e75c))
+* correct Docker image tag references in documentation ([7eb8fa0](https://github.com/yutotnh/yutodo/commit/7eb8fa04dfb9d88e5bc47d8a2cc96f1a470e93c1))
+* prevent startupView changes when using view shortcuts ([588cd5a](https://github.com/yutotnh/yutodo/commit/588cd5afda14bd532c4718f4ed6a0ec776166608))
+
 ## [0.1.1](https://github.com/yutotnh/yutodo/compare/v0.1.0...v0.1.1) (2025-07-01)
 
 
