@@ -146,6 +146,15 @@
       "title": "動作",
       "confirmDelete": "タスク削除時に確認を表示"
     },
+    "startup": {
+      "title": "起動設定",
+      "defaultView": "起動時のデフォルトビュー",
+      "viewOptions": {
+        "tasks-detailed": "タスク（詳細）",
+        "tasks-simple": "タスク（シンプル）",
+        "schedules": "スケジュール"
+      }
+    },
     "theme": {
       "title": "テーマ",
       "auto": "システム",

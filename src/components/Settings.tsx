@@ -213,6 +213,27 @@ export const Settings: React.FC<SettingsProps> = ({
               </div>
             </div>
 
+            {/* Startup Settings */}
+            <div className="settings-group">
+              <h3>
+                <List size={16} />
+                {t('settings.startup.title')}
+              </h3>
+              <div className="setting-item">
+                <label htmlFor="startup-view">{t('settings.startup.defaultView')}</label>
+                <select
+                  id="startup-view"
+                  value={localSettings.startupView}
+                  onChange={(e) => handleSettingChange('startupView', e.target.value)}
+                  className="setting-select"
+                >
+                  <option value="tasks-detailed">{t('settings.startup.viewOptions.tasks-detailed')}</option>
+                  <option value="tasks-simple">{t('settings.startup.viewOptions.tasks-simple')}</option>
+                  <option value="schedules">{t('settings.startup.viewOptions.schedules')}</option>
+                </select>
+              </div>
+            </div>
+
             {/* Delete Confirmation */}
             <div className="settings-group">
               <h3>

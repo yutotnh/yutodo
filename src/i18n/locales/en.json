@@ -146,6 +146,15 @@
       "title": "Behavior",
       "confirmDelete": "Confirm before deleting tasks"
     },
+    "startup": {
+      "title": "Startup",
+      "defaultView": "Default view on startup",
+      "viewOptions": {
+        "tasks-detailed": "Tasks (Detailed)",
+        "tasks-simple": "Tasks (Simple)",
+        "schedules": "Schedules"
+      }
+    },
     "theme": {
       "title": "Theme",
       "auto": "System",
