@@ -1,34 +1,39 @@
 {
-  "release-type": "node",
-  "bump-minor-pre-major": true,
-  "bump-patch-for-minor-pre-major": true,
-  "include-v-in-tag": true,
-  "changelog-sections": [
-    { "type": "feat", "section": "Features" },
-    { "type": "fix", "section": "Bug Fixes" },
-    { "type": "perf", "section": "Performance" },
-    { "type": "docs", "section": "Documentation" },
-    { "type": "deps", "section": "Dependencies" },
-    { "type": "refactor", "section": "Refactoring" },
-    { "type": "test", "section": "Testing" },
-    { "type": "build", "section": "Build System" },
-    { "type": "ci", "section": "CI/CD" }
-  ],
-  "extra-files": [
-    {
-      "type": "toml",
-      "path": "src-tauri/Cargo.toml",
-      "jsonpath": "$.package.version"
-    },
-    {
-      "type": "json",
-      "path": "src-tauri/tauri.conf.json",
-      "jsonpath": "$.version"
-    },
-    {
-      "type": "json",
-      "path": "server/package.json",
-      "jsonpath": "$.version"
+  "packages": {
+    ".": {
+      "release-type": "node",
+      "bump-minor-pre-major": true,
+      "bump-patch-for-minor-pre-major": true,
+      "include-v-in-tag": true,
+      "component": "yutodo",
+      "changelog-sections": [
+        { "type": "feat", "section": "Features" },
+        { "type": "fix", "section": "Bug Fixes" },
+        { "type": "perf", "section": "Performance" },
+        { "type": "docs", "section": "Documentation" },
+        { "type": "deps", "section": "Dependencies" },
+        { "type": "refactor", "section": "Refactoring" },
+        { "type": "test", "section": "Testing" },
+        { "type": "build", "section": "Build System" },
+        { "type": "ci", "section": "CI/CD" }
+      ],
+      "extra-files": [
+        {
+          "type": "toml",
+          "path": "src-tauri/Cargo.toml",
+          "jsonpath": "$.package.version"
+        },
+        {
+          "type": "json",
+          "path": "src-tauri/tauri.conf.json",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "json",
+          "path": "server/package.json",
+          "jsonpath": "$.version"
+        }
+      ]
     }
-  ]
+  }
 }
