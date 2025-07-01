@@ -247,34 +247,89 @@ body {
 }
 
 .app--slim .todo-item {
-  padding: 0.5rem 0.75rem;
-  margin: 0.25rem 0.1rem; /* 左右余白をさらに狭く */
+  padding: 4px 8px; /* 極限まで削減 */
+  margin: 1px 2px; /* 最小限のマージン */
   background: white;
   border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease; /* transformを除外 */
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  align-items: center; /* 垂直中央配置に変更 */
-  will-change: transform; /* GPUアクセラレーション有効化 */
-  backface-visibility: hidden; /* 3D変換の最適化 */
+  border-radius: 6px; /* より小さく */
+  transition: border-color 0.15s ease, background-color 0.15s ease; /* 高速化 */
+  align-items: center;
+  min-height: 26px; /* 固定高さ */
+  max-height: 26px;
+  overflow: hidden; /* はみ出し防止 */
 }
 
 .app--slim .todo-item:hover:not([data-dragging="true"]):not(.todo-item--selected) {
   background: #f8fafc;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   border-color: #cbd5e1;
 }
 
 .app--slim .todo-item--selected {
   background: #dbeafe;
   border-color: #3b82f6;
-  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.25);
-  transform: translateY(-2px);
+  border-left: 3px solid #3b82f6; /* 左境界線で選択状態を表現 */
 }
 
-.app--slim .todo-item--selected::before {
-  border-radius: 12px 0 0 12px;
+/* 超コンパクト1行メタ情報 */
+.todo-item__ultra-compact-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0; /* 圧縮されないように */
+}
+
+/* 優先度ドット */
+.priority-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.priority-dot--high {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.priority-dot--medium {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.priority-dot--low {
+  background: transparent;
+  color: #94a3b8; /* 普通の灰色 */
+}
+
+/* コンパクト日時表示 */
+.schedule-compact {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 10px;
+  color: #64748b;
+  padding: 1px 4px;
+  background: #f1f5f9;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.schedule-compact--overdue {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+/* 説明インジケーター */
+.description-indicator {
+  font-size: 12px;
+  color: #94a3b8;
+  width: 12px;
+  text-align: center;
+  cursor: help;
+  flex-shrink: 0;
 }
 
 .app--slim .todo-item--completed {
@@ -290,16 +345,9 @@ body {
   display: none; /* 詳細モードの優先度とスケジュールを隠す */
 }
 
-/* スリムモード専用のメタ情報表示 */
+/* 古いスリムモードのメタ情報（非表示） */
 .todo-item__slim-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-top: 0.25rem;
-  font-size: 0.75rem;
-  line-height: 1.2;
-  color: #64748b;
-  align-items: center;
+  display: none;
 }
 
 .priority-badge--slim {
@@ -356,23 +404,23 @@ body {
 }
 
 .app--slim .action-btn {
-  width: 24px;
-  height: 24px;
+  width: 18px;
+  height: 18px;
   background: #f1f5f9;
   border: 1px solid #e2e8f0;
-  border-radius: 8px;
+  border-radius: 4px;
   color: #64748b;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 0;
+  flex-shrink: 0;
 }
 
 .app--slim .action-btn:hover {
   background: #e2e8f0;
   color: #334155;
-  transform: scale(1.1);
 }
 
 .app--slim .action-btn--delete:hover {
@@ -382,20 +430,21 @@ body {
 }
 
 .app--slim .action-btn svg {
-  width: 14px;
-  height: 14px;
+  width: 12px;
+  height: 12px;
 }
 
 .app--slim .check-btn {
-  width: 20px;
-  height: 20px;
-  border: 2px solid #d1d5db;
+  width: 16px;
+  height: 16px;
+  border: 1px solid #d1d5db;
   background: white;
-  border-radius: 6px;
-  transition: all 0.3s ease;
+  border-radius: 4px;
+  transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
   padding: 0;
 }
 
@@ -410,8 +459,8 @@ body {
 }
 
 .app--slim .check-btn svg {
-  width: 12px;
-  height: 12px;
+  width: 10px;
+  height: 10px;
   color: white;
 }
 
@@ -419,29 +468,42 @@ body {
   margin-top: 0; /* スリムモードではマージンをリセット */
 }
 
+/* スリムモードのコンテンツエリアを横並びに */
+.app--slim .todo-item__content {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0; /* フレックス子要素の収縮を許可 */
+}
+
 .app--slim .todo-item__title {
-  font-size: 16px;
-  line-height: 1.5;
+  font-size: 14px;
+  line-height: 1.2;
   font-weight: 500;
   color: #1e293b;
   margin: 0;
-  display: flex;
-  align-items: center;
-  min-height: 24px; /* チェックボックスと同じ高さに合わせる */
+  flex: 1; /* 残り幅を占有 */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0; /* テキストの収縮を許可 */
 }
 
 .app--slim .todo-item__title-edit {
-  font-size: 16px;
-  line-height: 1.5;
+  font-size: 14px;
+  line-height: 1.2;
   font-weight: 500;
   color: #1e293b;
   background: transparent;
   border: none;
   outline: none;
-  width: 100%;
-  min-height: 24px;
+  flex: 1;
+  min-height: 18px;
   padding: 0;
   margin: 0;
+  min-width: 0;
 }
 
 .app--slim .todo-item--completed .todo-item__title {

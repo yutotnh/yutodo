@@ -477,86 +477,49 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onUpdate, on
           </div>
         )}
         
-        {/* スリムモードでも詳細情報を小さく表示 */}
+        {/* スリムモードでは横並び1行レイアウト */}
         {slimMode ? (
-          <div className="todo-item__slim-meta">
-            {/* 優先度表示 */}
-            <span className={getPriorityClass(todo.priority)} style={{ fontSize: '10px' }} data-testid="todo-priority">
-              <AlertCircle size={10} style={{ marginRight: '2px' }} />
-              {getPriorityText(todo.priority)}
-            </span>
+          <div className="todo-item__ultra-compact-meta">
+            {/* 優先度アイコン */}
+            <div 
+              className={`priority-dot priority-dot--${getPriorityClassSuffix(todo.priority)}`} 
+              data-testid="todo-priority" 
+              title={getPriorityText(todo.priority)}
+              style={{
+                backgroundColor: todo.priority === 'high' ? '#dc2626' : 
+                                todo.priority === 'medium' ? '#f59e0b' : 
+                                'transparent'
+              }}
+            >
+              <AlertCircle 
+                size={8} 
+                style={{ 
+                  color: todo.priority === 'low' ? '#94a3b8' : '#ffffff'
+                }} 
+              />
+            </div>
             
             {/* 日時表示 */}
             {todo.scheduledFor && (
-              <span className={`schedule-badge schedule-badge--slim ${isOverdue ? 'schedule-badge--overdue' : ''}`}>
-                <Clock size={10} />
-                {new Date(todo.scheduledFor).toLocaleString(undefined, { 
-                  month: 'short', 
-                  day: 'numeric', 
-                  hour: '2-digit', 
-                  minute: '2-digit',
-                  hour12: false 
-                })}
-              </span>
+              <div className={`schedule-compact ${isOverdue ? 'schedule-compact--overdue' : ''}`}>
+                <Clock size={8} />
+                <span>
+                  {new Date(todo.scheduledFor).toLocaleString(undefined, { 
+                    month: 'numeric', 
+                    day: 'numeric', 
+                    hour: '2-digit', 
+                    minute: '2-digit',
+                    hour12: false 
+                  })}
+                </span>
+              </div>
             )}
             
-            {/* 詳細を1行で表示 */}
+            {/* 説明があることを示すドット */}
             {todo.description && (
-              <span className="todo-item__description--slim">
-                <ReactMarkdown 
-                  remarkPlugins={[remarkGfm]}
-                  components={{
-                    // すべての要素をspanとして表示してインライン化
-                    p: ({ children }) => <span>{children}</span>,
-                    h1: ({ children }) => <span className="markdown-h1">{children}</span>,
-                    h2: ({ children }) => <span className="markdown-h2">{children}</span>,
-                    h3: ({ children }) => <span className="markdown-h3">{children}</span>,
-                    h4: ({ children }) => <span className="markdown-h4">{children}</span>,
-                    h5: ({ children }) => <span className="markdown-h5">{children}</span>,
-                    h6: ({ children }) => <span className="markdown-h6">{children}</span>,
-                    br: () => <span> </span>,
-                    div: ({ children }) => <span>{children}</span>,
-                    blockquote: ({ children }) => <span>"{children}"</span>,
-                    ul: ({ children }) => <span>{children}</span>,
-                    ol: ({ children }) => <span>{children}</span>,
-                    li: ({ children }) => <span>• {children} </span>,
-                    // リンクをクリックでブラウザで開く
-                    a: ({ href, children }) => (
-                      <a
-                        href={href}
-                        onClick={(e) => handleLinkClick(e, href || '')}
-                        onContextMenu={async (e) => {
-                          // 右クリックでURLをクリップボードにコピー
-                          e.preventDefault();
-                          e.stopPropagation();
-                          if (href) {
-                            try {
-                              // Tauri環境ではTauriクリップボードを使用
-                              if (typeof window !== 'undefined' && (window as any).__TAURI_INTERNALS__) {
-                                const { writeText } = await import('@tauri-apps/plugin-clipboard-manager');
-                                await writeText(href);
-                                logger.debug("URL copied to clipboard via Tauri (right-click):", href);
-                                alert(`📋 URL copied to clipboard:\n${href}`);
-                              } else {
-                                await navigator.clipboard.writeText(href);
-                                logger.debug("URL copied to clipboard via browser (right-click):", href);
-                              }
-                            } catch (error) {
-                              logger.error("Failed to copy URL to clipboard:", error);
-                              alert(`Failed to copy URL. Please copy manually:\n${href}`);
-                            }
-                          }
-                        }}
-                        title={`Click to open: ${href} | Right-click to copy`}
-                      >
-                        {children}
-                      </a>
-                    ),
-                  }}
-                >
-                  {todo.description}
-                </ReactMarkdown>
-              </span>
+              <div className="description-indicator" title={todo.description}>
+                ⋯
+              </div>
             )}
           </div>
         ) : (
