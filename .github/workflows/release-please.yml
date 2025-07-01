@@ -146,13 +146,19 @@ jobs:
       - name: Update release with Docker info
         run: |
           # Add Docker image information to the release
-          DOCKER_INFO="## Docker Image\n\nThe YuToDo Server is available as a Docker image from GitHub Container Registry:\n\n\`\`\`bash\ndocker pull ghcr.io/${{ github.repository }}/server:${{ needs.release-please.outputs.tag_name }}\n\`\`\`\n\nSee the [Docker documentation](https://github.com/${{ github.repository }}#docker-containerization) for usage instructions."
-          
           gh release edit ${{ needs.release-please.outputs.tag_name }} \
-            --notes-file - << EOF
+            --notes-file - << 'EOF'
           $(gh release view ${{ needs.release-please.outputs.tag_name }} --json body --jq .body)
           
-          ${DOCKER_INFO}
+          ## Docker Image
+          
+          The YuToDo Server is available as a Docker image from GitHub Container Registry:
+          
+          ```bash
+          docker pull ghcr.io/${{ github.repository }}/server:${{ needs.release-please.outputs.tag_name }}
+          ```
+          
+          See the [Docker documentation](https://github.com/${{ github.repository }}#docker-containerization) for usage instructions.
           EOF
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
