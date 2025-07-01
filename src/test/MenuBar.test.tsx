@@ -1,7 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { MenuBar } from '../components/MenuBar';
-import { AppSettings } from '../types/todo';
 
 // i18nをモック
 vi.mock('react-i18next', () => ({
@@ -14,18 +13,8 @@ vi.mock('react-i18next', () => ({
 }));
 
 describe('MenuBar', () => {
-  const mockSettings: AppSettings = {
-    startupAlwaysOnTop: false,
-    darkMode: 'auto',
-    confirmDelete: true,
-    customCss: '',
-    serverUrl: 'http://localhost:3001',
-    language: 'auto',
-    startupView: 'tasks-detailed',
-  };
-
   const defaultProps = {
-    settings: mockSettings,
+    currentView: 'tasks-detailed' as const,
     sessionAlwaysOnTop: false,
     onNewTask: vi.fn(),
     onSelectAll: vi.fn(),
@@ -72,12 +61,13 @@ describe('MenuBar', () => {
   });
 
   it('calls onViewChange when switching to tasks detailed', () => {
-    render(<MenuBar {...defaultProps} />);
+    // Test switching from a different view to tasks-detailed
+    render(<MenuBar {...defaultProps} currentView="tasks-simple" />);
     
     const viewMenu = screen.getByRole('button', { name: /menu\.\s*v\s*iew/ });
     fireEvent.click(viewMenu);
     
-    const tasksItem = screen.getByText('menu.showingTasksDetailed');
+    const tasksItem = screen.getByText('menu.showTasksDetailed');
     fireEvent.click(tasksItem);
     
     expect(defaultProps.onViewChange).toHaveBeenCalledWith('tasks-detailed');
@@ -182,8 +172,7 @@ describe('MenuBar', () => {
   });
 
   it('highlights current view in view menu for tasks-detailed', () => {
-    const tasksViewSettings = { ...mockSettings, startupView: 'tasks-detailed' as const };
-    render(<MenuBar {...defaultProps} settings={tasksViewSettings} />);
+    render(<MenuBar {...defaultProps} currentView="tasks-detailed" />);
     
     const viewMenu = screen.getByRole('button', { name: /menu\.\s*v\s*iew/ });
     fireEvent.click(viewMenu);
@@ -193,8 +182,7 @@ describe('MenuBar', () => {
   });
 
   it('highlights current view in view menu for tasks-simple', () => {
-    const tasksSimpleViewSettings = { ...mockSettings, startupView: 'tasks-simple' as const };
-    render(<MenuBar {...defaultProps} settings={tasksSimpleViewSettings} />);
+    render(<MenuBar {...defaultProps} currentView="tasks-simple" />);
     
     const viewMenu = screen.getByRole('button', { name: /menu\.\s*v\s*iew/ });
     fireEvent.click(viewMenu);
@@ -204,8 +192,7 @@ describe('MenuBar', () => {
   });
 
   it('highlights current view in view menu for schedules', () => {
-    const schedulesViewSettings = { ...mockSettings, startupView: 'schedules' as const };
-    render(<MenuBar {...defaultProps} settings={schedulesViewSettings} />);
+    render(<MenuBar {...defaultProps} currentView="schedules" />);
     
     const viewMenu = screen.getByRole('button', { name: /menu\.\s*v\s*iew/ });
     fireEvent.click(viewMenu);

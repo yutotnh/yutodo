@@ -247,17 +247,20 @@ describe('TodoItem', () => {
       );
 
       // スリムモード専用のメタ情報が表示されることを確認
-      const slimMeta = document.querySelector('.todo-item__slim-meta');
+      const slimMeta = document.querySelector('.todo-item__ultra-compact-meta');
       expect(slimMeta).toBeInTheDocument();
       
-      // 優先度が小さく表示されることを確認
-      expect(screen.getByText('High')).toBeInTheDocument();
+      // 優先度ドットが表示されることを確認
+      expect(screen.getByTestId('todo-priority')).toBeInTheDocument();
       
-      // 日付が簡潔に表示されることを確認
-      expect(screen.getByTestId('clock-icon')).toBeInTheDocument();
+      // 日付が簡潔に表示されることを確認（schedule-compact要素を確認）
+      const scheduleCompact = document.querySelector('.schedule-compact');
+      expect(scheduleCompact).toBeInTheDocument();
       
-      // 詳細が小さく表示されることを確認
-      expect(screen.getByText('This is a test description')).toBeInTheDocument();
+      // 説明インジケーター（⋯）が表示されることを確認
+      const descriptionIndicator = document.querySelector('.description-indicator');
+      expect(descriptionIndicator).toBeInTheDocument();
+      expect(descriptionIndicator).toHaveTextContent('⋯');
     });
 
     it('should not show slim mode details when not in slim mode', () => {
@@ -295,9 +298,10 @@ describe('TodoItem', () => {
         </TodoItemWrapper>
       );
 
-      const slimDescription = document.querySelector('.todo-item__description--slim');
+      const slimDescription = document.querySelector('.description-indicator');
       expect(slimDescription).toBeInTheDocument();
-      expect(slimDescription).toHaveTextContent('A very long description that should be truncated in slim mode');
+      expect(slimDescription).toHaveTextContent('⋯');
+      expect(slimDescription).toHaveAttribute('title', 'A very long description that should be truncated in slim mode');
     });
   });
 
