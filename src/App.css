@@ -317,9 +317,36 @@ body {
   flex-shrink: 0;
 }
 
+/* Legacy schedule overdue styling */
 .schedule-compact--overdue {
   background: #fef2f2;
   color: #dc2626;
+}
+
+/* Staged urgency levels for schedule compact display */
+.schedule-compact--approaching {
+  background: #fef3c7; /* amber-100 */
+  color: #92400e; /* amber-800 */
+}
+
+.schedule-compact--due-today {
+  background: #fef08a; /* yellow-200 */
+  color: #854d0e; /* yellow-800 */
+}
+
+.schedule-compact--overdue-light {
+  background: #fed7aa; /* orange-200 */
+  color: #9a3412; /* orange-800 */
+}
+
+.schedule-compact--overdue-moderate {
+  background: #fecaca; /* red-200 */
+  color: #991b1b; /* red-800 */
+}
+
+.schedule-compact--overdue-severe {
+  background: #dc2626; /* red-600 */
+  color: #ffffff; /* white text for better contrast */
 }
 
 /* 説明インジケーター */
@@ -371,9 +398,37 @@ body {
   gap: 0.25rem;
 }
 
+/* Legacy slim schedule badge overdue styling */
 .schedule-badge--slim.schedule-badge--overdue {
   background: #fef2f2;
   color: #dc2626;
+}
+
+/* Staged urgency levels for slim schedule badges */
+.schedule-badge--slim.schedule-badge--approaching {
+  background: #fef3c7; /* amber-100 */
+  color: #92400e; /* amber-800 */
+}
+
+.schedule-badge--slim.schedule-badge--due-today {
+  background: #fef08a; /* yellow-200 */
+  color: #854d0e; /* yellow-800 */
+}
+
+.schedule-badge--slim.schedule-badge--overdue-light {
+  background: #fed7aa; /* orange-200 */
+  color: #9a3412; /* orange-800 */
+}
+
+.schedule-badge--slim.schedule-badge--overdue-moderate {
+  background: #fecaca; /* red-200 */
+  color: #991b1b; /* red-800 */
+}
+
+.schedule-badge--slim.schedule-badge--overdue-severe {
+  background: #dc2626; /* red-600 */
+  color: #ffffff; /* white text for better contrast */
+  font-weight: 600;
 }
 
 .todo-item__description--slim {
@@ -1021,8 +1076,31 @@ body {
   background: #f8fafc;
 }
 
+/* Legacy overdue styling for backward compatibility */
 .todo-item--overdue {
   border-left: 4px solid #ef4444;
+}
+
+/* Staged urgency levels for todo items */
+.todo-item--approaching {
+  border-left: 4px solid #f59e0b; /* amber-500 */
+}
+
+.todo-item--due-today {
+  border-left: 4px solid #eab308; /* yellow-500 */
+}
+
+.todo-item--overdue-light {
+  border-left: 4px solid #f97316; /* orange-500 */
+}
+
+.todo-item--overdue-moderate {
+  border-left: 4px solid #ef4444; /* red-500 */
+}
+
+.todo-item--overdue-severe {
+  border-left: 4px solid #dc2626; /* red-600 */
+  background: #fef2f2; /* red-50 */
 }
 
 .todo-item--editing {
@@ -1229,8 +1307,31 @@ body {
   font-weight: 500;
 }
 
+/* Legacy schedule badge overdue styling */
 .schedule-badge--overdue {
   color: #ef4444;
+}
+
+/* Staged urgency levels for schedule badges */
+.schedule-badge--approaching {
+  color: #f59e0b; /* amber-500 */
+}
+
+.schedule-badge--due-today {
+  color: #eab308; /* yellow-500 */
+}
+
+.schedule-badge--overdue-light {
+  color: #f97316; /* orange-500 */
+}
+
+.schedule-badge--overdue-moderate {
+  color: #ef4444; /* red-500 */
+}
+
+.schedule-badge--overdue-severe {
+  color: #dc2626; /* red-600 */
+  font-weight: 600;
 }
 
 .date-badge {
@@ -2833,9 +2934,37 @@ body {
   color: #94a3b8;
 }
 
+/* Legacy dark mode slim schedule badge overdue styling */
 .app--dark .schedule-badge--slim.schedule-badge--overdue {
   background: #7f1d1d;
   color: #fca5a5;
+}
+
+/* Dark mode staged urgency levels for slim schedule badges */
+.app--dark .schedule-badge--slim.schedule-badge--approaching {
+  background: #92400e; /* amber-800 */
+  color: #fef3c7; /* amber-100 */
+}
+
+.app--dark .schedule-badge--slim.schedule-badge--due-today {
+  background: #854d0e; /* yellow-800 */
+  color: #fef08a; /* yellow-200 */
+}
+
+.app--dark .schedule-badge--slim.schedule-badge--overdue-light {
+  background: #9a3412; /* orange-800 */
+  color: #fed7aa; /* orange-200 */
+}
+
+.app--dark .schedule-badge--slim.schedule-badge--overdue-moderate {
+  background: #991b1b; /* red-800 */
+  color: #fecaca; /* red-200 */
+}
+
+.app--dark .schedule-badge--slim.schedule-badge--overdue-severe {
+  background: #7f1d1d; /* red-900 */
+  color: #ffffff; /* white text for maximum contrast */
+  font-weight: 600;
 }
 
 .app--dark .todo-item__description--slim {

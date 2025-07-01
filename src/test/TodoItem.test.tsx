@@ -333,7 +333,7 @@ describe('TodoItem', () => {
     it('should mark task as overdue when scheduled date is in the past', () => {
       const overdueTodo = {
         ...mockTodo,
-        scheduledFor: '2020-01-01T00:00:00.000Z',
+        scheduledFor: '2020-01-01T00:00:00.000Z', // Very old date - should be overdue-severe
         completed: false
       };
       
@@ -343,7 +343,8 @@ describe('TodoItem', () => {
         </TodoItemWrapper>
       );
 
-      expect(container.querySelector('.todo-item--overdue')).toBeInTheDocument();
+      // Should have overdue-severe class for very old dates
+      expect(container.querySelector('.todo-item--overdue-severe')).toBeInTheDocument();
     });
 
     it('should not mark completed task as overdue', () => {
