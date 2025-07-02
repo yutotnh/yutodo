@@ -113,8 +113,10 @@ describe('ShortcutHelp', () => {
   it('calls onClose when close button is clicked', () => {
     render(<ShortcutHelp onClose={mockOnClose} />);
     
-    const closeButton = screen.getByRole('button');
-    fireEvent.click(closeButton);
+    // Get the close button specifically by its class
+    const closeButton = document.querySelector('.settings-close');
+    expect(closeButton).toBeInTheDocument();
+    fireEvent.click(closeButton!);
     
     expect(mockOnClose).toHaveBeenCalledTimes(1);
   });
