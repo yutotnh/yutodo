@@ -565,7 +565,6 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onUpdate, on
             {/* 日時表示 */}
             {todo.scheduledFor && (
               <div className={`schedule-compact ${urgencyClassSuffix ? `schedule-compact${urgencyClassSuffix}` : ''}`}>
-                <Clock size={8} />
                 <span>
                   {new Date(todo.scheduledFor).toLocaleString(undefined, { 
                     month: 'numeric', 
