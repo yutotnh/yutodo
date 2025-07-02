@@ -295,10 +295,10 @@ describe('TodoItem', () => {
       const scheduleCompact = document.querySelector('.schedule-compact');
       expect(scheduleCompact).toBeInTheDocument();
       
-      // 説明インジケーター（⋯）が表示されることを確認
-      const descriptionIndicator = document.querySelector('.description-indicator');
+      // 詳細インジケーター（...）がタスク名の後に表示されることを確認
+      const descriptionIndicator = document.querySelector('.description-indicator-inline');
       expect(descriptionIndicator).toBeInTheDocument();
-      expect(descriptionIndicator).toHaveTextContent('⋯');
+      expect(descriptionIndicator).toHaveTextContent('...');
     });
 
     it('should not show slim mode details when not in slim mode', () => {
@@ -336,9 +336,9 @@ describe('TodoItem', () => {
         </TodoItemWrapper>
       );
 
-      const slimDescription = document.querySelector('.description-indicator');
+      const slimDescription = document.querySelector('.description-indicator-inline');
       expect(slimDescription).toBeInTheDocument();
-      expect(slimDescription).toHaveTextContent('⋯');
+      expect(slimDescription).toHaveTextContent('...');
       expect(slimDescription).toHaveAttribute('title', 'A very long description that should be truncated in slim mode');
     });
   });
@@ -1261,6 +1261,120 @@ describe('TodoItem', () => {
         expect(todoItem).toHaveClass('todo-item--priority-high');
         expect(todoItem).not.toHaveClass('todo-item--priority-low');
       });
+    });
+  });
+
+  describe('inline description indicator', () => {
+    it('should display ... after task title when description exists', () => {
+      const todoWithDescription = { 
+        ...mockTodo, 
+        title: 'Task with details',
+        description: 'This task has a description' 
+      };
+      
+      render(
+        <TodoItemWrapper>
+          <TodoItem todo={todoWithDescription} {...mockHandlers} />
+        </TodoItemWrapper>
+      );
+
+      // 詳細インジケーター（...）がタスク名の後に表示される
+      const descriptionIndicator = document.querySelector('.description-indicator-inline');
+      expect(descriptionIndicator).toBeInTheDocument();
+      expect(descriptionIndicator).toHaveTextContent('...');
+      expect(descriptionIndicator).toHaveAttribute('title', 'This task has a description');
+    });
+
+    it('should not display ... when description does not exist', () => {
+      const todoWithoutDescription = { 
+        ...mockTodo, 
+        title: 'Task without details',
+        description: '' 
+      };
+      
+      render(
+        <TodoItemWrapper>
+          <TodoItem todo={todoWithoutDescription} {...mockHandlers} />
+        </TodoItemWrapper>
+      );
+
+      // 詳細インジケーターは表示されない
+      const descriptionIndicator = document.querySelector('.description-indicator-inline');
+      expect(descriptionIndicator).not.toBeInTheDocument();
+    });
+
+    it('should not display ... during inline editing', async () => {
+      const user = userEvent.setup();
+      const todoWithDescription = { 
+        ...mockTodo, 
+        title: 'Task with details',
+        description: 'This task has a description' 
+      };
+      
+      render(
+        <TodoItemWrapper>
+          <TodoItem todo={todoWithDescription} {...mockHandlers} slimMode={true} />
+        </TodoItemWrapper>
+      );
+
+      // 編集前は詳細インジケーターが表示される
+      expect(document.querySelector('.description-indicator-inline')).toBeInTheDocument();
+
+      // ダブルクリックで編集開始
+      const titleElement = screen.getByTestId('todo-title');
+      await user.dblClick(titleElement);
+
+      // 編集中は詳細インジケーターが表示されない
+      expect(document.querySelector('.description-indicator-inline')).not.toBeInTheDocument();
+      
+      // 編集フィールドが表示される
+      expect(screen.getByTestId('todo-edit-input')).toBeInTheDocument();
+    });
+
+    it('should display ... in both slim and normal modes', () => {
+      const todoWithDescription = { 
+        ...mockTodo, 
+        title: 'Task with details',
+        description: 'This task has a description' 
+      };
+
+      // スリムモードでの確認
+      const { unmount: unmountSlim } = render(
+        <TodoItemWrapper>
+          <TodoItem todo={todoWithDescription} {...mockHandlers} slimMode={true} />
+        </TodoItemWrapper>
+      );
+
+      expect(document.querySelector('.description-indicator-inline')).toBeInTheDocument();
+      unmountSlim();
+
+      // 通常モードでの確認
+      render(
+        <TodoItemWrapper>
+          <TodoItem todo={todoWithDescription} {...mockHandlers} slimMode={false} />
+        </TodoItemWrapper>
+      );
+
+      expect(document.querySelector('.description-indicator-inline')).toBeInTheDocument();
+    });
+
+    it('should work with markdown titles', () => {
+      const todoWithMarkdownTitle = { 
+        ...mockTodo, 
+        title: '**Bold Task** with _italic_ text',
+        description: 'This task has markdown in title' 
+      };
+      
+      render(
+        <TodoItemWrapper>
+          <TodoItem todo={todoWithMarkdownTitle} {...mockHandlers} />
+        </TodoItemWrapper>
+      );
+
+      // マークダウンがレンダリングされた後に詳細インジケーターが表示される
+      const descriptionIndicator = document.querySelector('.description-indicator-inline');
+      expect(descriptionIndicator).toBeInTheDocument();
+      expect(descriptionIndicator).toHaveTextContent('...');
     });
   });
 });

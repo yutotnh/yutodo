@@ -552,6 +552,10 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onUpdate, on
             >
               {todo.title}
             </ReactMarkdown>
+            {/* 詳細がある場合に...を追加（編集中は表示しない） */}
+            {todo.description && !isInlineEditing && (
+              <span className="description-indicator-inline" title={todo.description}>...</span>
+            )}
           </div>
         )}
         
@@ -574,12 +578,6 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onUpdate, on
               </div>
             )}
             
-            {/* 説明があることを示すドット */}
-            {todo.description && (
-              <div className="description-indicator" title={todo.description}>
-                ⋯
-              </div>
-            )}
           </div>
         ) : (
           <>

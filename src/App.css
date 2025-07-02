@@ -361,6 +361,16 @@ body {
   flex-shrink: 0;
 }
 
+/* インライン詳細インジケーター（タスク名の後に表示） */
+.description-indicator-inline {
+  margin-left: 0.25rem;
+  font-size: 0.875rem;
+  color: #94a3b8;
+  cursor: help;
+  opacity: 0.7;
+  font-weight: normal;
+}
+
 .app--slim .todo-item--completed {
   background: #f1f5f9;
   opacity: 0.7;
@@ -2964,6 +2974,14 @@ body {
 }
 
 .app--dark .status-indicator {
+  color: #e2e8f0;
+}
+
+.app--dark .description-indicator {
+  color: #e2e8f0;
+}
+
+.app--dark .description-indicator-inline {
   color: #e2e8f0;
 }
 
