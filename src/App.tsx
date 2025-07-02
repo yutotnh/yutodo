@@ -435,7 +435,7 @@ function App() {
   // マウス位置によるヘッダー表示制御（オーバーレイ方式）
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
-      const threshold = 30;
+      const threshold = 15; // 判定範囲を狭くして上部タスクの編集を妨げないように
       // メニューが開いている時またはAltキーが押されている時はヘッダーを隠さない
       if (!isMenuOpen) {
         setShowHeader(e.clientY <= threshold);
