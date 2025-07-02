@@ -248,7 +248,7 @@ body {
 
 .app--slim .todo-item {
   position: relative; /* ドロップダウンメニューの基準点 */
-  padding: 4px 8px; /* 極限まで削減 */
+  padding: 4px 1px 4px 4px; /* 右のパディングを1pxに */
   margin: 1px 2px; /* 最小限のマージン */
   background: white;
   border: 1px solid #e2e8f0;
@@ -258,6 +258,7 @@ body {
   min-height: 26px; /* 固定高さ */
   max-height: 26px;
   overflow: visible; /* ドロップダウンメニューを表示するため */
+  gap: 4px; /* 時刻表示とボタン間の余白を狭く */
 }
 
 .app--slim .todo-item:hover:not([data-dragging="true"]):not(.todo-item--selected) {
@@ -275,7 +276,7 @@ body {
 .todo-item__ultra-compact-meta {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px; /* より狭い余白 */
   flex-shrink: 0; /* 圧縮されないように */
 }
 
@@ -459,6 +460,21 @@ body {
   display: none; /* 編集ボタンを隠す */
 }
 
+.app--slim .todo-item__check {
+  margin-top: 0; /* チェックボックスの上余白を削除 */
+}
+
+.app--slim .check-btn {
+  width: 16px; /* チェックボックスを小さく */
+  height: 16px;
+}
+
+.app--slim .todo-item__title {
+  margin: 0; /* タイトルの余白を削除 */
+  font-size: 0.875rem; /* フォントサイズを少し小さく */
+  line-height: 1.2; /* 行間を詰める */
+}
+
 .app--slim .todo-item__actions {
   gap: 0.5rem;
   align-items: center; /* アクションボタンも中央配置 */
@@ -469,7 +485,7 @@ body {
 }
 
 .app--slim .todo-item:hover .todo-item__actions {
-  width: 20px; /* ボタンの幅に合わせて調整 */
+  width: 18px; /* ボタンの幅を少し小さく */
   opacity: 1;
 }
 
@@ -619,7 +635,7 @@ body {
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 8px;
+  gap: 4px; /* タスク名と時刻表示間の余白を狭く */
   flex: 1;
   min-width: 0; /* フレックス子要素の収縮を許可 */
 }
