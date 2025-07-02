@@ -1,9 +1,10 @@
 import { AppSettingsFile, Keybinding, SettingsPaths, SettingsChangeEvent, DEFAULT_APP_SETTINGS, DEFAULT_KEYBINDINGS, SettingsError } from '../types/settings';
-import { exists, readTextFile, writeTextFile, mkdir, watch } from '@tauri-apps/plugin-fs';
+// Tauri plugin-fs functions will be imported dynamically to avoid bundling conflicts
 import { appDataDir, join, configDir, homeDir } from '@tauri-apps/api/path';
-import { parse as parseToml } from '@ltd/j-toml';
+// @ltd/j-toml will be imported dynamically to avoid bundling conflicts
 import logger from '../utils/logger';
 import { checkTauriWatchAPI } from '../utils/checkTauriApis';
+import { isWindows, isMac } from '../utils/osDetection';
 
 /**
  * Settings Manager for VS Code-style configuration
@@ -196,7 +197,7 @@ export class SettingsManager {
    * Get the appropriate config directory based on OS
    */
   private async getConfigDirectory(): Promise<string> {
-    const platform = await this.getPlatform();
+    const platform = this.getPlatform();
     
     switch (platform) {
       case 'linux': {
@@ -230,10 +231,8 @@ export class SettingsManager {
   /**
    * Get platform identifier
    */
-  private async getPlatform(): Promise<string> {
+  private getPlatform(): string {
     // Use existing OS detection utility
-    const { isWindows, isMac } = await import('../utils/osDetection');
-    
     if (isWindows()) return 'windows';
     if (isMac()) return 'darwin';
     // Default to Linux for everything else
@@ -306,6 +305,7 @@ export class SettingsManager {
       this.paths.backupDir
     ];
     
+    const { exists, mkdir } = await import('@tauri-apps/plugin-fs');
     for (const dir of dirs) {
       if (!await exists(dir)) {
         logger.info(`📁 Creating directory: ${dir}`);
@@ -323,9 +323,11 @@ export class SettingsManager {
       throw new Error('Cannot load settings: paths not initialized');
     }
     
+    const { exists, readTextFile } = await import('@tauri-apps/plugin-fs');
     try {
       if (await exists(this.paths.settingsFile)) {
         this.settingsFileContent = await readTextFile(this.paths.settingsFile);
+        const { parse: parseToml } = await import('@ltd/j-toml');
         const parsed = parseToml(this.settingsFileContent, { 
           joiner: '\n'
         }) as any;
@@ -360,9 +362,11 @@ export class SettingsManager {
       throw new Error('Cannot load keybindings: paths not initialized');
     }
     
+    const { exists, readTextFile } = await import('@tauri-apps/plugin-fs');
     try {
       if (await exists(this.paths.keybindingsFile)) {
         this.keybindingsFileContent = await readTextFile(this.paths.keybindingsFile);
+        const { parse: parseToml } = await import('@ltd/j-toml');
         const parsed = parseToml(this.keybindingsFileContent, { 
           joiner: '\n'
         }) as any;
@@ -442,6 +446,7 @@ fontFamily = "Inter, sans-serif"
 customCss = ""
 `;
     
+    const { writeTextFile } = await import('@tauri-apps/plugin-fs');
     await writeTextFile(this.paths.settingsFile, content);
     this.settingsFileContent = content;
     this.settings = DEFAULT_APP_SETTINGS;
@@ -584,6 +589,7 @@ command = "showHelp"
 # Add your custom keybindings below
 `;
     
+    const { writeTextFile } = await import('@tauri-apps/plugin-fs');
     await writeTextFile(this.paths.keybindingsFile, content);
     this.keybindingsFileContent = content;
     this.keybindings = DEFAULT_KEYBINDINGS;
@@ -620,6 +626,7 @@ command = "showHelp"
     }
     
     // Check if files exist before watching
+    const { exists } = await import('@tauri-apps/plugin-fs');
     const settingsExists = await exists(this.paths.settingsFile);
     const keybindingsExists = await exists(this.paths.keybindingsFile);
     
@@ -641,6 +648,7 @@ command = "showHelp"
     try {
       // Watch settings file using the actual path
       try {
+        const { watch } = await import('@tauri-apps/plugin-fs');
         this.settingsWatcher = await watch(
           this.paths.settingsFile,
           (event) => {
@@ -691,6 +699,7 @@ command = "showHelp"
         }
         
         try {
+          const { watch } = await import('@tauri-apps/plugin-fs');
           this.keybindingsWatcher = await watch(
             this.paths.keybindingsFile,
             (event) => {
@@ -802,6 +811,7 @@ command = "showHelp"
         }
 
         // Check if settings file exists
+        const { exists } = await import('@tauri-apps/plugin-fs');
         const settingsExists = await exists(this.paths.settingsFile);
         if (!settingsExists) {
           logger.warn('📄 Settings file does not exist - skipping watcher restart');
@@ -810,6 +820,7 @@ command = "showHelp"
 
         // Restart settings watcher with event filtering
         logger.debug('👀 Restarting settings file watcher...');
+        const { watch } = await import('@tauri-apps/plugin-fs');
         this.settingsWatcher = await watch(
           this.paths.settingsFile,
           (event) => {
@@ -851,9 +862,11 @@ command = "showHelp"
         }
 
         // Check if keybindings file exists before restarting watcher
+        const { exists } = await import('@tauri-apps/plugin-fs');
         const keybindingsExists = await exists(this.paths.keybindingsFile);
         if (keybindingsExists) {
           logger.debug('👀 Restarting keybindings file watcher...');
+          const { watch } = await import('@tauri-apps/plugin-fs');
           this.keybindingsWatcher = await watch(
             this.paths.keybindingsFile,
             (event) => {
@@ -950,10 +963,12 @@ command = "showHelp"
     
     try {
       logger.debug('📄 Reading settings file:', this.paths.settingsFile);
+      const { readTextFile } = await import('@tauri-apps/plugin-fs');
       this.settingsFileContent = await readTextFile(this.paths.settingsFile);
       logger.debug('📏 Settings file content length:', this.settingsFileContent.length);
       
       logger.debug('🔍 Parsing TOML content...');
+      const { parse: parseToml } = await import('@ltd/j-toml');
       const parsed = parseToml(this.settingsFileContent, { 
         joiner: '\n'
       }) as any;
@@ -1010,7 +1025,9 @@ command = "showHelp"
     const previous = [...this.keybindings];
     
     try {
+      const { readTextFile } = await import('@tauri-apps/plugin-fs');
       this.keybindingsFileContent = await readTextFile(this.paths.keybindingsFile);
+      const { parse: parseToml } = await import('@ltd/j-toml');
       const parsed = parseToml(this.keybindingsFileContent, { 
         joiner: '\n'
       }) as any;
@@ -1235,6 +1252,7 @@ command = "showHelp"
     
     const newContent = updatedLines.join('\n');
     
+    const { writeTextFile } = await import('@tauri-apps/plugin-fs');
     await writeTextFile(this.paths.settingsFile, newContent);
     this.settingsFileContent = newContent;
   }
@@ -1437,6 +1455,7 @@ command = "showHelp"
     }
     
     const content = lines.join('\n');
+    const { writeTextFile } = await import('@tauri-apps/plugin-fs');
     await writeTextFile(this.paths.keybindingsFile, content);
     this.keybindingsFileContent = content;
   }
@@ -1502,6 +1521,7 @@ command = "showHelp"
     }
     
     // Check if settings file exists
+    const { exists } = await import('@tauri-apps/plugin-fs');
     const settingsExists = await exists(this.paths.settingsFile);
     if (!settingsExists) {
       throw new Error('Settings file does not exist - cannot watch');
@@ -1514,6 +1534,7 @@ command = "showHelp"
     }
     
     logger.debug('👀 Starting settings file watcher...');
+    const { watch } = await import('@tauri-apps/plugin-fs');
     this.settingsWatcher = await watch(
       this.paths.settingsFile,
       (event) => {
@@ -1548,6 +1569,7 @@ command = "showHelp"
     }
     
     // Check if keybindings file exists
+    const { exists } = await import('@tauri-apps/plugin-fs');
     const keybindingsExists = await exists(this.paths.keybindingsFile);
     if (!keybindingsExists) {
       logger.warn('Keybindings file does not exist - skipping watcher');
@@ -1561,6 +1583,7 @@ command = "showHelp"
     }
     
     logger.debug('👀 Starting keybindings file watcher...');
+    const { watch } = await import('@tauri-apps/plugin-fs');
     this.keybindingsWatcher = await watch(
       this.paths.keybindingsFile,
       (event) => {
