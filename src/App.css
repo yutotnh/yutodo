@@ -462,11 +462,14 @@ body {
 .app--slim .todo-item__actions {
   gap: 0.5rem;
   align-items: center; /* アクションボタンも中央配置 */
+  width: 0;
   opacity: 0;
-  transition: opacity 0.2s ease;
+  overflow: hidden;
+  transition: all 0.2s ease;
 }
 
 .app--slim .todo-item:hover .todo-item__actions {
+  width: 20px; /* ボタンの幅に合わせて調整 */
   opacity: 1;
 }
 
