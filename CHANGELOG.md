@@ -6,6 +6,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [0.2.3](https://github.com/yutotnh/yutodo/compare/v0.2.2...v0.2.3) (2025-07-02)
+
+
+### Features
+
+* add cargo-workspace plugin to handle Cargo.lock updates ([ed1f1ca](https://github.com/yutotnh/yutodo/commit/ed1f1ca15a0fbc7f5a6900860392f16230894983))
+* implement hover-based action button expansion in slim mode ([a61728c](https://github.com/yutotnh/yutodo/commit/a61728c173ee7efc318bf2514c783739c67acf43))
+* implement left border + gradient priority display system ([66e42d7](https://github.com/yutotnh/yutodo/commit/66e42d70fb1d0591feeebbf6fba88edf024d7ecb))
+* implement Portal-based dropdown menu for slim mode action buttons ([89a12b0](https://github.com/yutotnh/yutodo/commit/89a12b0a8a74192df8a43803bba1438cf8417cf1))
+* integrate description indicator inline with task titles ([c9e9736](https://github.com/yutotnh/yutodo/commit/c9e9736a304fa13e04d67880ed58ef12fa274eb3))
+* optimize add todo form sizing in slim mode for consistency ([798cfc2](https://github.com/yutotnh/yutodo/commit/798cfc29e38085fa78224cff53aea4da674d684c))
+* optimize spacing in slim mode for ultra-compact display ([8a13164](https://github.com/yutotnh/yutodo/commit/8a131644c26ac88a716d8b02e64fabbeb48cf47e))
+* remove clock icons from slim mode for extreme space optimization ([d815d92](https://github.com/yutotnh/yutodo/commit/d815d92a6e2f4d02bf4552577572f09b089595eb))
+
+
+### Bug Fixes
+
+* implement independent scrolling for task list to prevent form overlay ([e082ff1](https://github.com/yutotnh/yutodo/commit/e082ff1b93a5b587cb502bc7a54292a9e22e3d75))
+* reduce header auto-show threshold for improved top task editing ([02af929](https://github.com/yutotnh/yutodo/commit/02af92961deb1b82ade461af2ee135cce3e5cba7))
+* resolve all Vite bundling warnings by optimizing import strategies ([7d6b5f1](https://github.com/yutotnh/yutodo/commit/7d6b5f14b6f6ca4fb2517326c23cb35420a54cd2))
+* resolve GitHub release notes generation issue in Release Please workflow ([64ae656](https://github.com/yutotnh/yutodo/commit/64ae65612c39794af19f6fb125561dd5573518bd))
+* resolve ShortcutHelp test failure by targeting specific close button ([782724a](https://github.com/yutotnh/yutodo/commit/782724ad8bad60ae98ef51ce1a71b8b64b2d32ad))
+* restrict description indicator to slim mode only ([8d145a9](https://github.com/yutotnh/yutodo/commit/8d145a979cc30172e4ba019898026ac61af44cab))
+* restructure release-please config for mixed Node.js/Rust project ([d06c2cf](https://github.com/yutotnh/yutodo/commit/d06c2cf5f6662d5e6264ae3b13007469d19f18ca))
+
 ## [0.2.2](https://github.com/yutotnh/yutodo/compare/v0.2.1...v0.2.2) (2025-07-01)
 
 
