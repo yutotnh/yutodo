@@ -1265,7 +1265,7 @@ describe('TodoItem', () => {
   });
 
   describe('inline description indicator', () => {
-    it('should display ... after task title when description exists', () => {
+    it('should display ... after task title when description exists in slim mode', () => {
       const todoWithDescription = { 
         ...mockTodo, 
         title: 'Task with details',
@@ -1274,18 +1274,18 @@ describe('TodoItem', () => {
       
       render(
         <TodoItemWrapper>
-          <TodoItem todo={todoWithDescription} {...mockHandlers} />
+          <TodoItem todo={todoWithDescription} {...mockHandlers} slimMode={true} />
         </TodoItemWrapper>
       );
 
-      // 詳細インジケーター（...）がタスク名の後に表示される
+      // スリムモードでは詳細インジケーター（...）がタスク名の後に表示される
       const descriptionIndicator = document.querySelector('.description-indicator-inline');
       expect(descriptionIndicator).toBeInTheDocument();
       expect(descriptionIndicator).toHaveTextContent('...');
       expect(descriptionIndicator).toHaveAttribute('title', 'This task has a description');
     });
 
-    it('should not display ... when description does not exist', () => {
+    it('should not display ... when description does not exist in slim mode', () => {
       const todoWithoutDescription = { 
         ...mockTodo, 
         title: 'Task without details',
@@ -1294,13 +1294,35 @@ describe('TodoItem', () => {
       
       render(
         <TodoItemWrapper>
-          <TodoItem todo={todoWithoutDescription} {...mockHandlers} />
+          <TodoItem todo={todoWithoutDescription} {...mockHandlers} slimMode={true} />
         </TodoItemWrapper>
       );
 
-      // 詳細インジケーターは表示されない
+      // スリムモードでも詳細がない場合はインジケーターは表示されない
       const descriptionIndicator = document.querySelector('.description-indicator-inline');
       expect(descriptionIndicator).not.toBeInTheDocument();
+    });
+
+    it('should not display ... in normal mode even when description exists', () => {
+      const todoWithDescription = { 
+        ...mockTodo, 
+        title: 'Task with details',
+        description: 'This task has a description' 
+      };
+      
+      render(
+        <TodoItemWrapper>
+          <TodoItem todo={todoWithDescription} {...mockHandlers} slimMode={false} />
+        </TodoItemWrapper>
+      );
+
+      // 通常モードでは詳細があってもインジケーターは表示されない（説明文が別途表示されるため）
+      const descriptionIndicator = document.querySelector('.description-indicator-inline');
+      expect(descriptionIndicator).not.toBeInTheDocument();
+      
+      // 代わりに詳細が別途表示されることを確認
+      const descriptionSection = document.querySelector('.todo-item__description');
+      expect(descriptionSection).toBeInTheDocument();
     });
 
     it('should not display ... during inline editing', async () => {
@@ -1331,14 +1353,14 @@ describe('TodoItem', () => {
       expect(screen.getByTestId('todo-edit-input')).toBeInTheDocument();
     });
 
-    it('should display ... in both slim and normal modes', () => {
+    it('should display ... only in slim mode, not in normal mode', () => {
       const todoWithDescription = { 
         ...mockTodo, 
         title: 'Task with details',
         description: 'This task has a description' 
       };
 
-      // スリムモードでの確認
+      // スリムモードでの確認：...が表示される
       const { unmount: unmountSlim } = render(
         <TodoItemWrapper>
           <TodoItem todo={todoWithDescription} {...mockHandlers} slimMode={true} />
@@ -1348,17 +1370,17 @@ describe('TodoItem', () => {
       expect(document.querySelector('.description-indicator-inline')).toBeInTheDocument();
       unmountSlim();
 
-      // 通常モードでの確認
+      // 通常モードでの確認：...は表示されない（別途説明が表示されるため）
       render(
         <TodoItemWrapper>
           <TodoItem todo={todoWithDescription} {...mockHandlers} slimMode={false} />
         </TodoItemWrapper>
       );
 
-      expect(document.querySelector('.description-indicator-inline')).toBeInTheDocument();
+      expect(document.querySelector('.description-indicator-inline')).not.toBeInTheDocument();
     });
 
-    it('should work with markdown titles', () => {
+    it('should work with markdown titles in slim mode', () => {
       const todoWithMarkdownTitle = { 
         ...mockTodo, 
         title: '**Bold Task** with _italic_ text',
@@ -1367,11 +1389,11 @@ describe('TodoItem', () => {
       
       render(
         <TodoItemWrapper>
-          <TodoItem todo={todoWithMarkdownTitle} {...mockHandlers} />
+          <TodoItem todo={todoWithMarkdownTitle} {...mockHandlers} slimMode={true} />
         </TodoItemWrapper>
       );
 
-      // マークダウンがレンダリングされた後に詳細インジケーターが表示される
+      // スリムモードでマークダウンがレンダリングされた後に詳細インジケーターが表示される
       const descriptionIndicator = document.querySelector('.description-indicator-inline');
       expect(descriptionIndicator).toBeInTheDocument();
       expect(descriptionIndicator).toHaveTextContent('...');
