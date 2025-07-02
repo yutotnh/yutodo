@@ -43,7 +43,9 @@
     "close": "閉じる",
     "export": "エクスポート",
     "import": "インポート",
-    "reset": "リセット"
+    "reset": "リセット",
+    "more": "その他",
+    "edit": "編集"
   },
   "shortcuts": {
     "title": "キーボードショートカット",

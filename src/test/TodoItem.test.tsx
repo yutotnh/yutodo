@@ -6,6 +6,14 @@ import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { TodoItem } from '../components/TodoItem';
 import { Todo } from '../types/todo';
 
+// Mock ReactDOM for portal testing
+vi.mock('react-dom', () => ({
+  default: {
+    createPortal: (children: React.ReactNode) => children,
+  },
+  createPortal: (children: React.ReactNode) => children,
+}));
+
 // Mock dependencies
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -105,6 +113,7 @@ vi.mock('lucide-react', () => ({
   Trash2: ({ size }: { size?: number }) => <span data-testid="trash-icon" data-size={size}>🗑</span>,
   Clock: ({ size }: { size?: number }) => <span data-testid="clock-icon" data-size={size}>🕐</span>,
   AlertCircle: ({ size }: { size?: number }) => <span data-testid="alert-icon" data-size={size}>⚠</span>,
+  MoreHorizontal: ({ size }: { size?: number }) => <span data-testid="more-icon" data-size={size}>⋯</span>,
 }));
 
 // Helper component to wrap TodoItem with DndKit context
@@ -221,15 +230,43 @@ describe('TodoItem', () => {
       expect(screen.getByTestId('trash-icon')).toBeInTheDocument();
     });
 
-    it('should show both edit and delete buttons in slim mode', () => {
+    it('should show dropdown menu button in slim mode', () => {
       render(
         <TodoItemWrapper>
           <TodoItem todo={mockTodo} {...mockHandlers} slimMode={true} />
         </TodoItemWrapper>
       );
 
-      expect(screen.getByTestId('edit-icon')).toBeInTheDocument();
-      expect(screen.getByTestId('trash-icon')).toBeInTheDocument();
+      // In slim mode, should show dropdown menu instead of individual buttons
+      expect(screen.getByTestId('more-icon')).toBeInTheDocument();
+      
+      // Individual buttons should not be visible initially
+      expect(screen.queryByTestId('edit-icon')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('trash-icon')).not.toBeInTheDocument();
+    });
+
+    it('should show dropdown menu when more button is clicked', async () => {
+      const user = userEvent.setup();
+      render(
+        <TodoItemWrapper>
+          <TodoItem todo={mockTodo} {...mockHandlers} slimMode={true} />
+        </TodoItemWrapper>
+      );
+
+      const moreButton = screen.getByTestId('more-icon').closest('button')!;
+      
+      // Dropdown menu should not be visible initially
+      expect(screen.queryByTestId('edit-icon')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('trash-icon')).not.toBeInTheDocument();
+      
+      // Click to show dropdown
+      await user.click(moreButton);
+      
+      // Now the edit and delete options should be visible
+      await waitFor(() => {
+        expect(screen.getByTestId('edit-icon')).toBeInTheDocument();
+        expect(screen.getByTestId('trash-icon')).toBeInTheDocument();
+      });
     });
 
     it('should display priority and date in slim mode with small text', () => {
@@ -563,7 +600,7 @@ describe('TodoItem', () => {
       });
     });
 
-    it('should open modal edit form in slim mode', async () => {
+    it('should open modal edit form in slim mode via dropdown', async () => {
       const user = userEvent.setup();
       render(
         <TodoItemWrapper>
@@ -571,6 +608,15 @@ describe('TodoItem', () => {
         </TodoItemWrapper>
       );
 
+      // Click dropdown menu button
+      const moreButton = screen.getByTestId('more-icon').closest('button')!;
+      await user.click(moreButton);
+      
+      // Wait for dropdown menu to appear and click edit
+      await waitFor(() => {
+        expect(screen.getByTestId('edit-icon')).toBeInTheDocument();
+      });
+      
       const editButton = screen.getByTestId('edit-icon').closest('button')!;
       await user.click(editButton);
 

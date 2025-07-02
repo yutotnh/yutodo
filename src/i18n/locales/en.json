@@ -43,7 +43,9 @@
     "close": "Close",
     "export": "Export",
     "import": "Import",
-    "reset": "Reset"
+    "reset": "Reset",
+    "more": "More",
+    "edit": "Edit"
   },
   "shortcuts": {
     "title": "Keyboard Shortcuts",

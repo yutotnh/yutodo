@@ -247,6 +247,7 @@ body {
 }
 
 .app--slim .todo-item {
+  position: relative; /* ドロップダウンメニューの基準点 */
   padding: 4px 8px; /* 極限まで削減 */
   margin: 1px 2px; /* 最小限のマージン */
   background: white;
@@ -256,7 +257,7 @@ body {
   align-items: center;
   min-height: 26px; /* 固定高さ */
   max-height: 26px;
-  overflow: hidden; /* はみ出し防止 */
+  overflow: visible; /* ドロップダウンメニューを表示するため */
 }
 
 .app--slim .todo-item:hover:not([data-dragging="true"]):not(.todo-item--selected) {
@@ -477,6 +478,82 @@ body {
 .app--slim .action-btn:hover {
   background: #e2e8f0;
   color: #334155;
+}
+
+/* スリムモード用ドロップダウンメニュー */
+.action-dropdown {
+  position: relative;
+  z-index: 1000; /* 基準レイヤー */
+}
+
+.action-btn--menu {
+  width: 16px !important;
+  height: 16px !important;
+}
+
+.action-dropdown__menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  z-index: 99999;
+  min-width: 120px;
+  overflow: hidden;
+  animation: dropdownFadeIn 0.15s ease-out;
+}
+
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.action-dropdown__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #475569;
+  font-size: 13px;
+  text-align: left;
+  transition: background-color 0.15s ease;
+}
+
+.action-dropdown__item:hover {
+  background: #f1f5f9;
+}
+
+.action-dropdown__item--delete {
+  color: #dc2626;
+}
+
+.action-dropdown__item--delete:hover {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+/* Portal化されたドロップダウンメニュー */
+.action-dropdown__menu--portal {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  min-width: 120px;
+  overflow: hidden;
+  animation: dropdownFadeIn 0.15s ease-out;
+  pointer-events: auto;
 }
 
 .app--slim .action-btn--delete:hover {
@@ -929,7 +1006,7 @@ body {
 /* Main Content */
 .app-main {
   flex: 1;
-  overflow: hidden;
+  overflow: visible; /* ドロップダウンメニュー表示のため */
   display: flex;
   flex-direction: column;
 }
@@ -1054,6 +1131,7 @@ body {
 
 /* Todo Item */
 .todo-item {
+  position: relative; /* ドロップダウンメニューの基準点 */
   display: flex;
   align-items: flex-start;
   gap: 1rem;
@@ -2712,6 +2790,35 @@ body {
 .app--dark.app--slim .action-btn:hover {
   background: #475569;
   color: #e2e8f0;
+}
+
+/* ダークモード：ドロップダウンメニュー */
+.app--dark .action-dropdown__menu {
+  background: #1e293b;
+  border-color: #475569;
+}
+
+.app--dark .action-dropdown__item {
+  color: #cbd5e1;
+}
+
+.app--dark .action-dropdown__item:hover {
+  background: #334155;
+}
+
+.app--dark .action-dropdown__item--delete {
+  color: #f87171;
+}
+
+.app--dark .action-dropdown__item--delete:hover {
+  background: #450a0a;
+  color: #fca5a5;
+}
+
+/* ダークモード：Portal化されたドロップダウンメニュー */
+.app--dark .action-dropdown__menu--portal {
+  background: #1e293b;
+  border-color: #475569;
 }
 
 .app--dark.app--slim .action-btn--delete:hover {

@@ -1,9 +1,10 @@
 import React, { useState, useRef, useCallback } from 'react';
+import ReactDOM from 'react-dom';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import { Check, Edit2, Trash2, Clock, AlertCircle } from 'lucide-react';
+import { Check, Edit2, Trash2, Clock, AlertCircle, MoreHorizontal } from 'lucide-react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useTranslation } from 'react-i18next';
@@ -26,6 +27,8 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onUpdate, on
   const { t } = useTranslation();
   const [isEditing, setIsEditing] = useState(false);
   const [isInlineEditing, setIsInlineEditing] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number } | null>(null);
   const [editTitle, setEditTitle] = useState(todo.title);
   const [editDescription, setEditDescription] = useState(todo.description || '');
   const [editPriority, setEditPriority] = useState<Priority>(todo.priority);
@@ -33,6 +36,8 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onUpdate, on
     todo.scheduledFor ? new Date(todo.scheduledFor) : null
   );
   const editInputRef = useRef<HTMLInputElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const menuButtonRef = useRef(null);
 
   // WSLg環境の検出
   const isWSLg = () => {
@@ -312,6 +317,76 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onUpdate, on
       document.removeEventListener('keydown', handleKeyDown);
     };
   }, [isEditing, handleCancel]);
+
+  // ドロップダウンの外側クリック検出
+  React.useEffect(() => {
+    const handleOutsideClick = (event: MouseEvent) => {
+      const target = event.target as Node;
+      
+      // メニューボタンやドロップダウンメニュー内のクリックは無視
+      if (
+        (menuButtonRef.current && (menuButtonRef.current as any).contains(target)) ||
+        (dropdownRef.current && dropdownRef.current.contains(target))
+      ) {
+        return;
+      }
+      
+      // 外側をクリックした場合は閉じる
+      setShowDropdown(false);
+      setDropdownPosition(null);
+    };
+
+    if (showDropdown) {
+      document.addEventListener('mousedown', handleOutsideClick);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+    };
+  }, [showDropdown]);
+
+  // ドロップダウンメニューの位置を計算
+  const calculateDropdownPosition = () => {
+    if (!menuButtonRef.current) return null;
+
+    const rect = (menuButtonRef.current as any).getBoundingClientRect();
+    const menuWidth = 120; // min-width from CSS
+    const menuHeight = 80; // 概算の高さ
+    
+    let left = rect.right - menuWidth; // 右寄せ
+    let top = rect.bottom + 2; // ボタンの下に表示
+
+    // 画面右端を超える場合は左寄せ
+    if (left < 0) {
+      left = rect.left;
+    }
+
+    // 画面下端を超える場合は上に表示
+    if (top + menuHeight > window.innerHeight) {
+      top = rect.top - menuHeight - 2;
+    }
+
+    // 画面上端を超える場合は下に戻す
+    if (top < 0) {
+      top = rect.bottom + 2;
+    }
+
+    return { top, left };
+  };
+
+  // ドロップダウンを開く/閉じる
+  const toggleDropdown = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    if (!showDropdown) {
+      const position = calculateDropdownPosition();
+      setDropdownPosition(position);
+      setShowDropdown(true);
+    } else {
+      setShowDropdown(false);
+      setDropdownPosition(null);
+    }
+  };
 
   // モーダル編集画面
   if (isEditing) {
@@ -596,20 +671,82 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onUpdate, on
       </div>
       
       <div className="todo-item__actions">
-        <button
-          onClick={() => setIsEditing(true)}
-          className="action-btn action-btn--edit"
-        >
-          <Edit2 size={16} />
-        </button>
-        <button
-          data-testid="delete-button"
-          onClick={() => onDelete(todo.id)}
-          className="action-btn action-btn--delete"
-        >
-          <Trash2 size={16} />
-        </button>
+        {slimMode ? (
+          // スリムモードではドロップダウンメニュー
+          <div className="action-dropdown" ref={dropdownRef}>
+            <button
+              ref={menuButtonRef}
+              onClick={toggleDropdown}
+              className="action-btn action-btn--menu"
+              title={t('buttons.more')}
+            >
+              <MoreHorizontal size={12} />
+            </button>
+          </div>
+        ) : (
+          // 通常モードでは既存のボタン
+          <>
+            <button
+              onClick={() => setIsEditing(true)}
+              className="action-btn action-btn--edit"
+            >
+              <Edit2 size={16} />
+            </button>
+            <button
+              data-testid="delete-button"
+              onClick={() => onDelete(todo.id)}
+              className="action-btn action-btn--delete"
+            >
+              <Trash2 size={16} />
+            </button>
+          </>
+        )}
       </div>
+
+      {/* Portal化されたドロップダウンメニュー */}
+      {showDropdown && dropdownPosition && (
+        <>
+          {ReactDOM.createPortal(
+            <div
+              ref={dropdownRef}
+              className="action-dropdown__menu--portal"
+              style={{
+                position: 'fixed',
+                top: dropdownPosition.top,
+                left: dropdownPosition.left,
+                zIndex: 999999
+              }}
+            >
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsEditing(true);
+                  setShowDropdown(false);
+                  setDropdownPosition(null);
+                }}
+                className="action-dropdown__item"
+              >
+                <Edit2 size={14} />
+                <span>{t('buttons.edit')}</span>
+              </button>
+              <button
+                data-testid="delete-button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(todo.id);
+                  setShowDropdown(false);
+                  setDropdownPosition(null);
+                }}
+                className="action-dropdown__item action-dropdown__item--delete"
+              >
+                <Trash2 size={14} />
+                <span>{t('buttons.delete')}</span>
+              </button>
+            </div>,
+            document.body
+          )}
+        </>
+      )}
     </div>
   );
 };
