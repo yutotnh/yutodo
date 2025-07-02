@@ -146,10 +146,12 @@ jobs:
 
       - name: Update release with Docker info
         run: |
-          # Add Docker image information to the release
-          gh release edit ${{ needs.release-please.outputs.tag_name }} \
-            --notes-file - << 'EOF'
-          $(gh release view ${{ needs.release-please.outputs.tag_name }} --json body --jq .body)
+          # Get existing release notes
+          EXISTING_BODY=$(gh release view ${{ needs.release-please.outputs.tag_name }} --json body --jq -r '.body')
+          
+          # Create updated release notes with Docker information
+          cat > release_notes.md << 'EOF'
+          ${{ needs.release-please.outputs.body }}
           
           ## Docker Image
           
@@ -161,5 +163,8 @@ jobs:
           
           See the [Docker documentation](https://github.com/${{ github.repository }}#docker-containerization) for usage instructions.
           EOF
+          
+          # Update the release with new notes
+          gh release edit ${{ needs.release-please.outputs.tag_name }} --notes-file release_notes.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
