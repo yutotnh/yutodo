@@ -466,7 +466,7 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onUpdate, on
       data-todo-id={todo.id}
       ref={setNodeRef}
       style={style}
-      className={`todo-item ${todo.completed ? 'todo-item--completed' : ''} ${urgencyClassSuffix ? `todo-item${urgencyClassSuffix}` : ''} ${isSelected ? 'todo-item--selected' : ''}`}
+      className={`todo-item ${todo.completed ? 'todo-item--completed' : ''} ${urgencyClassSuffix ? `todo-item${urgencyClassSuffix}` : ''} ${isSelected ? 'todo-item--selected' : ''} todo-item--priority-${todo.priority}`}
       data-dragging={isDragging}
       onClick={handleClick}
       {...attributes}
@@ -558,25 +558,6 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onUpdate, on
         {/* スリムモードでは横並び1行レイアウト */}
         {slimMode ? (
           <div className="todo-item__ultra-compact-meta">
-            {/* 優先度アイコン */}
-            <div 
-              className={`priority-dot priority-dot--${getPriorityClassSuffix(todo.priority)}`} 
-              data-testid="todo-priority" 
-              title={getPriorityText(todo.priority)}
-              style={{
-                backgroundColor: todo.priority === 'high' ? '#dc2626' : 
-                                todo.priority === 'medium' ? '#f59e0b' : 
-                                'transparent'
-              }}
-            >
-              <AlertCircle 
-                size={8} 
-                style={{ 
-                  color: todo.priority === 'low' ? '#94a3b8' : '#ffffff'
-                }} 
-              />
-            </div>
-            
             {/* 日時表示 */}
             {todo.scheduledFor && (
               <div className={`schedule-compact ${urgencyClassSuffix ? `schedule-compact${urgencyClassSuffix}` : ''}`}>

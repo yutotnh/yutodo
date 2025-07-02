@@ -262,10 +262,10 @@ describe('TodoItem', () => {
       // Click to show dropdown
       await user.click(moreButton);
       
-      // Now the edit and delete options should be visible
+      // Now the edit and delete options should be visible in dropdown menu
       await waitFor(() => {
-        expect(screen.getByTestId('edit-icon')).toBeInTheDocument();
-        expect(screen.getByTestId('trash-icon')).toBeInTheDocument();
+        expect(screen.getByText('buttons.edit')).toBeInTheDocument();
+        expect(screen.getByText('buttons.delete')).toBeInTheDocument();
       });
     });
 
@@ -287,8 +287,9 @@ describe('TodoItem', () => {
       const slimMeta = document.querySelector('.todo-item__ultra-compact-meta');
       expect(slimMeta).toBeInTheDocument();
       
-      // 優先度ドットが表示されることを確認
-      expect(screen.getByTestId('todo-priority')).toBeInTheDocument();
+      // 優先度が左端インジケーター + 背景グラデーション方式で表示されることを確認
+      const todoItem = screen.getByTestId('todo-item');
+      expect(todoItem).toHaveClass('todo-item--priority-high');
       
       // 日付が簡潔に表示されることを確認（schedule-compact要素を確認）
       const scheduleCompact = document.querySelector('.schedule-compact');
@@ -614,11 +615,11 @@ describe('TodoItem', () => {
       
       // Wait for dropdown menu to appear and click edit
       await waitFor(() => {
-        expect(screen.getByTestId('edit-icon')).toBeInTheDocument();
+        expect(screen.getByText('buttons.edit')).toBeInTheDocument();
       });
       
-      const editButton = screen.getByTestId('edit-icon').closest('button')!;
-      await user.click(editButton);
+      const editMenuItem = screen.getByText('buttons.edit');
+      await user.click(editMenuItem);
 
       await waitFor(() => {
         expect(screen.getByPlaceholderText('Task title...')).toBeInTheDocument();
@@ -639,8 +640,13 @@ describe('TodoItem', () => {
         </TodoItemWrapper>
       );
 
-      const editButton = screen.getByTestId('edit-icon').closest('button')!;
-      await user.click(editButton);
+      // スリムモードでは三点ドロップダウンメニューをクリック
+      const moreButton = screen.getByTestId('more-icon').closest('button')!;
+      await user.click(moreButton);
+      
+      // ドロップダウンメニューからEditを選択
+      const editMenuItem = await screen.findByText('buttons.edit');
+      await user.click(editMenuItem);
 
       // Wait for edit form
       const titleInput = await screen.findByPlaceholderText('Task title...');
@@ -673,8 +679,13 @@ describe('TodoItem', () => {
         </TodoItemWrapper>
       );
 
-      const editButton = screen.getByTestId('edit-icon').closest('button')!;
-      await user.click(editButton);
+      // スリムモードでは三点ドロップダウンメニューをクリック
+      const moreButton = screen.getByTestId('more-icon').closest('button')!;
+      await user.click(moreButton);
+      
+      // ドロップダウンメニューからEditを選択
+      const editMenuItem = await screen.findByText('buttons.edit');
+      await user.click(editMenuItem);
 
       const titleInput = await screen.findByPlaceholderText('Task title...');
       await user.clear(titleInput);
@@ -1055,6 +1066,201 @@ describe('TodoItem', () => {
       );
 
       expect(screen.getByText('Updated Title')).toBeInTheDocument();
+    });
+  });
+
+  describe('priority display system', () => {
+    describe('CSS class application', () => {
+      it('should apply correct CSS class for high priority', () => {
+        const highPriorityTodo = { ...mockTodo, priority: 'high' as const };
+        render(
+          <TodoItemWrapper>
+            <TodoItem todo={highPriorityTodo} {...mockHandlers} />
+          </TodoItemWrapper>
+        );
+
+        const todoItem = screen.getByTestId('todo-item');
+        expect(todoItem).toHaveClass('todo-item--priority-high');
+      });
+
+      it('should apply correct CSS class for medium priority', () => {
+        const mediumPriorityTodo = { ...mockTodo, priority: 'medium' as const };
+        render(
+          <TodoItemWrapper>
+            <TodoItem todo={mediumPriorityTodo} {...mockHandlers} />
+          </TodoItemWrapper>
+        );
+
+        const todoItem = screen.getByTestId('todo-item');
+        expect(todoItem).toHaveClass('todo-item--priority-medium');
+      });
+
+      it('should apply correct CSS class for low priority', () => {
+        const lowPriorityTodo = { ...mockTodo, priority: 'low' as const };
+        render(
+          <TodoItemWrapper>
+            <TodoItem todo={lowPriorityTodo} {...mockHandlers} />
+          </TodoItemWrapper>
+        );
+
+        const todoItem = screen.getByTestId('todo-item');
+        expect(todoItem).toHaveClass('todo-item--priority-low');
+      });
+    });
+
+    describe('priority changes', () => {
+      it('should update CSS class when priority changes', () => {
+        const { rerender } = render(
+          <TodoItemWrapper>
+            <TodoItem todo={{ ...mockTodo, priority: 'low' }} {...mockHandlers} />
+          </TodoItemWrapper>
+        );
+
+        let todoItem = screen.getByTestId('todo-item');
+        expect(todoItem).toHaveClass('todo-item--priority-low');
+        expect(todoItem).not.toHaveClass('todo-item--priority-high');
+
+        // Priority変更
+        rerender(
+          <TodoItemWrapper>
+            <TodoItem todo={{ ...mockTodo, priority: 'high' }} {...mockHandlers} />
+          </TodoItemWrapper>
+        );
+
+        todoItem = screen.getByTestId('todo-item');
+        expect(todoItem).toHaveClass('todo-item--priority-high');
+        expect(todoItem).not.toHaveClass('todo-item--priority-low');
+      });
+    });
+
+    describe('mode compatibility', () => {
+      it('should display priority in slim mode', () => {
+        const highPriorityTodo = { ...mockTodo, priority: 'high' as const };
+        render(
+          <TodoItemWrapper>
+            <TodoItem todo={highPriorityTodo} {...mockHandlers} slimMode={true} />
+          </TodoItemWrapper>
+        );
+
+        const todoItem = screen.getByTestId('todo-item');
+        expect(todoItem).toHaveClass('todo-item--priority-high');
+        
+        // スリムモードでは優先度ドットは表示されない（新システムでは左端バー使用）
+        expect(screen.queryByTestId('todo-priority')).not.toBeInTheDocument();
+      });
+
+      it('should display priority in normal mode', () => {
+        const highPriorityTodo = { ...mockTodo, priority: 'high' as const };
+        render(
+          <TodoItemWrapper>
+            <TodoItem todo={highPriorityTodo} {...mockHandlers} slimMode={false} />
+          </TodoItemWrapper>
+        );
+
+        const todoItem = screen.getByTestId('todo-item');
+        expect(todoItem).toHaveClass('todo-item--priority-high');
+        
+        // 通常モードでは優先度バッジが表示される
+        expect(screen.getByTestId('todo-priority')).toBeInTheDocument();
+      });
+    });
+
+    describe('visual indicator removal', () => {
+      it('should not display priority dots in slim mode', () => {
+        const todoWithAllPriorities = [
+          { ...mockTodo, id: '1', priority: 'high' as const },
+          { ...mockTodo, id: '2', priority: 'medium' as const },
+          { ...mockTodo, id: '3', priority: 'low' as const }
+        ];
+
+        todoWithAllPriorities.forEach((todo) => {
+          const { unmount } = render(
+            <TodoItemWrapper>
+              <TodoItem todo={todo} {...mockHandlers} slimMode={true} />
+            </TodoItemWrapper>
+          );
+
+          // 優先度ドット（旧システム）は表示されない
+          expect(screen.queryByTestId('todo-priority')).not.toBeInTheDocument();
+          expect(screen.queryByTestId('priority-dot')).not.toBeInTheDocument();
+          
+          // 新システムの左端インジケーター + 背景グラデーション用のCSSクラスが適用される
+          const todoItem = screen.getByTestId('todo-item');
+          expect(todoItem).toHaveClass(`todo-item--priority-${todo.priority}`);
+
+          unmount();
+        });
+      });
+    });
+
+    describe('dark mode compatibility', () => {
+      it('should apply priority classes in dark mode', () => {
+        const highPriorityTodo = { ...mockTodo, priority: 'high' as const };
+        const { container } = render(
+          <div className="app app--dark">
+            <TodoItemWrapper>
+              <TodoItem todo={highPriorityTodo} {...mockHandlers} />
+            </TodoItemWrapper>
+          </div>
+        );
+
+        // ダークモードクラスが存在することを確認
+        expect(container.querySelector('.app--dark')).toBeInTheDocument();
+        
+        // 優先度クラスが正しく適用されることを確認
+        const todoItem = screen.getByTestId('todo-item');
+        expect(todoItem).toHaveClass('todo-item--priority-high');
+      });
+
+      it('should apply priority classes in dark mode with slim mode', () => {
+        const priorityLevels = ['high', 'medium', 'low'] as const;
+        
+        priorityLevels.forEach((priority) => {
+          const { unmount } = render(
+            <div className="app app--dark app--slim">
+              <TodoItemWrapper>
+                <TodoItem todo={{ ...mockTodo, priority }} {...mockHandlers} slimMode={true} />
+              </TodoItemWrapper>
+            </div>
+          );
+
+          // ダークモード + スリムモードクラスの存在確認
+          const container = document.querySelector('.app--dark.app--slim');
+          expect(container).toBeInTheDocument();
+          
+          // 優先度クラスが正しく適用されることを確認
+          const todoItem = screen.getByTestId('todo-item');
+          expect(todoItem).toHaveClass(`todo-item--priority-${priority}`);
+
+          unmount();
+        });
+      });
+
+      it('should maintain priority system functionality in dark mode', () => {
+        const { rerender } = render(
+          <div className="app app--dark">
+            <TodoItemWrapper>
+              <TodoItem todo={{ ...mockTodo, priority: 'low' }} {...mockHandlers} />
+            </TodoItemWrapper>
+          </div>
+        );
+
+        let todoItem = screen.getByTestId('todo-item');
+        expect(todoItem).toHaveClass('todo-item--priority-low');
+
+        // ダークモードでの優先度変更テスト
+        rerender(
+          <div className="app app--dark">
+            <TodoItemWrapper>
+              <TodoItem todo={{ ...mockTodo, priority: 'high' }} {...mockHandlers} />
+            </TodoItemWrapper>
+          </div>
+        );
+
+        todoItem = screen.getByTestId('todo-item');
+        expect(todoItem).toHaveClass('todo-item--priority-high');
+        expect(todoItem).not.toHaveClass('todo-item--priority-low');
+      });
     });
   });
 });
