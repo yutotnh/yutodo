@@ -1533,7 +1533,25 @@ function App() {
           onDragEnd={handleDragEnd}
           autoScroll={false} // 自動スクロール無効化でパフォーマンス向上
         >
-          <div data-testid="todo-list" className="todo-list">
+          <div 
+            data-testid="todo-list" 
+            className="todo-list"
+            style={{
+              height: (() => {
+                const isAddTodoVisible = isWindowFocused && isTasksView();
+                if (isSimpleTasksView()) {
+                  // スリムモード: AddTodoフォーム表示状態に応じて動的調整
+                  return isAddTodoVisible ? 'calc(100vh - 50px)' : '100vh';
+                } else {
+                  // 詳細モード: ヘッダー + AddTodoフォーム分を差し引く
+                  const headerVisible = showHeader;
+                  const headerHeight = headerVisible ? '44px' : '0px';
+                  const formHeight = isAddTodoVisible ? '80px' : '0px';
+                  return `calc(100vh - ${headerHeight} - ${formHeight})`;
+                }
+              })()
+            }}
+          >
             {pendingTodos.length === 0 && completedTodos.length === 0 ? (
               <div className="empty-state">
                 {todos.length === 0 ? (
