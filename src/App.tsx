@@ -440,10 +440,18 @@ function App() {
     }
 
     const handleMouseMove = (e: MouseEvent) => {
-      const threshold = 15; // 判定範囲を狭くして上部タスクの編集を妨げないように
+      const showThreshold = 15; // 表示判定範囲: 上部タスクの編集を妨げないよう狭く
+      const hideThreshold = 50; // 非表示判定範囲: 余裕を持たせて広く
+      
       // メニューが開いている時はヘッダーを隠さない
       if (!isMenuOpen) {
-        setShowHeader(e.clientY <= threshold);
+        if (showHeader) {
+          // 現在表示中: hideThreshold を超えたら非表示にする
+          setShowHeader(e.clientY <= hideThreshold);
+        } else {
+          // 現在非表示: showThreshold 以内なら表示する
+          setShowHeader(e.clientY <= showThreshold);
+        }
       }
     };
 
