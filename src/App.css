@@ -236,7 +236,11 @@ body {
 .app-main {
   flex: 1;
   overflow: visible; /* タスクリストが独立スクロールするためメインコンテナはvisible */
-  /* マージンを除去 - ヘッダーはオーバーレイ表示 */
+  /* Detailed mode: Add top padding for fixed header */
+}
+
+.app:not(.app--slim) .app-main {
+  padding-top: 28px; /* Header height to prevent content overlap */
 }
 
 
@@ -842,15 +846,20 @@ body {
   z-index: 10000; /* Always on top to allow window dragging even with modals open */
   transition: transform 0.2s ease, opacity 0.2s ease;
   opacity: 0.7;
+  /* Prevent layout shifts by ensuring header never affects document flow */
+  pointer-events: auto;
 }
 
 /* 詳細モードでは要素が重ならないように配置 */
 .app:not(.app--slim) .app-header {
-  position: static;
+  /* Keep header as fixed positioned to prevent layout shifts */
+  position: fixed;
   opacity: 1;
-  transform: none;
+  transform: translateY(0);
   background: rgba(255, 255, 255, 0.95);
   border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+  /* Force visible state in detailed mode */
+  visibility: visible;
 }
 
 .app-header--visible {
@@ -866,8 +875,9 @@ body {
 /* 詳細モードでは表示/非表示アニメーションを無効化 */
 .app:not(.app--slim) .app-header--visible,
 .app:not(.app--slim) .app-header--hidden {
-  transform: none;
+  transform: translateY(0);
   opacity: 1;
+  visibility: visible;
 }
 
 .app-header:active {
@@ -1042,6 +1052,7 @@ body {
   overflow: visible; /* ドロップダウンメニュー表示のため */
   display: flex;
   flex-direction: column;
+  /* Ensure consistent layout regardless of header positioning */
 }
 
 /* Add Todo Form */

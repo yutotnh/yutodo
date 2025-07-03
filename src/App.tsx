@@ -434,80 +434,43 @@ function App() {
 
   // マウス位置によるヘッダー表示制御（オーバーレイ方式）
   useEffect(() => {
+    // Only apply auto-hide behavior in slim mode
+    if (currentView !== 'tasks-simple') {
+      return; // In detailed mode, header is always visible
+    }
+
     const handleMouseMove = (e: MouseEvent) => {
       const threshold = 15; // 判定範囲を狭くして上部タスクの編集を妨げないように
-      // メニューが開いている時またはAltキーが押されている時はヘッダーを隠さない
+      // メニューが開いている時はヘッダーを隠さない
       if (!isMenuOpen) {
         setShowHeader(e.clientY <= threshold);
       }
     };
 
-    const handleMouseEnter = () => {
-      // ウィンドウにマウスが入った時の処理
-    };
-
     const handleMouseLeave = () => {
-      // メニューが開いている時またはAltキーが押されている時はヘッダーを隠さない
+      // メニューが開いている時はヘッダーを隠さない
       if (!isMenuOpen) {
         setShowHeader(false);
       }
     };
 
-    // Tauri環境での追加対応
     const handleWindowBlur = () => {
       if (!isMenuOpen) {
         setShowHeader(false);
       }
     };
 
-    const handleVisibilityChange = () => {
-      if (document.hidden && !isMenuOpen) {
-        setShowHeader(false);
-      }
-    };
-
-    // bodyレベルでもマウス追跡を追加
-    const handleBodyMouseLeave = () => {
-      if (!isMenuOpen) {
-        setShowHeader(false);
-      }
-    };
-
-    // htmlレベルでのマウス追跡
-    const handleDocumentMouseLeave = () => {
-      if (!isMenuOpen) {
-        setShowHeader(false);
-      }
-    };
-
-    // ウィンドウレベルでのマウス追跡
-    const handleWindowMouseOut = (e: MouseEvent) => {
-      // マウスがウィンドウから完全に出た場合
-      if (!e.relatedTarget && !isMenuOpen) {
-        setShowHeader(false);
-      }
-    };
-
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseenter', handleMouseEnter);
+    // Use only essential event listeners to reduce conflicts
+    document.addEventListener('mousemove', handleMouseMove, { passive: true });
     document.addEventListener('mouseleave', handleMouseLeave);
-    document.body.addEventListener('mouseleave', handleBodyMouseLeave);
-    document.documentElement.addEventListener('mouseleave', handleDocumentMouseLeave);
-    window.addEventListener('mouseout', handleWindowMouseOut);
     window.addEventListener('blur', handleWindowBlur);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
       document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseenter', handleMouseEnter);
       document.removeEventListener('mouseleave', handleMouseLeave);
-      document.body.removeEventListener('mouseleave', handleBodyMouseLeave);
-      document.documentElement.removeEventListener('mouseleave', handleDocumentMouseLeave);
-      window.removeEventListener('mouseout', handleWindowMouseOut);
       window.removeEventListener('blur', handleWindowBlur);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [isMenuOpen]);
+  }, [isMenuOpen, currentView]); // Use currentView instead of isSimpleTasksView function
 
   // ウィンドウフォーカス状態を監視
   useEffect(() => {
@@ -1543,11 +1506,10 @@ function App() {
                   // スリムモード: AddTodoフォーム表示状態に応じて動的調整
                   return isAddTodoVisible ? 'calc(100vh - 50px)' : '100vh';
                 } else {
-                  // 詳細モード: ヘッダー + AddTodoフォーム分を差し引く
-                  const headerVisible = showHeader;
-                  const headerHeight = headerVisible ? '44px' : '0px';
+                  // 詳細モード: ヘッダーは常に固定表示なので一定の高さを確保
+                  // Header height (28px) is handled by CSS padding-top on .app-main
                   const formHeight = isAddTodoVisible ? '80px' : '0px';
-                  return `calc(100vh - ${headerHeight} - ${formHeight})`;
+                  return `calc(100vh - 28px - ${formHeight})`;
                 }
               })()
             }}
