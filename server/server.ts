@@ -982,8 +982,14 @@ class ScheduleExecutor {
       }
     }
 
-    // Check if current time has passed the next execution time
+    // Parse nextExecution time properly (local datetime format)
     const nextExecTime = new Date(schedule.nextExecution);
+    if (isNaN(nextExecTime.getTime())) {
+      console.error(`Invalid nextExecution time for schedule ${schedule.id}: ${schedule.nextExecution}`);
+      return false;
+    }
+
+    // Check if current time has passed the next execution time
     return now >= nextExecTime;
   }
 
@@ -1167,7 +1173,14 @@ class ScheduleExecutor {
   }
 
   private updateScheduleExecution(schedule: Schedule, executionTime: Date) {
-    const lastExecuted = executionTime.toISOString();
+    // Store lastExecuted in local timezone format for consistency
+    const lastExecutedDateStr = executionTime.getFullYear() + '-' + 
+                               String(executionTime.getMonth() + 1).padStart(2, '0') + '-' + 
+                               String(executionTime.getDate()).padStart(2, '0');
+    const lastExecutedTimeStr = String(executionTime.getHours()).padStart(2, '0') + ':' + 
+                               String(executionTime.getMinutes()).padStart(2, '0') + ':' + 
+                               String(executionTime.getSeconds()).padStart(2, '0');
+    const lastExecuted = `${lastExecutedDateStr}T${lastExecutedTimeStr}`;
     const nextExecution = this.calculateNextExecution(schedule, executionTime);
 
     db.run(
@@ -1196,18 +1209,19 @@ class ScheduleExecutor {
   public calculateInitialNextExecution(schedule: Schedule): string | null {
     // For 'once' type schedules, the next execution is the start date + time
     if (schedule.type === 'once') {
-      // Parse the date as local time, not UTC
-      const startDateTime = new Date(schedule.startDate + 'T00:00:00');
-      if (schedule.time) {
-        const [hours, minutes] = schedule.time.split(':').map(Number);
-        startDateTime.setHours(hours, minutes, 0, 0);
-      } else {
-        startDateTime.setHours(9, 0, 0, 0); // Default to 9:00 AM
+      // Create date string in local timezone format to avoid UTC conversion
+      const timeStr = schedule.time || '09:00';
+      const localDateTimeStr = `${schedule.startDate}T${timeStr}:00`;
+      
+      // Validate the date
+      const startDateTime = new Date(localDateTimeStr);
+      if (isNaN(startDateTime.getTime())) {
+        console.error(`Invalid date/time for schedule ${schedule.id}: ${localDateTimeStr}`);
+        return null;
       }
       
-      // Return the scheduled time regardless of whether it's past or future
-      // This allows users to see when it was/will be scheduled
-      return startDateTime.toISOString();
+      // Return the local datetime string to preserve timezone
+      return localDateTimeStr;
     }
     
     // For recurring schedules, calculate the next execution time from now
@@ -1338,11 +1352,17 @@ class ScheduleExecutor {
     }
 
     // Check if we've exceeded the end date
-    if (schedule.endDate && next.toISOString().split('T')[0] > schedule.endDate) {
+    const nextDateStr = next.getFullYear() + '-' + 
+                       String(next.getMonth() + 1).padStart(2, '0') + '-' + 
+                       String(next.getDate()).padStart(2, '0');
+    if (schedule.endDate && nextDateStr > schedule.endDate) {
       return null;
     }
 
-    return next.toISOString();
+    // Return local datetime string to preserve timezone
+    const nextTimeStr = String(next.getHours()).padStart(2, '0') + ':' + 
+                       String(next.getMinutes()).padStart(2, '0');
+    return `${nextDateStr}T${nextTimeStr}:00`;
   }
 
   private calculateNextExecution(schedule: Schedule, lastExecution: Date): string | null {

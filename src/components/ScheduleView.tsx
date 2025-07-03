@@ -131,13 +131,9 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
       switch (schedule.type) {
         case 'once': {
           // サーバー側のロジックと同じ方法で日付を処理
-          const startDateTime = new Date(schedule.startDate + 'T00:00:00');
-          if (schedule.time) {
-            const [hours, minutes] = schedule.time.split(':').map(Number);
-            startDateTime.setHours(hours, minutes, 0, 0);
-          } else {
-            startDateTime.setHours(9, 0, 0, 0); // Default to 9:00 AM
-          }
+          const timeStr = schedule.time || '09:00';
+          const localDateTimeStr = `${schedule.startDate}T${timeStr}:00`;
+          const startDateTime = new Date(localDateTimeStr);
           return startDateTime.toLocaleDateString() + (schedule.time ? ` ${schedule.time}` : '');
         }
         case 'daily':
@@ -152,8 +148,20 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
           return t('schedule.pending');
       }
     }
-    return new Date(schedule.nextExecution).toLocaleDateString() + ' ' + 
-           new Date(schedule.nextExecution).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+    
+    // Handle the new local datetime format from server
+    // Check if it's in local format (YYYY-MM-DDTHH:MM:SS) or UTC format
+    let nextDate: Date;
+    if (schedule.nextExecution.endsWith('Z') || schedule.nextExecution.includes('+')) {
+      // UTC or timezone-aware format - parse normally
+      nextDate = new Date(schedule.nextExecution);
+    } else {
+      // Local datetime format from server - treat as local time
+      nextDate = new Date(schedule.nextExecution);
+    }
+    
+    return nextDate.toLocaleDateString() + ' ' + 
+           nextDate.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
   };
 
   // スケジュールアイテムをレンダリングする関数
