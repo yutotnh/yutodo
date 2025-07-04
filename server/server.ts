@@ -555,6 +555,107 @@ function setupSocketHandlers() {
     });
   });
 
+  // Delete all completed todos
+  socket.on('delete-completed-todos', () => {
+    const startTime = Date.now();
+    
+    // Monitor socket event
+    if (observabilityManager) {
+      observabilityManager.monitorSocketEvent('delete-completed-todos', 'inbound', null, {
+        socketId: socket.id
+      });
+    }
+
+    // First get all completed todo IDs to broadcast their deletion
+    const dbStartTime = Date.now();
+    db.all('SELECT id FROM todos WHERE completed = 1', (err, rows: any[]) => {
+      const dbDuration = Date.now() - dbStartTime;
+      
+      if (err) {
+        console.error('❌ Database error:', err);
+        socket.emit('error', err.message);
+        
+        // Monitor database error
+        if (observabilityManager) {
+          observabilityManager.monitorError(err, {
+            socketId: socket.id,
+            operation: 'delete-completed-todos-select',
+            component: 'database'
+          });
+        }
+        return;
+      }
+
+      const completedTodoIds = rows.map(row => row.id);
+
+      // Monitor database query
+      if (observabilityManager) {
+        observabilityManager.monitorDatabaseQuery(
+          'SELECT id FROM todos WHERE completed = 1',
+          'todos',
+          'SELECT',
+          dbDuration,
+          { socketId: socket.id, recordCount: completedTodoIds.length }
+        );
+      }
+
+      if (completedTodoIds.length === 0) {
+        // No completed todos to delete
+        socket.emit('completed-todos-deleted', { count: 0 });
+        return;
+      }
+
+      // Delete all completed todos
+      const deleteStartTime = Date.now();
+      db.run('DELETE FROM todos WHERE completed = 1', function(err) {
+        const deleteDuration = Date.now() - deleteStartTime;
+        const totalDuration = Date.now() - startTime;
+        
+        if (err) {
+          console.error('❌ Database error deleting completed todos:', err);
+          socket.emit('error', err.message);
+          
+          // Monitor database error
+          if (observabilityManager) {
+            observabilityManager.monitorError(err, {
+              socketId: socket.id,
+              operation: 'delete-completed-todos-delete',
+              component: 'database'
+            });
+          }
+          return;
+        }
+
+        // Monitor database operation
+        if (observabilityManager) {
+          observabilityManager.monitorDatabaseQuery(
+            'DELETE FROM todos WHERE completed = 1',
+            'todos',
+            'DELETE',
+            deleteDuration,
+            { socketId: socket.id, affectedRows: this.changes }
+          );
+        }
+
+        // Broadcast each deleted todo ID to all clients for state synchronization
+        completedTodoIds.forEach(todoId => {
+          io.emit('todo-deleted', todoId);
+        });
+
+        // Send completion notification with count
+        socket.emit('completed-todos-deleted', { count: this.changes });
+
+        // Monitor outbound socket event
+        if (observabilityManager) {
+          observabilityManager.monitorSocketEvent('completed-todos-deleted', 'outbound', { count: this.changes }, {
+            socketId: socket.id,
+            duration: totalDuration
+          });
+        }
+      });
+    });
+  });
+
   // Toggle todo completion
   socket.on('toggle-todo', (todoId: string) => {
     const now = new Date().toISOString();

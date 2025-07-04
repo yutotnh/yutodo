@@ -64,6 +64,8 @@ export interface CommandContext {
   // Schedule handlers
   onDeleteInactiveSchedules?: () => void;
   onCreateSchedule?: () => void;
+  // Task bulk operations
+  onDeleteCompletedTasks?: () => void;
 }
 
 export interface CommandRegistry {

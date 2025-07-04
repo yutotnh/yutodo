@@ -17,6 +17,8 @@
     "deleteTaskConfirm": "Delete \"{{title}}\"?",
     "deleteSelectedTasks": "Delete Selected Tasks",
     "deleteSelectedConfirm": "Delete selected tasks?",
+    "deleteCompletedTasks": "Delete Completed Tasks",
+    "deleteCompletedTasksConfirm": "Delete all {{count}} completed tasks?",
     "tasksWillBeDeleted": "{{count}} tasks will be deleted.",
     "actionCannotBeUndone": "This action cannot be undone.",
     "selectDateTime": "Select date and time...",
@@ -424,6 +426,10 @@
         "toggleCompletion": {
           "title": "Toggle Task Completion",
           "description": "Mark selected tasks as complete/incomplete"
+        },
+        "deleteCompleted": {
+          "title": "Delete Completed Tasks",
+          "description": "Delete all completed tasks"
         }
       },
       "schedule": {

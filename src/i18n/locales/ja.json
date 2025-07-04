@@ -17,6 +17,8 @@
     "deleteTaskConfirm": "「{{title}}」を削除しますか？",
     "deleteSelectedTasks": "選択されたタスクを削除",
     "deleteSelectedConfirm": "選択されたタスクを削除しますか？",
+    "deleteCompletedTasks": "完了済みタスクを削除",
+    "deleteCompletedTasksConfirm": "完了済みタスク{{count}}個を全て削除しますか？",
     "tasksWillBeDeleted": "{{count}}個のタスクが削除されます。",
     "actionCannotBeUndone": "この操作は取り消すことができません。",
     "selectDateTime": "日時を選択...",
@@ -423,6 +425,10 @@
         "toggleCompletion": {
           "title": "タスク完了状態を切り替え",
           "description": "選択したタスクの完了/未完了を切り替え"
+        },
+        "deleteCompleted": {
+          "title": "完了済みタスクを削除",
+          "description": "完了済みタスクを全て削除"
         }
       },
       "schedule": {

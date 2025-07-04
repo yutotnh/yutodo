@@ -126,6 +126,8 @@ function App() {
     todoIds: string[];
     title: string;
     message: string;
+    itemCount?: number;
+    isCompletedTasksBulkDelete?: boolean;
   }>({ isOpen: false, todoIds: [], title: '', message: '' });
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [sessionAlwaysOnTop, setSessionAlwaysOnTop] = useState(false);
@@ -153,6 +155,7 @@ function App() {
     addTodo, 
     updateTodo, 
     deleteTodo, 
+    deleteCompletedTodos,
     toggleTodo, 
     bulkImport, 
     reorderTodos,
@@ -934,9 +937,19 @@ function App() {
   };
 
   const confirmDelete = () => {
-    deleteConfirm.todoIds.forEach(todoId => {
-      deleteTodo(todoId);
-    });
+    logger.debug('confirmDelete called', { isCompletedTasksBulkDelete: deleteConfirm.isCompletedTasksBulkDelete, todoIds: deleteConfirm.todoIds });
+    
+    if (deleteConfirm.isCompletedTasksBulkDelete) {
+      logger.debug('Proceeding with bulk completed tasks deletion');
+      // Bulk completed tasks deletion
+      deleteCompletedTodos();
+    } else {
+      logger.debug('Proceeding with individual/selected todos deletion');
+      // Individual or selected todos deletion
+      deleteConfirm.todoIds.forEach(todoId => {
+        deleteTodo(todoId);
+      });
+    }
     setSelectedTodos(new Set());
     setSelectionAnchorIndex(-1);
   };
@@ -993,6 +1006,33 @@ function App() {
 
     // 一括削除
     inactiveScheduleIds.forEach(id => deleteSchedule(id));
+  };
+
+  const handleDeleteCompletedTasks = () => {
+    const completedTasks = todos.filter(todo => todo.completed);
+    logger.debug('handleDeleteCompletedTasks called', { completedTasksCount: completedTasks.length });
+    
+    if (completedTasks.length === 0) {
+      logger.debug('No completed tasks to delete');
+      return;
+    }
+
+    if (settings.confirmDelete) {
+      logger.debug('Showing confirmation dialog for completed tasks deletion');
+      // Show confirmation dialog
+      setDeleteConfirm({
+        isOpen: true,
+        todoIds: [], // Empty array indicates bulk completed deletion
+        title: t('tasks.deleteCompletedTasks'),
+        message: t('tasks.deleteCompletedTasksConfirm', { count: completedTasks.length }),
+        itemCount: completedTasks.length,
+        isCompletedTasksBulkDelete: true
+      });
+    } else {
+      logger.debug('Deleting completed tasks without confirmation');
+      // Delete without confirmation
+      deleteCompletedTodos();
+    }
   };
 
   const handleToggleSchedule = (scheduleId: string) => {
@@ -1394,7 +1434,9 @@ function App() {
     onShowSchedules: () => setCurrentView('schedules'),
     // Schedule handlers
     onDeleteInactiveSchedules: handleDeleteInactiveSchedules,
-    onCreateSchedule: handleCreateSchedule
+    onCreateSchedule: handleCreateSchedule,
+    // Task bulk operations
+    onDeleteCompletedTasks: handleDeleteCompletedTasks
   };
 
   return (
@@ -1714,7 +1756,7 @@ function App() {
         onConfirm={confirmDelete}
         title={deleteConfirm.title}
         message={deleteConfirm.message}
-        itemCount={deleteConfirm.todoIds.length}
+        itemCount={deleteConfirm.itemCount || deleteConfirm.todoIds.length}
       />
 
       {showScheduleModal && (

@@ -189,6 +189,18 @@ const createTaskCommands = (t: TFunction): CommandAction[] => [
     },
     isEnabled: (context?: CommandContext) => (context?.selectedTasks.size || 0) > 0,
     isVisible: (context?: CommandContext) => context?.startupView === 'tasks-detailed' || context?.startupView === 'tasks-simple'
+  },
+  {
+    id: 'task.deleteCompleted',
+    title: t('commandPalette.commands.task.deleteCompleted.title', 'Delete Completed Tasks'),
+    description: t('commandPalette.commands.task.deleteCompleted.description', 'Delete all completed tasks'),
+    category: 'task',
+    keywords: ['delete', 'remove', 'completed', 'finished', 'done', 'clear'],
+    icon: 'trash',
+    execute: (context: CommandContext) => {
+      context.onDeleteCompletedTasks?.();
+    },
+    isVisible: (context?: CommandContext) => context?.startupView === 'tasks-detailed' || context?.startupView === 'tasks-simple'
   }
 ];
 

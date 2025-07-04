@@ -80,6 +80,11 @@ export const useSocket = (serverUrl: string) => {
       setTodos(prev => prev.filter(todo => todo.id !== todoId));
     });
 
+    socket.on('completed-todos-deleted', () => {
+      // The individual todo-deleted events will handle the state updates
+      // This event is just for confirmation/notification purposes
+    });
+
     socket.on('error', (error: string) => {
       logger.error('Socket error:', error);
     });
@@ -124,6 +129,14 @@ export const useSocket = (serverUrl: string) => {
   const deleteTodo = (todoId: string) => {
     if (socketRef.current) {
       socketRef.current.emit('delete-todo', todoId);
+    }
+  };
+
+  const deleteCompletedTodos = () => {
+    if (socketRef.current) {
+      socketRef.current.emit('delete-completed-todos');
+    } else {
+      logger.error('Cannot emit delete-completed-todos: socket not connected');
     }
   };
 
@@ -197,6 +210,7 @@ export const useSocket = (serverUrl: string) => {
     addTodo,
     updateTodo,
     deleteTodo,
+    deleteCompletedTodos,
     toggleTodo,
     bulkImport,
     reorderTodos,
