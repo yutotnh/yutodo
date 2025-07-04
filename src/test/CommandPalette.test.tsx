@@ -90,6 +90,9 @@ describe('CommandPalette - Basic Tests', () => {
       onToggleCaseSensitive: vi.fn(),
       onToggleRegex: vi.fn(),
       onToggleWholeWord: vi.fn(),
+      onDeleteInactiveSchedules: vi.fn(),
+      onCreateSchedule: vi.fn(),
+      onDeleteCompletedTasks: vi.fn(),
     };
 
     mockOnClose = vi.fn();
@@ -601,6 +604,271 @@ describe('CommandPalette - Basic Tests', () => {
 
       expect(screen.getByText('New Window')).toBeInTheDocument();
       expect(screen.getByText('Ctrl+Shift+N')).toBeInTheDocument();
+    });
+  });
+
+  describe('Schedule Commands Integration', () => {
+    let scheduleContext: CommandContext;
+    let scheduleCommands: CommandAction[];
+
+    beforeEach(() => {
+      scheduleContext = {
+        ...mockContext,
+        currentView: 'schedules',
+        startupView: 'schedules',
+      };
+
+      scheduleCommands = [
+        {
+          id: 'schedule.deleteInactive',
+          title: 'Delete Inactive Schedules',
+          description: 'Delete all inactive and completed schedules',
+          category: 'schedule',
+          keywords: ['delete', 'remove', 'inactive', 'schedules', 'cleanup'],
+          icon: 'trash',
+          execute: vi.fn(),
+          isVisible: (context?: CommandContext) => context?.currentView === 'schedules',
+        },
+        {
+          id: 'schedule.create',
+          title: 'Create Schedule',
+          description: 'Create a new schedule',
+          category: 'schedule',
+          keywords: ['new', 'create', 'add', 'schedule'],
+          icon: 'plus',
+          execute: vi.fn(),
+          isVisible: (context?: CommandContext) => context?.currentView === 'schedules',
+        },
+      ];
+    });
+
+    it('should display schedule commands in schedules view', () => {
+      mockCommandRegistry.getFilteredCommands.mockReturnValue(scheduleCommands);
+
+      render(
+        <CommandPalette
+          isOpen={true}
+          onClose={mockOnClose}
+          context={scheduleContext}
+        />
+      );
+
+      expect(screen.getByText('Delete Inactive Schedules')).toBeInTheDocument();
+      expect(screen.getByText('Create Schedule')).toBeInTheDocument();
+      expect(screen.getByText('Delete all inactive and completed schedules')).toBeInTheDocument();
+      expect(screen.getByText('Create a new schedule')).toBeInTheDocument();
+    });
+
+    it('should not display schedule commands in tasks view', () => {
+      const tasksContext = {
+        ...mockContext,
+        currentView: 'tasks-detailed' as const,
+      };
+
+      // Mock filtered commands to return empty array for tasks view
+      mockCommandRegistry.getFilteredCommands.mockReturnValue([]);
+
+      render(
+        <CommandPalette
+          isOpen={true}
+          onClose={mockOnClose}
+          context={tasksContext}
+        />
+      );
+
+      expect(screen.queryByText('Delete Inactive Schedules')).not.toBeInTheDocument();
+      expect(screen.queryByText('Create Schedule')).not.toBeInTheDocument();
+    });
+
+    it('should execute delete inactive schedules command', async () => {
+      mockCommandRegistry.getFilteredCommands.mockReturnValue(scheduleCommands);
+
+      render(
+        <CommandPalette
+          isOpen={true}
+          onClose={mockOnClose}
+          context={scheduleContext}
+        />
+      );
+
+      const deleteCommand = screen.getByText('Delete Inactive Schedules');
+      fireEvent.click(deleteCommand);
+
+      expect(mockCommandRegistry.executeCommand).toHaveBeenCalledWith(
+        'schedule.deleteInactive',
+        scheduleContext
+      );
+    });
+
+    it('should execute create schedule command', async () => {
+      mockCommandRegistry.getFilteredCommands.mockReturnValue(scheduleCommands);
+
+      render(
+        <CommandPalette
+          isOpen={true}
+          onClose={mockOnClose}
+          context={scheduleContext}
+        />
+      );
+
+      const createCommand = screen.getByText('Create Schedule');
+      fireEvent.click(createCommand);
+
+      expect(mockCommandRegistry.executeCommand).toHaveBeenCalledWith(
+        'schedule.create',
+        scheduleContext
+      );
+    });
+
+    it('should filter schedule commands by search query', () => {
+      mockCommandRegistry.getFilteredCommands.mockReturnValue(scheduleCommands);
+
+      render(
+        <CommandPalette
+          isOpen={true}
+          onClose={mockOnClose}
+          context={scheduleContext}
+        />
+      );
+
+      const searchInput = screen.getByPlaceholderText('Search commands...');
+      fireEvent.change(searchInput, { target: { value: 'delete' } });
+
+      expect(mockCommandRegistry.getFilteredCommands).toHaveBeenCalledWith('delete', scheduleContext);
+    });
+
+    it('should show filtered schedule commands for "inactive" keyword', () => {
+      const filteredCommands = [scheduleCommands[0]]; // Only delete inactive command
+      mockCommandRegistry.getFilteredCommands.mockReturnValue(filteredCommands);
+
+      render(
+        <CommandPalette
+          isOpen={true}
+          onClose={mockOnClose}
+          context={scheduleContext}
+        />
+      );
+
+      const searchInput = screen.getByPlaceholderText('Search commands...');
+      fireEvent.change(searchInput, { target: { value: 'inactive' } });
+
+      expect(screen.getByText('Delete Inactive Schedules')).toBeInTheDocument();
+      expect(screen.queryByText('Create Schedule')).not.toBeInTheDocument();
+    });
+
+    it('should navigate schedule commands with keyboard', () => {
+      mockCommandRegistry.getFilteredCommands.mockReturnValue(scheduleCommands);
+
+      render(
+        <CommandPalette
+          isOpen={true}
+          onClose={mockOnClose}
+          context={scheduleContext}
+        />
+      );
+
+      const commandPalette = screen.getByRole('dialog').querySelector('.command-palette');
+      
+      // First command should be selected by default
+      const firstItem = screen.getAllByRole('option')[0];
+      expect(firstItem).toHaveAttribute('aria-selected', 'true');
+      
+      // Navigate to second command
+      fireEvent.keyDown(commandPalette!, { key: 'ArrowDown' });
+      
+      const secondItem = screen.getAllByRole('option')[1];
+      expect(secondItem).toHaveAttribute('aria-selected', 'true');
+    });
+
+    it('should execute schedule command with Enter key', async () => {
+      mockCommandRegistry.getFilteredCommands.mockReturnValue(scheduleCommands);
+
+      render(
+        <CommandPalette
+          isOpen={true}
+          onClose={mockOnClose}
+          context={scheduleContext}
+        />
+      );
+
+      const commandPalette = screen.getByRole('dialog').querySelector('.command-palette');
+      
+      // First command is selected by default, press Enter to execute
+      fireEvent.keyDown(commandPalette!, { key: 'Enter' });
+
+      expect(mockCommandRegistry.executeCommand).toHaveBeenCalledWith(
+        'schedule.deleteInactive',
+        scheduleContext
+      );
+    });
+
+    it('should reload schedule commands when switching to schedules view', () => {
+      const { rerender } = render(
+        <CommandPalette
+          isOpen={true}
+          onClose={mockOnClose}
+          context={mockContext} // Initially in tasks view
+        />
+      );
+
+      // Clear previous calls
+      vi.clearAllMocks();
+
+      // Switch to schedules view
+      rerender(
+        <CommandPalette
+          isOpen={true}
+          onClose={mockOnClose}
+          context={scheduleContext}
+        />
+      );
+
+      expect(mockCommandRegistry.getFilteredCommands).toHaveBeenCalledWith('', scheduleContext);
+    });
+
+    it('should handle mixed command categories in schedules view', () => {
+      const mixedCommands = [
+        ...scheduleCommands,
+        {
+          id: 'settings.open',
+          title: 'Open Settings',
+          description: 'Open application settings',
+          category: 'settings',
+          keywords: ['settings', 'preferences'],
+          execute: vi.fn(),
+        },
+      ];
+
+      mockCommandRegistry.getFilteredCommands.mockReturnValue(mixedCommands);
+
+      render(
+        <CommandPalette
+          isOpen={true}
+          onClose={mockOnClose}
+          context={scheduleContext}
+        />
+      );
+
+      // All commands should be displayed
+      expect(screen.getByText('Delete Inactive Schedules')).toBeInTheDocument();
+      expect(screen.getByText('Create Schedule')).toBeInTheDocument();
+      expect(screen.getByText('Open Settings')).toBeInTheDocument();
+    });
+
+    it('should pass correct context with schedule handlers', () => {
+      render(
+        <CommandPalette
+          isOpen={true}
+          onClose={mockOnClose}
+          context={scheduleContext}
+        />
+      );
+
+      // Verify the context passed includes schedule handlers
+      const passedContext = mockCommandRegistry.getFilteredCommands.mock.calls[0][1];
+      expect(passedContext.onDeleteInactiveSchedules).toBeDefined();
+      expect(passedContext.onCreateSchedule).toBeDefined();
+      expect(passedContext.currentView).toBe('schedules');
     });
   });
 });

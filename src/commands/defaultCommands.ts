@@ -280,6 +280,34 @@ const createSearchCommands = (t: TFunction): CommandAction[] => [
   }
 ];
 
+// Schedule Commands
+const createScheduleCommands = (t: TFunction): CommandAction[] => [
+  {
+    id: 'schedule.deleteInactive',
+    title: t('commandPalette.commands.schedule.deleteInactiveSchedules.title', 'Delete Inactive Schedules'),
+    description: t('commandPalette.commands.schedule.deleteInactiveSchedules.description', 'Delete all inactive and completed schedules'),
+    category: 'schedule',
+    keywords: ['delete', 'remove', 'inactive', 'schedules', 'cleanup', 'finished', 'completed'],
+    icon: 'trash',
+    execute: (context: CommandContext) => {
+      context.onDeleteInactiveSchedules?.();
+    },
+    isVisible: (context?: CommandContext) => context?.currentView === 'schedules'
+  },
+  {
+    id: 'schedule.create',
+    title: t('commandPalette.commands.schedule.createSchedule.title', 'Create Schedule'),
+    description: t('commandPalette.commands.schedule.createSchedule.description', 'Create a new schedule'),
+    category: 'schedule',
+    keywords: ['new', 'create', 'add', 'schedule'],
+    icon: 'plus',
+    execute: (context: CommandContext) => {
+      context.onCreateSchedule?.();
+    },
+    isVisible: (context?: CommandContext) => context?.currentView === 'schedules'
+  }
+];
+
 // Settings Commands
 const createSettingsCommands = (t: TFunction): CommandAction[] => [
   {
@@ -313,6 +341,7 @@ export function registerDefaultCommands(t: TFunction): void {
   const fileCommands = createFileCommands(t);
   const viewCommands = createViewCommands(t);
   const taskCommands = createTaskCommands(t);
+  const scheduleCommands = createScheduleCommands(t);
   const searchCommands = createSearchCommands(t);
   const settingsCommands = createSettingsCommands(t);
 
@@ -320,6 +349,7 @@ export function registerDefaultCommands(t: TFunction): void {
     ...fileCommands,
     ...viewCommands,
     ...taskCommands,
+    ...scheduleCommands,
     ...searchCommands,
     ...settingsCommands
   ];
@@ -338,6 +368,7 @@ export {
   createFileCommands,
   createViewCommands,
   createTaskCommands,
+  createScheduleCommands,
   createSearchCommands,
   createSettingsCommands
 };
