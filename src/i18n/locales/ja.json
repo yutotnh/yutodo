@@ -63,6 +63,7 @@
     "multipleSelection": "複数選択",
     "rangeSelection": "範囲選択",
     "new-task": "新しいタスクを追加",
+    "new-window": "新しいウィンドウを開く",
     "command-palette": "コマンドパレットを開く",
     "open-settings": "設定を開く",
     "toggle-search": "検索の表示切替",
@@ -223,6 +224,7 @@
     "view": "表示",
     "help": "ヘルプ",
     "newTask": "新しいタスク",
+    "newWindow": "新しいウィンドウ",
     "importTasks": "タスクを読み込み",
     "exportTasks": "タスクを書き出し",
     "quit": "終了",
@@ -369,6 +371,10 @@
         "importTasks": {
           "title": "タスクをインポート", 
           "description": "TOMLファイルからタスクをインポート"
+        },
+        "newWindow": {
+          "title": "新しいウィンドウ",
+          "description": "新しいYuToDoウィンドウを開く"
         }
       },
       "view": {

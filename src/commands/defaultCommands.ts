@@ -27,6 +27,18 @@ const createFileCommands = (t: TFunction): CommandAction[] => [
     execute: (context: CommandContext) => {
       context.onImportTasks();
     }
+  },
+  {
+    id: 'file.new.window',
+    title: t('commandPalette.commands.file.newWindow.title', 'New Window'),
+    description: t('commandPalette.commands.file.newWindow.description', 'Open a new YuToDo window'),
+    category: 'file',
+    keywords: ['new', 'window', 'open'],
+    keybinding: getShortcutKey('onNewWindow'),
+    icon: 'external-link',
+    execute: (context: CommandContext) => {
+      context.onNewWindow();
+    }
   }
 ];
 

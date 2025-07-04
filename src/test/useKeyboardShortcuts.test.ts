@@ -12,6 +12,7 @@ vi.mock('../utils/osDetection', () => ({
 describe('useKeyboardShortcuts', () => {
   const mockHandlers = {
     onNewTask: vi.fn(),
+    onNewWindow: vi.fn(),
     onToggleSettings: vi.fn(),
     onFocusSearch: vi.fn(),
     onOpenCommandPalette: vi.fn(),
@@ -32,6 +33,7 @@ describe('useKeyboardShortcuts', () => {
 
   const mockKeybindings = [
     { key: 'Ctrl+N', command: 'newTask', when: '!inputFocus' },
+    { key: 'Ctrl+Shift+N', command: 'newWindow' },
     { key: 'Ctrl+,', command: 'openSettings' },
     { key: 'Ctrl+F', command: 'focusSearch' },
     { key: 'Ctrl+Shift+P', command: 'openCommandPalette' },
@@ -428,6 +430,13 @@ describe('useKeyboardShortcuts', () => {
         simulateKeyDown('3', { ctrlKey: true });
       });
       expect(mockHandlers.onShowSchedules).toHaveBeenCalled();
+
+      // Test newWindow (Ctrl+Shift+N)
+      vi.clearAllMocks();
+      act(() => {
+        simulateKeyDown('n', { ctrlKey: true, shiftKey: true });
+      });
+      expect(mockHandlers.onNewWindow).toHaveBeenCalled();
     });
   });
 

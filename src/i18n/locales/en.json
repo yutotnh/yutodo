@@ -63,6 +63,7 @@
     "multipleSelection": "Multiple selection",
     "rangeSelection": "Range selection",
     "new-task": "Add new task",
+    "new-window": "Open new window",
     "command-palette": "Open command palette",
     "open-settings": "Open settings",
     "toggle-search": "Toggle search",
@@ -223,6 +224,7 @@
     "view": "View",
     "help": "Help",
     "newTask": "New Task",
+    "newWindow": "New Window",
     "importTasks": "Import Tasks",
     "exportTasks": "Export Tasks",
     "quit": "Quit",
@@ -370,6 +372,10 @@
         "importTasks": {
           "title": "Import Tasks", 
           "description": "Import tasks from TOML file"
+        },
+        "newWindow": {
+          "title": "New Window",
+          "description": "Open a new YuToDo window"
         }
       },
       "view": {

@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { getCurrentWindow } from '@tauri-apps/api/window';
+import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import logger from '../utils/logger';
 
 interface UseWindowDragOptions {
@@ -54,7 +54,7 @@ export const useWindowDrag = (options: UseWindowDragOptions = {}) => {
     try {
       // Only enable dragging in Tauri environment
       if (typeof window !== 'undefined' && (window as any).__TAURI_INTERNALS__) {
-        const appWindow = getCurrentWindow();
+        const appWindow = getCurrentWebviewWindow();
         await appWindow.startDragging();
       }
     } catch (error) {

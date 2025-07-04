@@ -6,6 +6,7 @@ import logger from '../utils/logger';
 export interface KeyboardShortcutHandlers {
   // Basic operations
   onNewTask: () => void;
+  onNewWindow: () => void;
   onToggleSettings: () => void;
   onFocusSearch: () => void;
   onOpenCommandPalette: () => void;
@@ -145,6 +146,7 @@ export const useKeyboardShortcuts = (
   const fallbackKeybindings = [
     { key: 'Ctrl+Shift+P', command: 'openCommandPalette' },
     { key: 'Ctrl+N', command: 'newTask', when: '!inputFocus' },
+    { key: 'Ctrl+Shift+N', command: 'newWindow' },
     { key: 'Ctrl+,', command: 'openSettings' },
     { key: 'Ctrl+F', command: 'toggleSearch' },
     { key: 'Ctrl+Shift+F', command: 'toggleFilter' },
@@ -164,6 +166,14 @@ export const useKeyboardShortcuts = (
   ];
   
   const effectiveKeybindings = keybindings.length > 0 ? keybindings : fallbackKeybindings;
+  
+  // Debug: Log keybindings to check if newWindow is present
+  useEffect(() => {
+    logger.debug('Effective keybindings count:', effectiveKeybindings.length);
+    logger.debug('Using file-based keybindings:', keybindings.length > 0);
+    const newWindowBinding = effectiveKeybindings.find(kb => kb.command === 'newWindow');
+    logger.debug('newWindow keybinding found:', !!newWindowBinding, newWindowBinding);
+  }, [effectiveKeybindings, keybindings.length]);
   
   // Sequential key handling
   const [isWaitingForSecondKey, setIsWaitingForSecondKey] = useState(false);
@@ -305,10 +315,18 @@ export const useKeyboardShortcuts = (
 function executeCommand(command: string, handlers: KeyboardShortcutHandlers) {
   logger.debug(`Executing command: ${command}`);
   
+  // Debug: Check if newWindow handler exists
+  if (command === 'newWindow') {
+    logger.debug('newWindow command triggered, handler exists:', typeof handlers.onNewWindow === 'function');
+  }
+  
   switch (command) {
     // Basic operations
     case 'newTask':
       handlers.onNewTask();
+      break;
+    case 'newWindow':
+      handlers.onNewWindow();
       break;
     case 'openSettings':
       handlers.onToggleSettings();

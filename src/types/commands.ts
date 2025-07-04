@@ -37,6 +37,7 @@ export interface CommandContext {
   settings: any;
   // Handler functions
   onNewTask: () => void;
+  onNewWindow: () => void;
   onToggleSettings: () => void;
   onFocusSearch: () => void;
   onToggleSearch: () => void;

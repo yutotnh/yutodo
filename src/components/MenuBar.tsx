@@ -8,6 +8,7 @@ interface MenuBarProps {
   currentView: 'tasks-detailed' | 'tasks-simple' | 'schedules';
   sessionAlwaysOnTop: boolean;
   onNewTask: () => void;
+  onNewWindow: () => void;
   onSelectAll: () => void;
   onDeleteSelected: () => void;
   onShowSettings: () => void;
@@ -34,6 +35,7 @@ export const MenuBar: React.FC<MenuBarProps> = ({
   currentView,
   sessionAlwaysOnTop,
   onNewTask,
+  onNewWindow,
   onSelectAll,
   onDeleteSelected,
   onShowSettings,
@@ -57,6 +59,7 @@ export const MenuBar: React.FC<MenuBarProps> = ({
     const fallbackKeybindings = [
       { key: 'Ctrl+Shift+P', command: 'openCommandPalette' },
       { key: 'Ctrl+N', command: 'newTask' },
+      { key: 'Ctrl+Shift+N', command: 'newWindow' },
       { key: 'Ctrl+,', command: 'openSettings' },
       { key: 'Ctrl+A', command: 'selectAll' },
       { key: 'Delete', command: 'deleteSelected' },
@@ -100,6 +103,7 @@ export const MenuBar: React.FC<MenuBarProps> = ({
       accessKey: 'F',
       items: [
         { id: 'new-task', label: t('menu.newTask'), shortcut: getShortcutForCommand('newTask'), action: onNewTask },
+        { id: 'new-window', label: t('menu.newWindow'), shortcut: getShortcutForCommand('newWindow'), action: onNewWindow },
         { id: 'separator-1', separator: true },
         { id: 'import', label: t('menu.importTasks'), action: onImportTasks },
         { id: 'export', label: t('menu.exportTasks'), action: onExportTasks },
@@ -136,7 +140,7 @@ export const MenuBar: React.FC<MenuBarProps> = ({
         { id: 'about', label: t('menu.about'), action: onShowAbout }
       ] as MenuItemData[]
     }
-  }), [t, getShortcutForCommand, onNewTask, onImportTasks, onExportTasks, onShowSettings, onQuit, onSelectAll, onDeleteSelected, onShowShortcuts, onShowAbout, onToggleAlwaysOnTop, onViewChange, sessionAlwaysOnTop, currentView]);
+  }), [t, getShortcutForCommand, onNewTask, onNewWindow, onImportTasks, onExportTasks, onShowSettings, onQuit, onSelectAll, onDeleteSelected, onShowShortcuts, onShowAbout, onToggleAlwaysOnTop, onViewChange, sessionAlwaysOnTop, currentView]);
 
 
   // 言語に応じてアクセスキーを括弧で表示する必要があるかチェック

@@ -33,6 +33,13 @@ export const keyboardShortcuts: KeyboardShortcut[] = [
     category: 'basic'
   },
   {
+    id: 'new-window',
+    key: 'Ctrl+Shift+N',
+    description: 'Open new window',
+    handler: 'onNewWindow',
+    category: 'basic'
+  },
+  {
     id: 'command-palette',
     key: 'Ctrl+Shift+P',
     description: 'Open command palette',

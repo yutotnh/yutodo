@@ -17,6 +17,7 @@ describe('MenuBar', () => {
     currentView: 'tasks-detailed' as const,
     sessionAlwaysOnTop: false,
     onNewTask: vi.fn(),
+    onNewWindow: vi.fn(),
     onSelectAll: vi.fn(),
     onDeleteSelected: vi.fn(),
     onShowSettings: vi.fn(),
@@ -83,6 +84,18 @@ describe('MenuBar', () => {
     fireEvent.click(newTaskItem);
     
     expect(defaultProps.onNewTask).toHaveBeenCalled();
+  });
+
+  it('calls onNewWindow when new window menu item is clicked', () => {
+    render(<MenuBar {...defaultProps} />);
+    
+    const fileMenu = screen.getByRole('button', { name: /menu\.\s*f\s*ile/ });
+    fireEvent.click(fileMenu);
+    
+    const newWindowItem = screen.getByText('menu.newWindow');
+    fireEvent.click(newWindowItem);
+    
+    expect(defaultProps.onNewWindow).toHaveBeenCalled();
   });
 
   it('calls onExportTasks when export menu item is clicked', () => {

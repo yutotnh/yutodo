@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Minus, X, Pin, PinOff } from 'lucide-react';
-import { getCurrentWindow } from '@tauri-apps/api/window';
+import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { useTranslation } from 'react-i18next';
 import {
   DndContext,
@@ -38,6 +38,7 @@ import { CommandContext } from './types/commands';
 import { formatTomlKeyValue } from './utils/tomlUtils';
 import { registerDefaultCommands } from './commands/defaultCommands';
 import { isOverdue } from './utils/dateUtils';
+import { openNewYuToDoWindow } from './utils/windowUtils';
 import logger from './utils/logger';
 import './App.css';
 import './components/CommandPalette.css';
@@ -277,7 +278,7 @@ function App() {
         // Tauri環境でのみ実行
         if (typeof window !== 'undefined' && (window as any).__TAURI_INTERNALS__) {
           logger.debug('Applying always on top setting:', sessionAlwaysOnTop);
-          const appWindow = getCurrentWindow();
+          const appWindow = getCurrentWebviewWindow();
           await appWindow.setAlwaysOnTop(sessionAlwaysOnTop);
           logger.debug('Always on top applied successfully');
         }
@@ -478,7 +479,7 @@ function App() {
       document.removeEventListener('mouseleave', handleMouseLeave);
       window.removeEventListener('blur', handleWindowBlur);
     };
-  }, [isMenuOpen, currentView]); // Use currentView instead of isSimpleTasksView function
+  }, [isMenuOpen, currentView, showHeader]); // Include showHeader as it's used in the effect
 
   // ウィンドウフォーカス状態を監視
   useEffect(() => {
@@ -504,7 +505,7 @@ function App() {
 
         // Tauriの場合
         if ((window as any).__TAURI__) {
-          const appWindow = getCurrentWindow();
+          const appWindow = getCurrentWebviewWindow();
           await appWindow.setTitle(newTitle);
         } else {
           // ブラウザの場合
@@ -574,7 +575,7 @@ function App() {
   // ウィンドウコントロールハンドラ
   const handleMinimize = async () => {
     try {
-      const appWindow = getCurrentWindow();
+      const appWindow = getCurrentWebviewWindow();
       await appWindow.minimize();
     } catch (error) {
       console.error('Failed to minimize window:', error);
@@ -583,7 +584,7 @@ function App() {
 
   const handleClose = async () => {
     try {
-      const appWindow = getCurrentWindow();
+      const appWindow = getCurrentWebviewWindow();
       await appWindow.close();
     } catch (error) {
       console.error('Failed to close window:', error);
@@ -814,7 +815,7 @@ function App() {
     }
 
     try {
-      const appWindow = getCurrentWindow();
+      const appWindow = getCurrentWebviewWindow();
       await appWindow.startDragging();
     } catch (error) {
       console.error('Failed to start dragging:', error);
@@ -1246,6 +1247,9 @@ function App() {
     onOpenCommandPalette: () => {
       setShowCommandPalette(true);
     },
+    onNewWindow: () => {
+      openNewYuToDoWindow();
+    },
     // View switching（現在のビューのみ変更、設定ファイルには保存しない）
     onShowTasks: () => {
       setCurrentView('tasks-detailed');
@@ -1356,6 +1360,7 @@ function App() {
     searchQuery,
     settings,
     onNewTask: keyboardHandlers.onNewTask,
+    onNewWindow: keyboardHandlers.onNewWindow,
     onToggleSettings: keyboardHandlers.onToggleSettings,
     onFocusSearch: keyboardHandlers.onFocusSearch,
     onToggleSearch: keyboardHandlers.onToggleSearch,
@@ -1400,6 +1405,7 @@ function App() {
             currentView={currentView}
             sessionAlwaysOnTop={sessionAlwaysOnTop}
             onNewTask={keyboardHandlers.onNewTask}
+            onNewWindow={keyboardHandlers.onNewWindow}
             onSelectAll={keyboardHandlers.onSelectAll}
             onDeleteSelected={keyboardHandlers.onDeleteSelected}
             onShowSettings={() => setShowSettings(true)}

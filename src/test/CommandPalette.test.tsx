@@ -70,6 +70,7 @@ describe('CommandPalette - Basic Tests', () => {
         headerAutoHide: true,
       },
       onNewTask: vi.fn(),
+      onNewWindow: vi.fn(),
       onToggleSettings: vi.fn(),
       onFocusSearch: vi.fn(),
       onSelectAll: vi.fn(),
@@ -101,6 +102,15 @@ describe('CommandPalette - Basic Tests', () => {
         category: 'file',
         keywords: ['export', 'save', 'toml'],
         keybinding: 'Ctrl+Shift+E',
+        execute: vi.fn(),
+      },
+      {
+        id: 'file.new.window',
+        title: 'New Window',
+        description: 'Open a new application window',
+        category: 'file',
+        keywords: ['window', 'new', 'open'],
+        keybinding: 'Ctrl+Shift+N',
         execute: vi.fn(),
       },
       {
@@ -155,6 +165,7 @@ describe('CommandPalette - Basic Tests', () => {
       );
 
       expect(screen.getByText('Export Tasks')).toBeInTheDocument();
+      expect(screen.getByText('New Window')).toBeInTheDocument();
       expect(screen.getByText('Open Settings')).toBeInTheDocument();
     });
   });
@@ -507,6 +518,89 @@ describe('CommandPalette - Basic Tests', () => {
 
       // Commands should be filtered based on context including currentView
       expect(mockCommandRegistry.getFilteredCommands).toHaveBeenCalledWith('', mockContext);
+    });
+  });
+
+  describe('Command Execution', () => {
+    it('should execute new window command when clicked', async () => {
+      render(
+        <CommandPalette
+          isOpen={true}
+          onClose={mockOnClose}
+          context={mockContext}
+        />
+      );
+
+      const newWindowCommand = screen.getByText('New Window');
+      fireEvent.click(newWindowCommand);
+
+      expect(mockCommandRegistry.executeCommand).toHaveBeenCalledWith('file.new.window', mockContext);
+    });
+
+    it('should execute new window command when selected and Enter is pressed', async () => {
+      render(
+        <CommandPalette
+          isOpen={true}
+          onClose={mockOnClose}
+          context={mockContext}
+        />
+      );
+
+      const commandPalette = screen.getByRole('dialog').querySelector('.command-palette');
+      
+      // Navigate to the New Window command (it should be the second item)
+      fireEvent.keyDown(commandPalette!, { key: 'ArrowDown' });
+      
+      // Press Enter to execute
+      fireEvent.keyDown(commandPalette!, { key: 'Enter' });
+
+      expect(mockCommandRegistry.executeCommand).toHaveBeenCalledWith('file.new.window', mockContext);
+    });
+
+    it('should filter new window command when searching', () => {
+      render(
+        <CommandPalette
+          isOpen={true}
+          onClose={mockOnClose}
+          context={mockContext}
+        />
+      );
+
+      const searchInput = screen.getByPlaceholderText('Search commands...');
+      fireEvent.change(searchInput, { target: { value: 'window' } });
+
+      expect(mockCommandRegistry.getFilteredCommands).toHaveBeenCalledWith('window', mockContext);
+    });
+
+    it('should show new window command in search results for "new" keyword', () => {
+      // Mock filtered results to only show new window command
+      const filteredCommands = [
+        {
+          id: 'file.new.window',
+          title: 'New Window',
+          description: 'Open a new application window',
+          category: 'file',
+          keywords: ['window', 'new', 'open'],
+          keybinding: 'Ctrl+Shift+N',
+          execute: vi.fn(),
+        },
+      ];
+      
+      mockCommandRegistry.getFilteredCommands.mockReturnValue(filteredCommands);
+
+      render(
+        <CommandPalette
+          isOpen={true}
+          onClose={mockOnClose}
+          context={mockContext}
+        />
+      );
+
+      const searchInput = screen.getByPlaceholderText('Search commands...');
+      fireEvent.change(searchInput, { target: { value: 'new' } });
+
+      expect(screen.getByText('New Window')).toBeInTheDocument();
+      expect(screen.getByText('Ctrl+Shift+N')).toBeInTheDocument();
     });
   });
 });
