@@ -234,25 +234,161 @@ describe('defaultCommands', () => {
     });
   });
 
-  describe('task commands integration', () => {
-    it('should verify delete completed tasks command still works', () => {
+  describe('delete completed tasks command', () => {
+    let deleteCompletedCommand: any;
+
+    beforeEach(() => {
       const taskCommands = createTaskCommands(mockT);
-      const deleteCompletedCommand = taskCommands.find(cmd => cmd.id === 'task.deleteCompleted');
-      
+      deleteCompletedCommand = taskCommands.find(cmd => cmd.id === 'task.deleteCompleted');
+    });
+
+    it('should create delete completed tasks command with correct structure', () => {
       expect(deleteCompletedCommand).toBeDefined();
-      expect(deleteCompletedCommand!.title).toBe('Delete Completed Tasks');
-      expect(deleteCompletedCommand!.category).toBe('task');
+      expect(deleteCompletedCommand.id).toBe('task.deleteCompleted');
+      expect(deleteCompletedCommand.title).toBe('Delete Completed Tasks');
+      expect(deleteCompletedCommand.description).toBe('Delete all completed tasks');
+      expect(deleteCompletedCommand.category).toBe('task');
+      expect(deleteCompletedCommand.keywords).toContain('delete');
+      expect(deleteCompletedCommand.keywords).toContain('completed');
+      expect(deleteCompletedCommand.keywords).toContain('clear');
+      expect(deleteCompletedCommand.icon).toBe('trash');
+    });
+
+    it('should call correct translation keys', () => {
+      createTaskCommands(mockT);
       
-      // Test execution
-      deleteCompletedCommand!.execute(mockContext);
-      expect(mockContext.onDeleteCompletedTasks).toHaveBeenCalledOnce();
-      
-      // Test visibility - should be visible in task views
-      const tasksContext = { ...mockContext, startupView: 'tasks-detailed' as const };
-      expect(deleteCompletedCommand!.isVisible?.(tasksContext)).toBe(true);
-      
-      const scheduleContext = { ...mockContext, startupView: 'schedules' as const };
-      expect(deleteCompletedCommand!.isVisible?.(scheduleContext)).toBe(false);
+      expect(mockT).toHaveBeenCalledWith(
+        'commandPalette.commands.task.deleteCompleted.title', 
+        'Delete Completed Tasks'
+      );
+      expect(mockT).toHaveBeenCalledWith(
+        'commandPalette.commands.task.deleteCompleted.description', 
+        'Delete all completed tasks'
+      );
+    });
+
+    describe('command execution', () => {
+      it('should execute delete completed tasks command successfully', () => {
+        deleteCompletedCommand.execute(mockContext);
+        expect(mockContext.onDeleteCompletedTasks).toHaveBeenCalledOnce();
+      });
+
+      it('should handle missing onDeleteCompletedTasks handler gracefully', () => {
+        const contextWithoutHandler = {
+          ...mockContext,
+          onDeleteCompletedTasks: undefined
+        };
+        
+        expect(() => {
+          deleteCompletedCommand.execute(contextWithoutHandler);
+        }).not.toThrow();
+      });
+
+      it('should work with optional chaining for handler', () => {
+        const contextWithNullHandler = {
+          ...mockContext,
+          onDeleteCompletedTasks: null
+        };
+        
+        expect(() => {
+          deleteCompletedCommand.execute(contextWithNullHandler);
+        }).not.toThrow();
+      });
+    });
+
+    describe('command visibility', () => {
+      it('should be visible in tasks-detailed view', () => {
+        const tasksDetailedContext = { ...mockContext, startupView: 'tasks-detailed' as const };
+        expect(deleteCompletedCommand.isVisible?.(tasksDetailedContext)).toBe(true);
+      });
+
+      it('should be visible in tasks-simple view', () => {
+        const tasksSimpleContext = { ...mockContext, startupView: 'tasks-simple' as const };
+        expect(deleteCompletedCommand.isVisible?.(tasksSimpleContext)).toBe(true);
+      });
+
+      it('should be hidden in schedules view', () => {
+        const scheduleContext = { ...mockContext, startupView: 'schedules' as const };
+        expect(deleteCompletedCommand.isVisible?.(scheduleContext)).toBe(false);
+      });
+
+      it('should handle undefined context gracefully', () => {
+        expect(() => deleteCompletedCommand.isVisible?.(undefined)).not.toThrow();
+        expect(deleteCompletedCommand.isVisible?.(undefined)).toBe(false);
+      });
+
+      it('should handle context without startupView gracefully', () => {
+        const incompleteContext = { ...mockContext };
+        delete (incompleteContext as any).startupView;
+        
+        expect(() => deleteCompletedCommand.isVisible?.(incompleteContext)).not.toThrow();
+        expect(deleteCompletedCommand.isVisible?.(incompleteContext)).toBe(false);
+      });
+    });
+
+    describe('command properties validation', () => {
+      it('should have all required properties', () => {
+        expect(deleteCompletedCommand.id).toBeTruthy();
+        expect(deleteCompletedCommand.title).toBeTruthy();
+        expect(deleteCompletedCommand.description).toBeTruthy();
+        expect(deleteCompletedCommand.category).toBeTruthy();
+        expect(deleteCompletedCommand.execute).toBeInstanceOf(Function);
+        expect(deleteCompletedCommand.isVisible).toBeInstanceOf(Function);
+      });
+
+      it('should have relevant keywords for search', () => {
+        const keywords = deleteCompletedCommand.keywords;
+        expect(keywords).toContain('delete');
+        expect(keywords).toContain('remove');
+        expect(keywords).toContain('completed');
+        expect(keywords).toContain('finished');
+        expect(keywords).toContain('done');
+        expect(keywords).toContain('clear');
+      });
+
+      it('should use trash icon for deletion action', () => {
+        expect(deleteCompletedCommand.icon).toBe('trash');
+      });
+    });
+
+    describe('integration with other task commands', () => {
+      it('should be included in task commands list', () => {
+        const taskCommands = createTaskCommands(mockT);
+        const commandIds = taskCommands.map(cmd => cmd.id);
+        expect(commandIds).toContain('task.deleteCompleted');
+      });
+
+      it('should be registered with all other commands', () => {
+        const mockRegister = vi.mocked(commandRegistry.register);
+        
+        registerDefaultCommands(mockT);
+        
+        const allCalls = mockRegister.mock.calls;
+        const registeredCommands = allCalls.map(call => call[0]);
+        const deleteCompletedRegistered = registeredCommands.find(cmd => cmd.id === 'task.deleteCompleted');
+        
+        expect(deleteCompletedRegistered).toBeDefined();
+        expect(deleteCompletedRegistered!.category).toBe('task');
+      });
+    });
+
+    describe('error handling', () => {
+      it('should handle execution with malformed context', () => {
+        const malformedContext = {} as any;
+        
+        expect(() => {
+          deleteCompletedCommand.execute(malformedContext);
+        }).not.toThrow();
+      });
+
+      it('should handle visibility check with malformed context', () => {
+        const malformedContext = { someOtherProperty: 'value' } as any;
+        
+        expect(() => {
+          deleteCompletedCommand.isVisible?.(malformedContext);
+        }).not.toThrow();
+        expect(deleteCompletedCommand.isVisible?.(malformedContext)).toBe(false);
+      });
     });
   });
 });

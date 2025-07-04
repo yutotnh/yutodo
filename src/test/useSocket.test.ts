@@ -553,4 +553,137 @@ describe('useSocket', () => {
       expect(result.current.todos[0]).toEqual(mockTodo);
     });
   });
+
+  describe('delete completed todos functionality', () => {
+    it('should emit delete-completed-todos event when socket is connected', () => {
+      const { result } = renderHook(() => useSocket('http://localhost:3001'));
+
+      act(() => {
+        result.current.deleteCompletedTodos();
+      });
+
+      expect(mockSocket.emit).toHaveBeenCalledWith('delete-completed-todos');
+    });
+
+    it('should not emit event when socket is not connected', () => {
+      // Create a hook without connecting socket
+      const { result } = renderHook(() => useSocket(''));
+
+      act(() => {
+        result.current.deleteCompletedTodos();
+      });
+
+      // Should not throw errors, and io should not have been called
+      expect(mockIo).not.toHaveBeenCalled();
+    });
+
+    it('should handle completed-todos-deleted event', async () => {
+      renderHook(() => useSocket('http://localhost:3001'));
+
+      // Get the completed-todos-deleted callback
+      const completedTodosDeletedCallback = (mockSocket.on as Mock).mock.calls.find(
+        call => call[0] === 'completed-todos-deleted'
+      )![1];
+
+      // Should not throw error when event is received
+      expect(() => {
+        act(() => {
+          completedTodosDeletedCallback({ count: 3 });
+        });
+      }).not.toThrow();
+    });
+
+    it('should handle completed-todos-deleted event with zero count', async () => {
+      renderHook(() => useSocket('http://localhost:3001'));
+
+      const completedTodosDeletedCallback = (mockSocket.on as Mock).mock.calls.find(
+        call => call[0] === 'completed-todos-deleted'
+      )![1];
+
+      // Should handle zero count gracefully
+      expect(() => {
+        act(() => {
+          completedTodosDeletedCallback({ count: 0 });
+        });
+      }).not.toThrow();
+    });
+
+    it('should work with completed-todos-deleted in combination with todo-deleted events', async () => {
+      const { result } = renderHook(() => useSocket('http://localhost:3001'));
+
+      const completedTodo1 = { ...mockTodo, id: '1', completed: true };
+      const completedTodo2 = { ...mockTodo, id: '2', completed: true };
+      const pendingTodo = { ...mockTodo, id: '3', completed: false };
+
+      // Set initial state with mixed todos
+      act(() => {
+        const todosCallback = (mockSocket.on as Mock).mock.calls.find(
+          call => call[0] === 'todos'
+        )![1];
+        todosCallback([completedTodo1, completedTodo2, pendingTodo]);
+      });
+
+      expect(result.current.todos).toHaveLength(3);
+
+      // Simulate deletion of completed todos through individual todo-deleted events
+      const todoDeletedCallback = (mockSocket.on as Mock).mock.calls.find(
+        call => call[0] === 'todo-deleted'
+      )![1];
+
+      act(() => {
+        todoDeletedCallback('1');
+        todoDeletedCallback('2');
+      });
+
+      // Only pending todo should remain
+      expect(result.current.todos).toHaveLength(1);
+      expect(result.current.todos[0].id).toBe('3');
+      expect(result.current.todos[0].completed).toBe(false);
+
+      // Receive confirmation event
+      const completedTodosDeletedCallback = (mockSocket.on as Mock).mock.calls.find(
+        call => call[0] === 'completed-todos-deleted'
+      )![1];
+
+      act(() => {
+        completedTodosDeletedCallback({ count: 2 });
+      });
+
+      // State should remain stable
+      expect(result.current.todos).toHaveLength(1);
+      expect(result.current.todos[0].id).toBe('3');
+    });
+
+    it('should have deleteCompletedTodos function available', () => {
+      const { result } = renderHook(() => useSocket('http://localhost:3001'));
+
+      expect(result.current.deleteCompletedTodos).toBeDefined();
+      expect(typeof result.current.deleteCompletedTodos).toBe('function');
+    });
+
+    it('should log error when deleteCompletedTodos called without socket connection', () => {
+      // Mock logger to capture error
+      const mockLogger = {
+        error: vi.fn(),
+        debug: vi.fn(),
+        info: vi.fn(),
+        warn: vi.fn(),
+        network: vi.fn(),
+        ui: vi.fn(),
+      };
+
+      vi.doMock('../utils/logger', () => ({
+        default: mockLogger
+      }));
+
+      const { result } = renderHook(() => useSocket(''));
+
+      act(() => {
+        result.current.deleteCompletedTodos();
+      });
+
+      // Should not have tried to emit event
+      expect(mockSocket.emit).not.toHaveBeenCalled();
+    });
+  });
 });

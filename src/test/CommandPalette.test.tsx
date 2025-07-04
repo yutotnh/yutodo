@@ -871,4 +871,280 @@ describe('CommandPalette - Basic Tests', () => {
       expect(passedContext.currentView).toBe('schedules');
     });
   });
+
+  describe('Delete Completed Tasks Command Integration', () => {
+    let tasksContext: CommandContext;
+    let deleteCompletedTasksCommand: CommandAction;
+
+    beforeEach(() => {
+      tasksContext = {
+        ...mockContext,
+        currentView: 'tasks-detailed',
+        startupView: 'tasks-detailed',
+      };
+
+      deleteCompletedTasksCommand = {
+        id: 'task.deleteCompleted',
+        title: 'Delete Completed Tasks',
+        description: 'Delete all completed tasks',
+        category: 'task',
+        keywords: ['delete', 'remove', 'completed', 'finished', 'done', 'clear'],
+        icon: 'trash',
+        execute: vi.fn(),
+        isVisible: (context?: CommandContext) => 
+          context?.startupView === 'tasks-detailed' || context?.startupView === 'tasks-simple',
+      };
+    });
+
+    it('should display delete completed tasks command in tasks view', () => {
+      mockCommandRegistry.getFilteredCommands.mockReturnValue([deleteCompletedTasksCommand]);
+
+      render(
+        <CommandPalette
+          isOpen={true}
+          onClose={mockOnClose}
+          context={tasksContext}
+        />
+      );
+
+      expect(screen.getByText('Delete Completed Tasks')).toBeInTheDocument();
+      expect(screen.getByText('Delete all completed tasks')).toBeInTheDocument();
+    });
+
+    it('should not display delete completed tasks command in schedules view', () => {
+      const scheduleContext = {
+        ...mockContext,
+        currentView: 'schedules' as const,
+        startupView: 'schedules' as const,
+      };
+
+      // Mock filtered commands to return empty array for schedules view
+      mockCommandRegistry.getFilteredCommands.mockReturnValue([]);
+
+      render(
+        <CommandPalette
+          isOpen={true}
+          onClose={mockOnClose}
+          context={scheduleContext}
+        />
+      );
+
+      expect(screen.queryByText('Delete Completed Tasks')).not.toBeInTheDocument();
+    });
+
+    it('should execute delete completed tasks command when clicked', async () => {
+      mockCommandRegistry.getFilteredCommands.mockReturnValue([deleteCompletedTasksCommand]);
+
+      render(
+        <CommandPalette
+          isOpen={true}
+          onClose={mockOnClose}
+          context={tasksContext}
+        />
+      );
+
+      const deleteCommand = screen.getByText('Delete Completed Tasks');
+      fireEvent.click(deleteCommand);
+
+      expect(mockCommandRegistry.executeCommand).toHaveBeenCalledWith(
+        'task.deleteCompleted',
+        tasksContext
+      );
+    });
+
+    it('should execute delete completed tasks command with Enter key', async () => {
+      mockCommandRegistry.getFilteredCommands.mockReturnValue([deleteCompletedTasksCommand]);
+
+      render(
+        <CommandPalette
+          isOpen={true}
+          onClose={mockOnClose}
+          context={tasksContext}
+        />
+      );
+
+      const commandPalette = screen.getByRole('dialog').querySelector('.command-palette');
+      
+      // Command should be selected by default, press Enter to execute
+      fireEvent.keyDown(commandPalette!, { key: 'Enter' });
+
+      expect(mockCommandRegistry.executeCommand).toHaveBeenCalledWith(
+        'task.deleteCompleted',
+        tasksContext
+      );
+    });
+
+    it('should filter delete completed tasks command by search keywords', () => {
+      mockCommandRegistry.getFilteredCommands.mockReturnValue([deleteCompletedTasksCommand]);
+
+      render(
+        <CommandPalette
+          isOpen={true}
+          onClose={mockOnClose}
+          context={tasksContext}
+        />
+      );
+
+      const searchInput = screen.getByPlaceholderText('Search commands...');
+      fireEvent.change(searchInput, { target: { value: 'completed' } });
+
+      expect(mockCommandRegistry.getFilteredCommands).toHaveBeenCalledWith('completed', tasksContext);
+    });
+
+    it('should show delete completed tasks command for "clear" keyword search', () => {
+      const filteredCommands = [deleteCompletedTasksCommand];
+      mockCommandRegistry.getFilteredCommands.mockReturnValue(filteredCommands);
+
+      render(
+        <CommandPalette
+          isOpen={true}
+          onClose={mockOnClose}
+          context={tasksContext}
+        />
+      );
+
+      const searchInput = screen.getByPlaceholderText('Search commands...');
+      fireEvent.change(searchInput, { target: { value: 'clear' } });
+
+      expect(screen.getByText('Delete Completed Tasks')).toBeInTheDocument();
+    });
+
+    it('should work in both tasks-detailed and tasks-simple views', () => {
+      const viewsToTest = ['tasks-detailed', 'tasks-simple'] as const;
+      
+      viewsToTest.forEach(view => {
+        vi.clearAllMocks();
+        
+        const contextWithView = {
+          ...mockContext,
+          currentView: view,
+          startupView: view,
+        };
+
+        mockCommandRegistry.getFilteredCommands.mockReturnValue([deleteCompletedTasksCommand]);
+
+        const { unmount } = render(
+          <CommandPalette
+            isOpen={true}
+            onClose={mockOnClose}
+            context={contextWithView}
+          />
+        );
+
+        expect(screen.getByText('Delete Completed Tasks')).toBeInTheDocument();
+        
+        // Clean up before next iteration
+        unmount();
+      });
+    });
+
+    it('should pass correct context with delete completed tasks handler', () => {
+      render(
+        <CommandPalette
+          isOpen={true}
+          onClose={mockOnClose}
+          context={tasksContext}
+        />
+      );
+
+      // Verify the context passed includes delete completed tasks handler
+      const passedContext = mockCommandRegistry.getFilteredCommands.mock.calls[0][1];
+      expect(passedContext.onDeleteCompletedTasks).toBeDefined();
+      expect(passedContext.currentView).toBe('tasks-detailed');
+      expect(passedContext.startupView).toBe('tasks-detailed');
+    });
+
+    it('should handle mixed task and other commands', () => {
+      const mixedCommands = [
+        deleteCompletedTasksCommand,
+        {
+          id: 'task.selectAll',
+          title: 'Select All Tasks',
+          description: 'Select all visible tasks',
+          category: 'task',
+          keywords: ['select', 'all'],
+          execute: vi.fn(),
+        },
+        {
+          id: 'settings.open',
+          title: 'Open Settings',
+          description: 'Open application settings',
+          category: 'settings',
+          keywords: ['settings'],
+          execute: vi.fn(),
+        },
+      ];
+
+      mockCommandRegistry.getFilteredCommands.mockReturnValue(mixedCommands);
+
+      render(
+        <CommandPalette
+          isOpen={true}
+          onClose={mockOnClose}
+          context={tasksContext}
+        />
+      );
+
+      // All commands should be displayed
+      expect(screen.getByText('Delete Completed Tasks')).toBeInTheDocument();
+      expect(screen.getByText('Select All Tasks')).toBeInTheDocument();
+      expect(screen.getByText('Open Settings')).toBeInTheDocument();
+    });
+
+    it('should handle delete completed tasks command with no completed tasks', async () => {
+      // This would typically be handled by the command execution logic
+      // but the command palette should not prevent execution
+      mockCommandRegistry.getFilteredCommands.mockReturnValue([deleteCompletedTasksCommand]);
+
+      render(
+        <CommandPalette
+          isOpen={true}
+          onClose={mockOnClose}
+          context={tasksContext}
+        />
+      );
+
+      const deleteCommand = screen.getByText('Delete Completed Tasks');
+      
+      // Should not throw error even if no completed tasks exist
+      expect(() => {
+        fireEvent.click(deleteCommand);
+      }).not.toThrow();
+
+      expect(mockCommandRegistry.executeCommand).toHaveBeenCalledWith(
+        'task.deleteCompleted',
+        tasksContext
+      );
+    });
+
+    it('should reload delete completed tasks command when switching to tasks view', () => {
+      const { rerender } = render(
+        <CommandPalette
+          isOpen={true}
+          onClose={mockOnClose}
+          context={mockContext} // Initially in default tasks view
+        />
+      );
+
+      // Clear previous calls
+      vi.clearAllMocks();
+
+      // Switch to tasks-simple view
+      const tasksSimpleContext = {
+        ...mockContext,
+        currentView: 'tasks-simple' as const,
+        startupView: 'tasks-simple' as const,
+      };
+
+      rerender(
+        <CommandPalette
+          isOpen={true}
+          onClose={mockOnClose}
+          context={tasksSimpleContext}
+        />
+      );
+
+      expect(mockCommandRegistry.getFilteredCommands).toHaveBeenCalledWith('', tasksSimpleContext);
+    });
+  });
 });
