@@ -252,7 +252,7 @@ body {
 
 .app--slim .todo-item {
   position: relative; /* ドロップダウンメニューの基準点 */
-  padding: 4px 1px 4px 4px; /* 右のパディングを1pxに */
+  padding: 4px 0 4px 4px; /* 右のパディングを0にして表示領域を最大化 */
   margin: 1px 2px; /* 最小限のマージン */
   background: white;
   border: 1px solid #e2e8f0;
@@ -280,7 +280,7 @@ body {
 .todo-item__ultra-compact-meta {
   display: flex;
   align-items: center;
-  gap: 4px; /* より狭い余白 */
+  gap: 1px; /* 最小限の余白 */
   flex-shrink: 0; /* 圧縮されないように */
 }
 
@@ -480,9 +480,11 @@ body {
 }
 
 .app--slim .todo-item__actions {
-  gap: 0.5rem;
+  gap: 0;
   align-items: center; /* アクションボタンも中央配置 */
   width: 0;
+  margin: 0;
+  padding: 0;
   opacity: 0;
   overflow: hidden;
   transition: all 0.2s ease;
@@ -632,6 +634,24 @@ body {
 
 .app--slim .todo-item__check {
   margin-top: 0; /* スリムモードではマージンをリセット */
+  width: 0; /* デフォルトで幅0にして完全に非表示 */
+  min-width: 0; /* 最小幅もリセット */
+  overflow: hidden; /* 内容を隠す */
+  transition: width 0.2s ease; /* スムーズな幅変更 */
+}
+
+.app--slim .todo-item__check .check-btn {
+  opacity: 0; /* ボタン自体も透明化 */
+  transition: opacity 0.2s ease;
+}
+
+/* スリムモードでタスクアイテムにホバーした時にチェックボックスを表示 */
+.app--slim .todo-item:hover .todo-item__check {
+  width: 16px; /* ホバー時にチェックボックスの幅を復元 */
+}
+
+.app--slim .todo-item:hover .todo-item__check .check-btn {
+  opacity: 1; /* ホバー時にボタンを表示 */
 }
 
 /* スリムモードのコンテンツエリアを横並びに */
@@ -639,7 +659,7 @@ body {
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 4px; /* タスク名と時刻表示間の余白を狭く */
+  gap: 2px; /* タスク名と時刻表示間の余白をさらに狭く */
   flex: 1;
   min-width: 0; /* フレックス子要素の収縮を許可 */
 }
