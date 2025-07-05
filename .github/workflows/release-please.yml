@@ -42,9 +42,11 @@ jobs:
       - name: Update Cargo.lock if Rust files changed
         if: ${{ steps.release.outputs.pr }}
         run: |
-          # Check if src-tauri files were updated in the PR
-          PR_NUMBER="${{ steps.release.outputs.pr }}"
-          if [ -n "$PR_NUMBER" ]; then
+          # Extract PR number from release-please output
+          PR_INFO='${{ steps.release.outputs.pr }}'
+          PR_NUMBER=$(echo "$PR_INFO" | jq -r '.number')
+          
+          if [ -n "$PR_NUMBER" ] && [ "$PR_NUMBER" != "null" ]; then
             # Get list of changed files in the PR
             CHANGED_FILES=$(gh api repos/${{ github.repository }}/pulls/${PR_NUMBER}/files --jq '.[].filename')
             
