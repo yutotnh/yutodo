@@ -77,10 +77,7 @@ describe('useSocket', () => {
       renderHook(() => useSocket('http://localhost:3001'));
 
       expect(mockIo).toHaveBeenCalledWith('http://localhost:3001', {
-        reconnection: true,
-        reconnectionAttempts: 5,
-        reconnectionDelay: 1000,
-        reconnectionDelayMax: 5000,
+        reconnection: false, // 手動再接続に変更
       });
     });
 
@@ -90,9 +87,10 @@ describe('useSocket', () => {
       expect(mockSocket.on).toHaveBeenCalledWith('connect', expect.any(Function));
       expect(mockSocket.on).toHaveBeenCalledWith('disconnect', expect.any(Function));
       expect(mockSocket.on).toHaveBeenCalledWith('connect_error', expect.any(Function));
-      expect(mockSocket.on).toHaveBeenCalledWith('reconnect_attempt', expect.any(Function));
-      expect(mockSocket.on).toHaveBeenCalledWith('reconnect', expect.any(Function));
-      expect(mockSocket.on).toHaveBeenCalledWith('reconnect_failed', expect.any(Function));
+      // 自動再接続関連のイベントは削除されました
+      // expect(mockSocket.on).toHaveBeenCalledWith('reconnect_attempt', expect.any(Function));
+      // expect(mockSocket.on).toHaveBeenCalledWith('reconnect', expect.any(Function));
+      // expect(mockSocket.on).toHaveBeenCalledWith('reconnect_failed', expect.any(Function));
       expect(mockSocket.on).toHaveBeenCalledWith('todos', expect.any(Function));
       expect(mockSocket.on).toHaveBeenCalledWith('todo-added', expect.any(Function));
       expect(mockSocket.on).toHaveBeenCalledWith('todo-updated', expect.any(Function));
@@ -158,57 +156,67 @@ describe('useSocket', () => {
       consoleSpy.mockRestore();
     });
 
-    it('should handle reconnection attempts', async () => {
+    it('should handle manual reconnection attempts via connect_error', async () => {
       const { result } = renderHook(() => useSocket('http://localhost:3001'));
 
-      // Get the reconnect_attempt callback
-      const reconnectAttemptCallback = (mockSocket.on as Mock).mock.calls.find(
-        call => call[0] === 'reconnect_attempt'
+      // Get the connect_error callback
+      const connectErrorCallback = (mockSocket.on as Mock).mock.calls.find(
+        call => call[0] === 'connect_error'
       )![1];
 
+      // Simulate first connection error
       act(() => {
-        reconnectAttemptCallback(3);
+        connectErrorCallback(new Error('Connection failed'));
       });
 
-      expect(result.current.reconnectAttempts).toBe(3);
-      expect(result.current.connectionStatus).toBe('connecting');
+      expect(result.current.reconnectAttempts).toBe(1);
+      expect(result.current.connectionStatus).toBe('error');
     });
 
     it('should handle successful reconnection', async () => {
       const { result } = renderHook(() => useSocket('http://localhost:3001'));
 
-      // Set up initial state
-      const reconnectAttemptCallback = (mockSocket.on as Mock).mock.calls.find(
-        call => call[0] === 'reconnect_attempt'
+      // Simulate connection error first
+      const connectErrorCallback = (mockSocket.on as Mock).mock.calls.find(
+        call => call[0] === 'connect_error'
       )![1];
       act(() => {
-        reconnectAttemptCallback(2);
+        connectErrorCallback(new Error('Connection failed'));
       });
 
-      // Now handle successful reconnection
-      const reconnectCallback = (mockSocket.on as Mock).mock.calls.find(
-        call => call[0] === 'reconnect'
+      expect(result.current.reconnectAttempts).toBe(1);
+
+      // Now handle successful connection
+      const connectCallback = (mockSocket.on as Mock).mock.calls.find(
+        call => call[0] === 'connect'
       )![1];
 
       act(() => {
-        reconnectCallback(2);
+        connectCallback();
       });
 
       expect(result.current.reconnectAttempts).toBe(0);
+      expect(result.current.connectionStatus).toBe('connected');
     });
 
-    it('should handle reconnection failure', async () => {
+    it('should handle maximum reconnection attempts', async () => {
       const { result } = renderHook(() => useSocket('http://localhost:3001'));
 
-      // Get the reconnect_failed callback
-      const reconnectFailedCallback = (mockSocket.on as Mock).mock.calls.find(
-        call => call[0] === 'reconnect_failed'
+      // Get the connect_error callback
+      const connectErrorCallback = (mockSocket.on as Mock).mock.calls.find(
+        call => call[0] === 'connect_error'
       )![1];
 
+      // Simulate 5 connection errors to reach maximum
       act(() => {
-        reconnectFailedCallback();
+        connectErrorCallback(new Error('Connection failed'));
+        connectErrorCallback(new Error('Connection failed'));
+        connectErrorCallback(new Error('Connection failed'));
+        connectErrorCallback(new Error('Connection failed'));
+        connectErrorCallback(new Error('Connection failed'));
       });
 
+      expect(result.current.reconnectAttempts).toBe(5);
       expect(result.current.connectionStatus).toBe('error');
     });
   });
