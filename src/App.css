@@ -5255,6 +5255,123 @@ body {
   color: #d1d5db;
 }
 
+.connection-error-attempts {
+  margin: 1rem 0;
+  display: flex;
+  justify-content: center;
+}
+
+.connection-error-attempts-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-align: center;
+}
+
+.connection-error-attempts-badge--normal {
+  background-color: #e0f2fe;
+  color: #0369a1;
+  border: 1px solid #38bdf8;
+}
+
+.connection-error-attempts-badge--final {
+  background-color: #fef3c7;
+  color: #d97706;
+  border: 1px solid #fbbf24;
+  animation: pulse 2s infinite;
+}
+
+.app--dark .connection-error-attempts-badge--normal {
+  background-color: #0c4a6e;
+  color: #7dd3fc;
+  border: 1px solid #0284c7;
+}
+
+.app--dark .connection-error-attempts-badge--final {
+  background-color: #451a03;
+  color: #fde047;
+  border: 1px solid #eab308;
+}
+
+.connection-error-progress {
+  margin: 1.5rem 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.connection-error-progress-dots {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.connection-error-progress-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+}
+
+.connection-error-progress-dot--inactive {
+  background-color: #e5e7eb;
+  border-color: #d1d5db;
+}
+
+.connection-error-progress-dot--active {
+  background-color: #3b82f6;
+  border-color: #2563eb;
+}
+
+.connection-error-progress-dot--current {
+  transform: scale(1.3);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.3);
+  animation: pulse 1.5s infinite;
+}
+
+.connection-error-progress-dot--failed {
+  background-color: #ef4444;
+  border-color: #dc2626;
+}
+
+.connection-error-progress-dot--failed.connection-error-progress-dot--current {
+  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.3);
+}
+
+.connection-error-progress-label {
+  text-align: center;
+}
+
+.connection-error-progress-label span {
+  color: #6b7280;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.app--dark .connection-error-progress-dot--inactive {
+  background-color: #374151;
+  border-color: #4b5563;
+}
+
+.app--dark .connection-error-progress-dot--active {
+  background-color: #60a5fa;
+  border-color: #3b82f6;
+}
+
+.app--dark .connection-error-progress-dot--failed {
+  background-color: #f87171;
+  border-color: #ef4444;
+}
+
+.app--dark .connection-error-progress-label span {
+  color: #9ca3af;
+}
+
 .connection-error-server {
   margin-bottom: 1rem;
 }

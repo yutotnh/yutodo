@@ -10,16 +10,14 @@ export const useSocket = (serverUrl: string) => {
   const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected' | 'error'>('disconnected');
   const [reconnectAttempts, setReconnectAttempts] = useState(0);
   const socketRef = useRef<Socket | null>(null);
+  const reconnectTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (!serverUrl) return;
 
     setConnectionStatus('connecting');
     const socket = io(serverUrl, {
-      reconnection: true,
-      reconnectionAttempts: 5,
-      reconnectionDelay: 1000,
-      reconnectionDelayMax: 5000,
+      reconnection: false,  // 自動再接続を無効化して手動で制御
     });
     socketRef.current = socket;
 
@@ -43,23 +41,45 @@ export const useSocket = (serverUrl: string) => {
       logger.error('Socket connection error:', error);
       setConnected(false);
       setConnectionStatus('error');
+      
+      // 手動再接続のロジック
+      setReconnectAttempts(prev => {
+        const newAttempts = prev + 1;
+        
+        // 最大5回まで（初回接続を含む）
+        if (newAttempts < 5) {
+          // 再接続間隔の設定（1秒、2秒、4秒、5秒）
+          const delays = [1000, 2000, 4000, 5000];
+          const delay = delays[newAttempts - 1];
+          
+          // 既存のタイマーをクリア
+          if (reconnectTimerRef.current) {
+            clearTimeout(reconnectTimerRef.current);
+          }
+          
+          // 新しい再接続タイマーを設定
+          reconnectTimerRef.current = setTimeout(() => {
+            if (socketRef.current && !socketRef.current.connected) {
+              setConnectionStatus('connecting');
+              socketRef.current.connect();
+            }
+          }, delay);
+        } else {
+          // 5回目で最大試行回数に到達
+          logger.error('Max reconnect attempts reached');
+          // タイマーをクリア
+          if (reconnectTimerRef.current) {
+            clearTimeout(reconnectTimerRef.current);
+            reconnectTimerRef.current = null;
+          }
+        }
+        
+        return newAttempts;
+      });
     });
 
-    socket.on('reconnect_attempt', (attemptNumber) => {
-      logger.network(`Reconnection attempt ${attemptNumber}`);
-      setReconnectAttempts(attemptNumber);
-      setConnectionStatus('connecting');
-    });
-
-    socket.on('reconnect', (attemptNumber) => {
-      logger.info(`Reconnected after ${attemptNumber} attempts`);
-      setReconnectAttempts(0);
-    });
-
-    socket.on('reconnect_failed', () => {
-      logger.error('Failed to reconnect to server');
-      setConnectionStatus('error');
-    });
+    // 自動再接続を無効化したため、以下のイベントは発生しません
+    // reconnect_attempt, reconnect, reconnect_failed
 
     socket.on('todos', (todoList: Todo[]) => {
       logger.network('Received todos from server:', todoList.length, 'items');
@@ -110,6 +130,11 @@ export const useSocket = (serverUrl: string) => {
     });
 
     return () => {
+      // タイマーをクリア
+      if (reconnectTimerRef.current) {
+        clearTimeout(reconnectTimerRef.current);
+        reconnectTimerRef.current = null;
+      }
       socket.disconnect();
     };
   }, [serverUrl]);
@@ -194,8 +219,18 @@ export const useSocket = (serverUrl: string) => {
   const retryConnection = () => {
     if (socketRef.current) {
       logger.network('Manual retry connection requested');
+      
+      // 既存のタイマーをクリア
+      if (reconnectTimerRef.current) {
+        clearTimeout(reconnectTimerRef.current);
+        reconnectTimerRef.current = null;
+      }
+      
+      // 状態をリセット
       setConnectionStatus('connecting');
       setReconnectAttempts(0);
+      
+      // 再接続を実行
       socketRef.current.disconnect();
       socketRef.current.connect();
     }

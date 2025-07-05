@@ -18,7 +18,12 @@ vi.mock('react-i18next', () => ({
         'connectionError.retryNow': 'Retry Now',
         'connectionError.settings': 'Server Settings',
         'connectionError.closeTemporary': 'Close temporarily (Press Esc)',
-        'connectionError.helpText': 'Press Esc to work offline temporarily. Changes will not be synchronized until reconnected.'
+        'connectionError.helpText': 'Press Esc to work offline temporarily. Changes will not be synchronized until reconnected.',
+        'connectionError.attemptsRemaining': '{{count}} attempts remaining',
+        'connectionError.maxAttemptsReached': 'Maximum retry attempts reached',
+        'connectionError.finalAttempt': 'Final attempt',
+        'connectionError.connectionLost': 'Connection lost - reconnecting...',
+        'connectionError.maxAttemptsDescription': 'All automatic retry attempts have been exhausted. You can manually retry or check your connection.'
       };
       
       if (key === 'connectionError.attemptCount') {
@@ -26,6 +31,9 @@ vi.mock('react-i18next', () => ({
       }
       if (key === 'connectionError.nextRetry') {
         return `Next retry in ${options?.seconds} seconds`;
+      }
+      if (key === 'connectionError.attemptsRemaining') {
+        return `${options?.count} attempts remaining`;
       }
       
       return translations[key] || defaultValue || key;
@@ -185,5 +193,100 @@ describe('ConnectionErrorOverlay', () => {
     render(<ConnectionErrorOverlay {...defaultProps} connectionStatus="error" />);
     
     expect(screen.getByText('Press Esc to work offline temporarily. Changes will not be synchronized until reconnected.')).toBeInTheDocument();
+  });
+
+  it('shows remaining attempts when reconnecting', () => {
+    render(<ConnectionErrorOverlay {...defaultProps} connectionStatus="connecting" reconnectAttempts={2} />);
+    
+    expect(screen.getByText('Reconnecting to server...')).toBeInTheDocument();
+    expect(screen.getByText('3 attempts remaining')).toBeInTheDocument();
+  });
+
+  it('shows final attempt message when on last attempt', () => {
+    render(<ConnectionErrorOverlay {...defaultProps} connectionStatus="connecting" reconnectAttempts={4} />);
+    
+    // Should show "Final attempt" in title
+    expect(screen.getByRole('heading', { name: 'Final attempt' })).toBeInTheDocument();
+    // Should show "Final attempt" in badge (not remaining attempts)
+    expect(screen.getAllByText('Final attempt')).toHaveLength(2); // title + badge
+  });
+
+  it('shows maximum attempts reached when all attempts exhausted', () => {
+    render(<ConnectionErrorOverlay {...defaultProps} connectionStatus="connecting" reconnectAttempts={5} />);
+    
+    expect(screen.getByText('Maximum retry attempts reached')).toBeInTheDocument();
+    expect(screen.getByText('All automatic retry attempts have been exhausted. You can manually retry or check your connection.')).toBeInTheDocument();
+    expect(screen.getByText('Retry Now')).toBeInTheDocument();
+  });
+
+  it('shows maximum attempts reached in error state when attempts exhausted', () => {
+    render(<ConnectionErrorOverlay {...defaultProps} connectionStatus="error" reconnectAttempts={5} />);
+    
+    expect(screen.getByText('Maximum retry attempts reached')).toBeInTheDocument();
+    expect(screen.getByText('All automatic retry attempts have been exhausted. You can manually retry or check your connection.')).toBeInTheDocument();
+  });
+
+  it('displays progress dots for connection attempts', () => {
+    render(<ConnectionErrorOverlay {...defaultProps} connectionStatus="connecting" reconnectAttempts={3} />);
+    
+    // Should show progress indicator
+    expect(screen.getByText('3/5 attempts')).toBeInTheDocument();
+    
+    // Should show 5 progress dots
+    const progressDots = document.querySelectorAll('.connection-error-progress-dot');
+    expect(progressDots).toHaveLength(5);
+    
+    // First 3 dots should be active
+    const activeDots = document.querySelectorAll('.connection-error-progress-dot--active');
+    expect(activeDots).toHaveLength(3);
+    
+    // Current dot should be the 3rd one
+    const currentDot = document.querySelector('.connection-error-progress-dot--current');
+    expect(currentDot).toBeInTheDocument();
+  });
+
+  it('shows failed progress dots in error state', () => {
+    render(<ConnectionErrorOverlay {...defaultProps} connectionStatus="error" reconnectAttempts={2} />);
+    
+    // Should show progress indicator
+    expect(screen.getByText('2/5 attempts')).toBeInTheDocument();
+    
+    // Should show failed dots
+    const failedDots = document.querySelectorAll('.connection-error-progress-dot--failed');
+    expect(failedDots).toHaveLength(2);
+  });
+
+  it('does not show progress indicator when no attempts made', () => {
+    render(<ConnectionErrorOverlay {...defaultProps} connectionStatus="connecting" reconnectAttempts={0} />);
+    
+    // Should not show progress indicator
+    expect(screen.queryByText('0/5 attempts')).not.toBeInTheDocument();
+    const progressDots = document.querySelectorAll('.connection-error-progress-dot');
+    expect(progressDots).toHaveLength(0);
+  });
+
+  it('does not show remaining attempts info when max attempts reached', () => {
+    render(<ConnectionErrorOverlay {...defaultProps} connectionStatus="connecting" reconnectAttempts={5} />);
+    
+    // Should not show remaining attempts badge when max reached
+    expect(screen.queryByText('attempts remaining')).not.toBeInTheDocument();
+  });
+
+  it('changes background color on final attempt', () => {
+    const { container } = render(<ConnectionErrorOverlay {...defaultProps} connectionStatus="connecting" reconnectAttempts={4} />);
+    
+    // Should have yellow background for final attempt
+    const content = container.querySelector('.connection-error-content');
+    expect(content).toHaveClass('bg-yellow-50');
+    expect(content).toHaveClass('border-yellow-200');
+  });
+
+  it('changes background color when max attempts reached', () => {
+    const { container } = render(<ConnectionErrorOverlay {...defaultProps} connectionStatus="connecting" reconnectAttempts={5} />);
+    
+    // Should have orange background for max attempts reached
+    const content = container.querySelector('.connection-error-content');
+    expect(content).toHaveClass('bg-orange-50');
+    expect(content).toHaveClass('border-orange-200');
   });
 });
