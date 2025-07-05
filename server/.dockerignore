@@ -9,7 +9,7 @@ yarn-debug.log*
 yarn-error.log*
 
 # Build artifacts (will be created during Docker build)
-dist/
+# dist/ - Commented out to ensure build output is available for copying between stages
 
 # Development and testing
 __tests__/

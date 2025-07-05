@@ -28,8 +28,9 @@ COPY package.json package-lock.json ./
 RUN npm ci --prefer-offline --no-audit
 
 # Copy only necessary source files (exclude test files and other non-essential items)
-COPY --chown=builder:builder tsconfig.json ./
-COPY --chown=builder:builder src ./src
+COPY tsconfig.json ./
+COPY server.ts ./
+COPY src ./src
 
 # Debug and build TypeScript
 RUN echo "=== TypeScript Debug Info ===" && \
