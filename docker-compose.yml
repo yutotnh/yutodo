@@ -1,6 +1,7 @@
 # ======================================
 # Docker Compose - Development Environment
 # YuToDo Server Containerization
+# Usage: docker-compose up
 # ======================================
 
 services:
@@ -23,25 +24,25 @@ services:
       - YUTODO_SERVER_HOST=0.0.0.0
       - YUTODO_SERVER_PORT=3001
       - YUTODO_DB_PATH=/data/todos.db
-      # CONFIG_DIRを削除してデフォルト設定を使用
+      # CONFIG_DIR removed to use default settings
       # - YUTODO_CONFIG_DIR=/config
       - YUTODO_LOG_LEVEL=debug
       - YUTODO_ENABLE_DEBUG=true
-      # CORS設定：開発時はワイルドカード許可
+      # CORS configuration: allow wildcards in development
       - YUTODO_CORS_ORIGINS=*
-      # スケジュール設定
+      # Schedule configuration
       - YUTODO_SCHEDULE_INTERVAL=60
     
     # Volume mounts
     volumes:
-      # データベース永続化
+      # Database persistence
       - yutodo-data:/data
-      # 設定ファイル（オプション） - 削除してデフォルト設定を使用
+      # Configuration file (optional) - removed to use default settings
       # - ./server/config:/config:ro
-      # ログ出力（開発時のデバッグ用）
+      # Log output (for development debugging)
       - yutodo-logs:/logs
     
-    # Health check - 改善されたヘルスチェック設定
+    # Health check - improved health check configuration
     healthcheck:
       test: ["CMD", "node", "-e", "const http = require('http'); const options = { host: 'localhost', port: 3001, timeout: 5000 }; const request = http.request(options, (res) => { console.log('Health check status:', res.statusCode); process.exit(res.statusCode === 200 ? 0 : 1); }); request.on('error', (err) => { console.log('Health check error:', err.message); process.exit(1); }); request.end();"]
       interval: 15s

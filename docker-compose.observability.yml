@@ -1,16 +1,25 @@
 # =====================================
 # Docker Compose - Observability Stack
+# Usage: docker-compose -f docker-compose.observability.yml up -d
 # =====================================
 
-version: '3.8'
-
 services:
-  # YuToDo Server (extends main docker-compose.yml)
+  # YuToDo Server with enhanced observability
   yutodo-server:
-    extends:
-      file: docker-compose.yml
-      service: yutodo-server
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+      target: production
+    container_name: yutodo-server-observability
+    restart: unless-stopped
     environment:
+      # Basic configuration
+      - NODE_ENV=development
+      - YUTODO_SERVER_HOST=0.0.0.0
+      - YUTODO_SERVER_PORT=3001
+      - YUTODO_DB_PATH=/data/todos.db
+      - YUTODO_CORS_ORIGINS=*
+      
       # Enhanced observability configuration
       - YUTODO_LOG_LEVEL=debug
       - YUTODO_ENABLE_DEBUG=true
@@ -33,6 +42,10 @@ services:
       - "3001:3001"   # Main application
       - "9090:9090"   # Prometheus metrics
       - "8080:8080"   # Health checks
+    
+    volumes:
+      - yutodo-observability-data:/data
+      - yutodo-observability-logs:/logs
     
     depends_on:
       - prometheus
@@ -241,6 +254,16 @@ services:
 
 # Volumes for persistent data
 volumes:
+  yutodo-observability-data:
+    driver: local
+    labels:
+      - "com.yutodo.description=YuToDo server database storage"
+  
+  yutodo-observability-logs:
+    driver: local
+    labels:
+      - "com.yutodo.description=YuToDo server logs"
+  
   prometheus-data:
     driver: local
     labels:

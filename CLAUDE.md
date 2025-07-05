@@ -1124,22 +1124,62 @@ docker-compose -f docker-compose.prod.yml up -d
 npm run tauri build  # Build desktop app
 ```
 
+#### E2E Testing Environment
+```bash
+# Run complete E2E test suite
+docker-compose -f docker-compose.e2e.yml up
+
+# For debugging E2E tests
+docker-compose -f docker-compose.e2e.yml up yutodo-e2e-dev
+docker exec -it yutodo-e2e-dev /usr/local/bin/docker-e2e-run.sh
+```
+
+#### Observability Environment
+```bash
+# Start full monitoring stack
+docker-compose -f docker-compose.observability.yml up -d
+
+# Access monitoring interfaces:
+# - Grafana: http://localhost:3000 (admin/admin)
+# - Prometheus: http://localhost:9091
+# - Jaeger: http://localhost:16686
+# - AlertManager: http://localhost:9093
+```
+
 ### Container Configuration
 
-#### Development (docker-compose.yml)
+The project includes four distinct Docker Compose configurations for different use cases:
+
+#### Development Environment (docker-compose.yml)
 - **Purpose**: Local development with debug logging and flexible CORS
+- **Usage**: `docker-compose up`
 - **Environment**: `NODE_ENV=development`, debug mode enabled
 - **CORS**: Wildcard allowed (`*`) for development flexibility
 - **Volumes**: Named volumes for data persistence
 - **Port**: 3001 (mapped to host)
 
-#### Production (docker-compose.prod.yml)  
+#### Production Environment (docker-compose.prod.yml)
 - **Purpose**: Production deployment with security and performance optimization
+- **Usage**: `docker-compose -f docker-compose.prod.yml up -d`
 - **Environment**: `NODE_ENV=production`, optimized logging
 - **CORS**: Explicit origins only (security)
 - **Security**: Resource limits, security options, read-only filesystem where possible
 - **Volumes**: Bind mounts for better backup control
 - **Health Checks**: Enhanced monitoring for production reliability
+
+#### E2E Testing Environment (docker-compose.e2e.yml)
+- **Purpose**: End-to-end testing with isolated test environment
+- **Usage**: `docker-compose -f docker-compose.e2e.yml up`
+- **Environment**: `NODE_ENV=test`, independent test database
+- **Features**: Automated test runner, screenshot capture, test isolation
+- **Includes**: Test server, E2E test runner with WebdriverIO and Tauri driver
+
+#### Observability Stack (docker-compose.observability.yml)
+- **Purpose**: Full monitoring and observability stack
+- **Usage**: `docker-compose -f docker-compose.observability.yml up -d`
+- **Environment**: Development mode with enhanced logging and metrics
+- **Includes**: Prometheus, Grafana, Jaeger, Loki, AlertManager, cAdvisor
+- **Ports**: 3001 (app), 9090 (metrics), 8080 (health), 3000 (Grafana), 16686 (Jaeger)
 
 ### Environment Variables
 
@@ -1179,6 +1219,14 @@ docker-compose down                 # Stop and remove containers
 # Production environment
 docker-compose -f docker-compose.prod.yml up -d
 docker-compose -f docker-compose.prod.yml down
+
+# E2E Testing environment
+docker-compose -f docker-compose.e2e.yml up     # Run E2E tests
+docker-compose -f docker-compose.e2e.yml down   # Clean up
+
+# Observability stack
+docker-compose -f docker-compose.observability.yml up -d
+docker-compose -f docker-compose.observability.yml down
 
 # Manual container build
 cd server && docker build -t yutodo-server .
@@ -1254,8 +1302,14 @@ docker-compose exec yutodo-server npm test
 # Frontend tests (host, connecting to container)
 npm test
 
-# E2E tests (with containerized server)
+# E2E tests (dedicated environment)
+docker-compose -f docker-compose.e2e.yml up
+
+# E2E tests (development environment)
 docker-compose up -d && npm run test:e2e
+
+# Monitor with observability stack during testing
+docker-compose -f docker-compose.observability.yml up -d
 ```
 
 ### Container Benefits

@@ -1,15 +1,15 @@
 # ======================================
 # Docker Compose - E2E Testing Environment
+# Usage: docker-compose -f docker-compose.e2e.yml up
 # ======================================
-
-version: '3.8'
 
 services:
   # YuToDo Server for E2E testing
   yutodo-server-e2e:
-    extends:
-      file: docker-compose.yml
-      service: yutodo-server
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+      target: production
     container_name: yutodo-server-e2e
     
     environment:
