@@ -39,7 +39,7 @@
         {
           "type": "toml",
           "path": "src-tauri/Cargo.lock",
-          "jsonpath": "$.package.[?(@.name == 'yutodo')].version"
+          "jsonpath": "$.package[?(@.name == 'yutodo')].version"
         }
       ]
     }
