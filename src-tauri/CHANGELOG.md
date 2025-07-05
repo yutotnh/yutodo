@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.3.0](https://github.com/yutotnh/yutodo/compare/v0.2.3...v0.3.0) (2025-07-05)
+
+
+### Features
+
+* implement new window functionality with Ctrl+Shift+N ([e027b41](https://github.com/yutotnh/yutodo/commit/e027b41ff3eeaaea003ee247ee668e51019decf1))
+
+
+### Bug Fixes
+
+* add missing CommandExt import for Windows build ([da3ade1](https://github.com/yutotnh/yutodo/commit/da3ade17ca6f0b27e4b6eb0ad16f94006d7db314))
+
 ## [0.2.3](https://github.com/yutotnh/yutodo/compare/v0.2.2...v0.2.3) (2025-07-02)
 
 

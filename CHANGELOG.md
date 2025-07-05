@@ -6,6 +6,39 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [0.3.0](https://github.com/yutotnh/yutodo/compare/v0.2.3...v0.3.0) (2025-07-05)
+
+
+### Features
+
+* add command palette integration for schedule management ([db1e307](https://github.com/yutotnh/yutodo/commit/db1e307c5543faa13df6467def01489a05b80de9))
+* add command to delete all completed tasks ([dccf247](https://github.com/yutotnh/yutodo/commit/dccf247fb67feebdcfd38b88e099fef7e8361543))
+* implement hover-only checkbox display in slim mode ([3d79b98](https://github.com/yutotnh/yutodo/commit/3d79b9868b0f8cabed23df98bafe675d8df32949))
+* implement new window functionality with Ctrl+Shift+N ([e027b41](https://github.com/yutotnh/yutodo/commit/e027b41ff3eeaaea003ee247ee668e51019decf1))
+* implement server connection retry display with proper counting logic ([e41b45a](https://github.com/yutotnh/yutodo/commit/e41b45a6ebcbfdacaf8dad61b25a55acddc467b7))
+
+
+### Bug Fixes
+
+* add missing CommandExt import for Windows build ([da3ade1](https://github.com/yutotnh/yutodo/commit/da3ade17ca6f0b27e4b6eb0ad16f94006d7db314))
+* correct Tauri API import path in useWindowDrag test ([042afda](https://github.com/yutotnh/yutodo/commit/042afdaa7fe05d23371c9437a55adc37f0e21c9c))
+* enable proper feat commit minor version bumps by removing bump-patch-for-minor-pre-major ([6cee6f5](https://github.com/yutotnh/yutodo/commit/6cee6f57aaadde39925df60f848682c233515af5))
+* improve header auto-hide behavior with different thresholds for show/hide ([592c2aa](https://github.com/yutotnh/yutodo/commit/592c2aae03749312c4895185632daaab37d6bb3d))
+* resolve Docker build error with missing server.js ([5cfdb89](https://github.com/yutotnh/yutodo/commit/5cfdb8998112140057dfd7201b3b91112a3f0282))
+* resolve schedule execution time timezone conversion issue ([ba81215](https://github.com/yutotnh/yutodo/commit/ba812151423229e164be7523fd02f21fe349f59d))
+* resolve title bar scrolling issue by stabilizing header positioning ([db8d9b0](https://github.com/yutotnh/yutodo/commit/db8d9b0287be93f888fe4bf3d080494ed7fdcacc))
+
+
+### Refactoring
+
+* improve Docker Compose organization and remove Chinese text ([914207e](https://github.com/yutotnh/yutodo/commit/914207e5e8c5a1c5eb55c9c3d55236a16ebe12b5))
+
+
+### Testing
+
+* add comprehensive test coverage for delete completed tasks ([38b8e57](https://github.com/yutotnh/yutodo/commit/38b8e57a284fbed45a8bf0be4132541e23dde438))
+* update tests for manual reconnection logic ([9b001ae](https://github.com/yutotnh/yutodo/commit/9b001ae8ade42f0354212f1e4317b68de5159a5e))
+
 ## [0.2.3](https://github.com/yutotnh/yutodo/compare/v0.2.2...v0.2.3) (2025-07-02)
 
 
