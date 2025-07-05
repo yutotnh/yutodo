@@ -1,5 +1,8 @@
 use std::process::Command;
 
+#[cfg(target_os = "windows")]
+use std::os::windows::process::CommandExt;
+
 #[cfg(test)]
 mod tests;
 
