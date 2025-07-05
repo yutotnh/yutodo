@@ -6,6 +6,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [0.4.0](https://github.com/yutotnh/yutodo/compare/v0.3.0...v0.4.0) (2025-07-05)
+
+
+### Features
+
+* auto-update Cargo.lock in release-please workflow ([b5798c6](https://github.com/yutotnh/yutodo/commit/b5798c633a2de979a4d7fc12bd7c76857008f837))
+
+
+### Bug Fixes
+
+* add Cargo.lock version management to release-please config ([d876321](https://github.com/yutotnh/yutodo/commit/d876321350e9dbac6c6916f5af09b7b0683d55f9))
+* correct JSONPath syntax for Cargo.lock version update ([41d0550](https://github.com/yutotnh/yutodo/commit/41d055077a754ed8ae47fac410f7c434bea7b169))
+* correct tauri.conf.json path in release-please config ([02f706e](https://github.com/yutotnh/yutodo/commit/02f706e30ca0c822b7c8f0829857016b64e12dc3))
+* correct YAML syntax in release-please workflow ([93f0d2c](https://github.com/yutotnh/yutodo/commit/93f0d2c4047423cc9244a416ff024224680a5b45))
+* install Tauri dependencies for Cargo.lock update ([5466ac2](https://github.com/yutotnh/yutodo/commit/5466ac25750fbc6549ca6584cf6be19c37f9aa30))
+* integrate src-tauri into main package for release-please ([c7f245e](https://github.com/yutotnh/yutodo/commit/c7f245ef9423b3f9819ef4a2924765bda1ee2e5e))
+* properly extract PR number from release-please output ([9d7e4e8](https://github.com/yutotnh/yutodo/commit/9d7e4e84b00a68b72995ae3f1488b9297d1a882d))
+* remove Cargo.lock from release-please extra-files ([80a77a9](https://github.com/yutotnh/yutodo/commit/80a77a9028a92f55bebaf82571a1afb549efcc96))
+
 ## [0.3.0](https://github.com/yutotnh/yutodo/compare/v0.2.3...v0.3.0) (2025-07-05)
 
 
