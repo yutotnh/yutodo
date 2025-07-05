@@ -35,6 +35,12 @@ jobs:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
 
+      - name: Install Tauri dependencies (ubuntu only)
+        if: ${{ steps.release.outputs.pr }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
       - name: Setup Rust for Cargo.lock update
         if: ${{ steps.release.outputs.pr }}
         uses: dtolnay/rust-toolchain@stable
