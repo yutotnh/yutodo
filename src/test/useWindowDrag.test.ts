@@ -12,8 +12,8 @@ vi.mock('../utils/logger', () => ({
 // Mock Tauri API functions
 const mockStartDragging = vi.fn();
 
-vi.mock('@tauri-apps/api/window', () => ({
-  getCurrentWindow: vi.fn(() => ({
+vi.mock('@tauri-apps/api/webviewWindow', () => ({
+  getCurrentWebviewWindow: vi.fn(() => ({
     startDragging: mockStartDragging,
   })),
 }));
